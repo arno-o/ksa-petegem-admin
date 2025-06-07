@@ -1,13 +1,13 @@
-import type { Route } from "./+types/werkgroepen";
+import type { Route } from "../+types/register";
 
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "KSA Petegem - Admin" },
+    { title: "KSA Admin - Register" },
     { name: "description", content: "Welcome to React Router!" },
   ];
 }
 
-export default function Werkgroepen() {
+export default function Register() {
   return;
 }

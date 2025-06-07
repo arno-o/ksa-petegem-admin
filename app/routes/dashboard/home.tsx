@@ -1,13 +1,13 @@
-import type { Route } from "./+types/posts";
+import type { Route } from "../+types/home";
 
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "KSA Petegem - Admin" },
+    { title: "KSA Admin - Home" },
     { name: "description", content: "Welcome to React Router!" },
   ];
 }
 
-export default function Posts() {
+export default function Home() {
   return;
 }

@@ -1,13 +1,13 @@
-import type { Route } from "./+types/groepen";
+import type { Route } from "../+types/groups";
 
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "KSA Petegem - Admin" },
+    { title: "KSA Admin - Groepen" },
     { name: "description", content: "Welcome to React Router!" },
   ];
 }
 
-export default function Groepen() {
+export default function Groups() {
   return;
 }
