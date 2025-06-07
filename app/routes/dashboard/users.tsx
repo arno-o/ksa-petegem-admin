@@ -1,6 +1,9 @@
 import type { Route } from "./+types/users";
 import PageLayout from "../pageLayout"
 
+import { toast } from "sonner"
+import { Button } from "~/components/ui/button"
+
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -9,9 +12,17 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Users() {
-  return(
+  return (
     <PageLayout>
-      Leiding Pagina
+      
+      <Button
+        variant="outline"
+        onClick={() =>
+          toast.info("Dit is een test melding")
+        }
+      >
+        Een nieuwe melding
+      </Button>
     </PageLayout>
   );
 }

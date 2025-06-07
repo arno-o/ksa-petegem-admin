@@ -7,6 +7,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { Toaster } from "~/components/ui/sonner"
+
 import { ThemeProvider } from "./components/theme-provider"
 
 import type { Route } from "./+types/root";
@@ -35,6 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <Toaster />
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
           {children}
         </ThemeProvider>
