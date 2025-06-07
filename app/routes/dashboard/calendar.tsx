@@ -1,4 +1,5 @@
 import type { Route } from "./+types/calendar";
+import PageLayout from "../pageLayout"
 
 
 export function meta({ }: Route.MetaArgs) {
@@ -8,5 +9,9 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Calendar() {
-  return;
+  return(
+    <PageLayout>
+      Activiteiten
+    </PageLayout>
+  );
 }

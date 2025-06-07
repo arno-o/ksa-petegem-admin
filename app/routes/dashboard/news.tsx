@@ -1,4 +1,5 @@
 import type { Route } from "./+types/news";
+import PageLayout from "../pageLayout"
 
 
 export function meta({ }: Route.MetaArgs) {
@@ -8,5 +9,9 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function News() {
-  return;
+  return(
+    <PageLayout>
+      Berichten pagina
+    </PageLayout>
+  );
 }

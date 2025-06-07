@@ -1,4 +1,6 @@
 import type { Route } from "./+types/users";
+import PageLayout from "../pageLayout"
+
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -7,5 +9,9 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Users() {
-  return;
+  return(
+    <PageLayout>
+      Leiding Pagina
+    </PageLayout>
+  );
 }
