@@ -1,10 +1,9 @@
-import type { Route } from "../+types/login";
+import type { Route } from "./+types/login";
 
 
 export function meta({ }: Route.MetaArgs) {
   return [
     { title: "KSA Admin - Login" },
-    { name: "description", content: "Welcome to React Router!" },
   ];
 }
 
