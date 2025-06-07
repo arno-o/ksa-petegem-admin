@@ -11,7 +11,18 @@ export const fetchLeiding = async () => {
   return data;
 };
 
+export const fetchLeidingById = async (id: number) => {
+  const { data, error } = await supabase.from("leiding").select("*").eq("id", id);
+  if (error) throw error;
+  return data;
+}
+
 export const updateLeiding = async (id: number, updates: Partial<any>) => {
   const { error } = await supabase.from("leiding").update(updates).eq("id", id);
   if (error) throw error;
 };
+
+export const deleteLeiding = async (id: number) => {
+  const { error } = await supabase.from("leiding").delete().eq("id", id);
+  if (error) throw error;
+}

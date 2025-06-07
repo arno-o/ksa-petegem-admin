@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchLeiding } from "../utils/dataFetch";
+import { fetchLeiding } from "../utils/data";
 import {
   Box,
   Typography,

@@ -12,7 +12,7 @@ import {
 
 import { Dialog } from "@mui/material";
 import type { Leiding } from "../types";
-import { updateLeiding } from "../utils/dataFetch";
+import { updateLeiding } from "../utils/data";
 import { useState, useEffect } from "react";
 
 interface Props {
