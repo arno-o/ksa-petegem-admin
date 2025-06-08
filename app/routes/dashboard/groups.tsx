@@ -1,5 +1,6 @@
-import type { Route } from "./+types/groups";
 import PageLayout from "../pageLayout";
+import type { Route } from "./+types/groups";
+import PrivateRoute from "~/context/PrivateRoute"
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -8,9 +9,11 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Groups() {
-  return(
-    <PageLayout>
-      Leeftijdsgroepen
-    </PageLayout>
+  return (
+    <PrivateRoute>
+      <PageLayout>
+        Leeftijdsgroepen
+      </PageLayout>
+    </PrivateRoute>
   );
 }
