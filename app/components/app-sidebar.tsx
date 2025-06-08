@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Link, useLocation } from "react-router"
+import { NavUser } from "~/components/nav-user"
 
 import {
   Sidebar,
@@ -13,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "~/components/ui/sidebar"
+import { Button } from "~/components/ui/button"
 
 import { ModeToggle } from "~/components/mode-toggle"
 
@@ -50,7 +52,7 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const location = useLocation()
+  const location = useLocation();
 
   return (
     <Sidebar {...props}>
@@ -82,6 +84,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarRail />
+      <div className="p-2">
+        <NavUser />
+      </div>
     </Sidebar>
   )
 }
