@@ -11,13 +11,50 @@ import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 
 import { useState } from "react"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
+import { UserAuth } from "~/context/AuthContext"
 
 export function RegisterForm({className, ...props}: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const navigate = useNavigate();
+
+  const {session, signUpNewUser} = UserAuth();
+  console.log(session);
+
+  interface SignUpResult {
+    success: boolean;
+    // Add other properties if the result object has more
+  }
+
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setLoading(true);
+    setError(""); // Clear previous errors
+
+    try {
+      const result: SignUpResult | undefined = await signUpNewUser(email, password);
+      if (result?.success) {
+        navigate("/berichten");
+      } else {
+        // Optionally handle the case where result is undefined or success is false
+        setError("Sign up failed. Please try again.");
+      }
+    } catch (error: unknown) {
+      // It's good practice to check the type of error if you need to access its properties
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unexpected error occurred during sign up.");
+      }
+      console.error("Sign up error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -29,11 +66,12 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
+                  onChange={(e) => setEmail(e.target.value)}
                   id="email"
                   type="email"
                   placeholder="arno@ksapetegem.be"
@@ -42,16 +80,21 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Wachtwoord</Label>
                 </div>
-                <Input id="password" type="password" required />
+                <Input 
+                  onChange={(e) => setPassword (e.target.value)}
+                  id="password" 
+                  type="password" 
+                  required />
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
-                  Aanmelden
+                  Account maken
                 </Button>
               </div>
             </div>
+            {error && <p className="text-red-600 mt-4 text-center text-sm">{error}</p>}
             <div className="mt-4 text-center text-sm">
               Heb je al een account?{" "}
               <Link to="/" className="underline underline-offset-4">Log in</Link>
