@@ -13,7 +13,7 @@ export default function News() {
   return (
     <PrivateRoute>
       <PageLayout>
-        Berichten pagina
+        Berichten
       </PageLayout>
     </PrivateRoute>
   );

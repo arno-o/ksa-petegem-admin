@@ -15,15 +15,7 @@ export default function Users() {
   return (
     <PrivateRoute>
       <PageLayout>
-
-        <Button
-          variant="outline"
-          onClick={() =>
-            toast.info("Dit is een test melding")
-          }
-        >
-          Een nieuwe melding
-        </Button>
+        Leiding
       </PageLayout>
     </PrivateRoute>
   );
