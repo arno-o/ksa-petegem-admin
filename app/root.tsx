@@ -7,12 +7,13 @@ import {
   ScrollRestoration,
 } from "react-router";
 
-import { Toaster } from "~/components/ui/sonner"
-
-import { ThemeProvider } from "./components/theme-provider"
-
-import type { Route } from "./+types/root";
 import "./app.css";
+import type { Route } from "./+types/root";
+
+import { Toaster } from "~/components/ui/sonner"
+import { ThemeProvider } from "./components/theme-provider"
+import { AuthContextProvider } from "~/context/AuthContext"
+
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -37,12 +38,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <AuthContextProvider>
         <Toaster />
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
           {children}
         </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
+        
+
+        </AuthContextProvider>
       </body>
     </html>
   );

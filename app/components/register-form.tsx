@@ -9,17 +9,21 @@ import {
 } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
+
+import { useState } from "react"
 import { Link } from "react-router"
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function RegisterForm({className, ...props}: React.ComponentProps<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState("");
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Meld je aan</CardTitle>
+          <CardTitle>Maak een account aan</CardTitle>
           <CardDescription>
             Zonder login ben je hier niks mee..
           </CardDescription>
@@ -47,6 +51,10 @@ export function LoginForm({
                   Aanmelden
                 </Button>
               </div>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Heb je al een account?{" "}
+              <Link to="/" className="underline underline-offset-4">Log in</Link>
             </div>
           </form>
         </CardContent>

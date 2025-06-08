@@ -24,7 +24,7 @@ const data = {
       items: [
         {
           title: "Berichten",
-          url: "/",
+          url: "/berichten",
         },
         {
           title: "Activiteiten",
