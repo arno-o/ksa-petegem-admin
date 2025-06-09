@@ -1,4 +1,3 @@
-import { cn } from "~/lib/utils"
 import { Button } from "~/components/ui/button"
 import {
   Card,
@@ -9,6 +8,7 @@ import {
 } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
+import { cn } from "~/lib/utils"
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router"
@@ -17,13 +17,14 @@ import { UserAuth } from "~/context/AuthContext"
 export function RegisterForm({className, ...props}: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
 
   const navigate = useNavigate();
 
-  const {session, signUpNewUser} = UserAuth();
-  console.log(session);
+  const { signUpNewUser } = UserAuth();
 
   interface SignUpResult {
     success: boolean;
@@ -36,7 +37,7 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
     setError(""); // Clear previous errors
 
     try {
-      const result: SignUpResult | undefined = await signUpNewUser(email, password);
+      const result: SignUpResult | undefined = await signUpNewUser(email, password, firstName, lastName);
       if (result?.success) {
         navigate("/berichten");
       } else {
@@ -74,7 +75,6 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
                   onChange={(e) => setEmail(e.target.value)}
                   id="email"
                   type="email"
-                  placeholder="arno@ksapetegem.be"
                   required
                 />
               </div>
@@ -88,6 +88,20 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
                   type="password" 
                   required />
               </div>
+              <div className="flex gap-3">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Voornaam</Label>
+                  </div>
+                  <Input onChange={(e) => setFirstName(e.target.value)} id="firstName" type="firstName" required />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Familienaam</Label>
+                  </div>
+                  <Input onChange={(e) => setLastName(e.target.value)} id="lastName" type="lastName" required />
+                </div>
+              </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
                   Account maken
@@ -97,7 +111,7 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
             {error && <p className="text-red-600 mt-4 text-center text-sm">{error}</p>}
             <div className="mt-4 text-center text-sm">
               Heb je al een account?{" "}
-              <Link to="/" className="underline underline-offset-4">Log in</Link>
+              <Link to="/" className="underline underline-offset-4" viewTransition>Log in</Link>
             </div>
           </form>
         </CardContent>

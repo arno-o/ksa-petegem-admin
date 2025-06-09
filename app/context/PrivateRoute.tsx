@@ -7,16 +7,18 @@ interface PageProps {
 }
 
 export default function PrivateRoute({ children }: PageProps) {
-  const { session } = UserAuth();
+  const { session, loading } = UserAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!session) {
+    if (!loading && !session) {
       navigate("/");
     }
-  }, [session, navigate]);
+  }, [loading, session, navigate]);
 
-  if (!session) return null; // or a loading spinner, etc.
+  if (loading) return null; // or a loading spinner
+
+  if (!session) return null;
 
   return <>{children}</>;
 }

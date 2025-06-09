@@ -26,8 +26,7 @@ export function LoginForm({
 
   const navigate = useNavigate();
 
-  const { session, signInUser } = UserAuth();
-  console.log(session);
+  const { signInUser } = UserAuth();
 
   interface SignInResult {
     success: boolean;
