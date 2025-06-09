@@ -73,7 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive}>
-                        <Link to={item.url}>{item.title}</Link>
+                        <Link to={item.url} viewTransition>{item.title}</Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )

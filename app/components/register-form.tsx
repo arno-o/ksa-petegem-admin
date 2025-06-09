@@ -111,7 +111,7 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
             {error && <p className="text-red-600 mt-4 text-center text-sm">{error}</p>}
             <div className="mt-4 text-center text-sm">
               Heb je al een account?{" "}
-              <Link to="/" className="underline underline-offset-4">Log in</Link>
+              <Link to="/" className="underline underline-offset-4" viewTransition>Log in</Link>
             </div>
           </form>
         </CardContent>
