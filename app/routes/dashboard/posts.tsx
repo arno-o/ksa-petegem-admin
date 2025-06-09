@@ -1,5 +1,5 @@
 import PageLayout from "../pageLayout"
-import type { Route } from "./+types/news"
+import type { Route } from "./+types/posts"
 import PrivateRoute from "~/context/PrivateRoute"
 
 
@@ -9,7 +9,7 @@ export function meta({ }: Route.MetaArgs) {
   ];
 }
 
-export default function News() {
+export default function Posts() {
   return (
     <PrivateRoute>
       <PageLayout>
