@@ -14,7 +14,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "~/components/ui/sidebar"
-import { Button } from "~/components/ui/button"
 
 import { ModeToggle } from "~/components/mode-toggle"
 

@@ -33,8 +33,8 @@ export default function Page({ children }: PageProps) {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
           <span className="pr-2">Hallo {firstName} 👋</span>
-          <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-          <span className="flex gap-2 items-center"><CalendarFold size={16} /> Vandaag is {dateToday}</span>
+          {/* <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+          <span className="flex gap-2 items-center"><CalendarFold size={16} /> Vandaag is {dateToday}</span> */}
         </header>
         <div className="p-4">
           {children}
