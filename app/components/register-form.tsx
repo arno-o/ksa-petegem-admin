@@ -39,7 +39,7 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
     try {
       const result: SignUpResult | undefined = await signUpNewUser(email, password, firstName, lastName);
       if (result?.success) {
-        navigate("/berichten");
+        navigate("/berichten", { viewTransition: true });
       } else {
         // Optionally handle the case where result is undefined or success is false
         setError("Sign up failed. Please try again.");
