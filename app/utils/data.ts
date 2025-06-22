@@ -12,13 +12,13 @@ export const fetchLeiding = async () => {
   return data;
 };
 
-export const fetchLeidingById = async (id: number) => {
-  const { data, error } = await supabase.from("leiding").select("*").eq("id", id);
+export const fetchLeidingById = async (id: string | number) => {
+  const { data, error } = await supabase.from("leiding").select("*").eq("id", id).single();
   if (error) throw error;
   return data;
 }
 
-export const updateLeiding = async (id: number, updates: Partial<any>) => {
+export const updateLeiding = async (id: string | number, updates: Partial<any>) => {
   const { error } = await supabase.from("leiding").update(updates).eq("id", id);
   if (error) throw error;
 };
@@ -80,4 +80,10 @@ export const updatePost = async (id: string | number, updates: Partial<any>) => 
 export const deletePost = async (id: string | number) => {
   const { error } = await supabase.from("posts").delete().eq("id", Number(id));
   if (error) throw error;
+};
+
+export const fetchGroups = async () => {
+  const { data, error } = await supabase.from("groepen").select("*");
+  if (error) throw error;
+  return data;
 };

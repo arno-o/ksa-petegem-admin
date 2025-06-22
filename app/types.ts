@@ -6,11 +6,13 @@ export type Leiding = {
   studies: string | null;
   ksa_betekenis: string | null;
   ksa_ervaring: string | null;
-  leiding_sinds: string | null;
-  geboortedatum: string | null;
+  leiding_sinds: Date | null;
+  geboortedatum: Date | null;
   hoofdleiding: boolean;
-  werkgroepen: any;
+  werkgroepen: string | null;
   foto_url: string | null;
+  leidingsploeg: number;
+  trekker: boolean;
 };
 
 export interface Post {
@@ -33,4 +35,10 @@ export interface Post {
             [key: string]: any; // Allow other properties if they exist
         } | null;
     } | null;
+}
+
+export interface Group {
+    id: number;
+    naam: string;
+    omschrijving: string;
 }
