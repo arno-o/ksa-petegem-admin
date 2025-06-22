@@ -18,7 +18,6 @@ import {
   DialogClose // Add DialogClose for cancel button
 } from "~/components/ui/dialog";
 import { Badge } from "~/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"; // Assuming you have these for user display
 import { format } from "date-fns"; // For date formatting
 import { nl } from "date-fns/locale"; // For Dutch locale if needed
 
@@ -208,14 +207,6 @@ export default function Posts() {
                                                 {post.published ? "Gepubliceerd" : "Concept"}
                                             </Badge>
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                {/* User Avatar/Name */}
-                                                {(authorFullName || authorInitials) && ( // Only render if we have some info
-                                                    <Avatar className="h-6 w-6">
-                                                        {/* Use full name or user ID as seed for consistent avatar */}
-                                                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(avatarSeed)}`} />
-                                                        <AvatarFallback>{authorInitials}</AvatarFallback>
-                                                    </Avatar>
-                                                )}
                                                 <span>
                                                     {post.published && post.published_at
                                                         ? `Pub.: ${format(new Date(post.published_at), 'dd MMM yyyy', { locale: nl })}` // Added yyyy
