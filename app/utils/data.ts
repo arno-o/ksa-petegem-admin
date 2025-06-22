@@ -133,3 +133,40 @@ export const uploadLeidingPhoto = async (file: File, userId: string): Promise<st
 
   return publicUrlData.publicUrl;
 };
+
+export const uploadPostCover = async (file: File, postId: string): Promise<string> => {
+  const filePath = `${postId}/${Date.now()}-${file.name}`;
+  const { data, error } = await supabase.storage.from("post-covers").upload(filePath, file, {
+    upsert: true,
+  });
+
+  if (error) throw new Error("Upload mislukt: " + error.message);
+
+  const { data: urlData } = supabase.storage
+    .from("post-covers")
+    .getPublicUrl(filePath);
+
+  return urlData.publicUrl;
+};
+
+export const deleteFromBucket = async (bucket: string, publicUrl: string) => {
+  try {
+    // Extract only the path after the bucket name
+    const match = publicUrl.match(new RegExp(`${bucket}/(.+)$`));
+    const filePath = match?.[1];
+
+    if (!filePath) {
+      throw new Error("Kon pad van afbeelding niet bepalen.");
+    }
+
+    const { error } = await supabase.storage.from(bucket).remove([filePath]);
+
+    if (error) {
+      console.warn("Fout bij verwijderen van afbeelding:", error.message);
+      throw error;
+    }
+  } catch (err) {
+    console.error("deleteFromBucket error:", err);
+    throw err;
+  }
+};

@@ -13,7 +13,6 @@ import FullScreenLoader from "~/components/full-screen-loader";
 
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
-import SimpleUpload from "~/components/FileUpload";
 import { Calendar } from "~/components/ui/calendar";
 import {
     Popover,
@@ -32,6 +31,7 @@ import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
+import FileUpload from "~/components/FileUpload";
 
 export function meta({ }: Route.MetaArgs) {
     return [{ title: "Leiding Bewerken" }];
@@ -319,10 +319,11 @@ const EditUser = () => {
                                     <h2 className="text-lg font-semibold">Profielfoto</h2>
                                     <p className="text-sm text-muted-foreground">Upload een recente foto van deze leiding.</p>
                                 </div>
-                                <SimpleUpload
-                                    leidingId={leidingId || ""}
-                                    initialUrl={form.foto_url}
-                                    onSuccess={(url) => setForm({ ...form, foto_url: url })}
+                                <FileUpload
+                                    bucket="leiding-fotos"
+                                    path={`leiding-${leiding.id}`} // or just `${leiding.id}` if you want the raw ID
+                                    initialUrl={leiding.foto_url || ""}
+                                    onChange={(url) => setForm({ ...form, foto_url: url })}
                                 />
                             </div>
 

@@ -25,7 +25,7 @@ import {
     DialogDescription,
 } from "~/components/ui/dialog";
 
-import { fetchPostById, updatePost, deletePost } from "~/utils/data";
+import { fetchPostById, updatePost, deletePost, supabase } from "~/utils/data";
 import PageLayout from "../pageLayout";
 import PrivateRoute from "~/context/PrivateRoute";
 
@@ -208,7 +208,12 @@ export default function EditPostPage() {
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="cover_image_url" className="text-sm font-medium">Cover afbeelding URL</Label>
-                                        <FileUpload />
+                                        <FileUpload
+                                            bucket="post-covers"
+                                            path={`post-${postId}`}
+                                            initialUrl={form.cover_img}
+                                            onChange={(url) => setForm({ ...form, cover_img: url ?? "" })}
+                                        />
                                     </div>
                                 </div>
                             </div>

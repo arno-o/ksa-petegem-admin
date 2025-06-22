@@ -73,6 +73,10 @@ export default function Users() {
     }
   };
 
+  const handleDeleteLeiding = (id: number) => {
+    setLeiding((prev) => prev?.filter((persoon) => persoon.id !== id));
+  };
+
   return (
     <PrivateRoute>
       <PageLayout>
@@ -99,7 +103,7 @@ export default function Users() {
                   <Input id="familienaam" className="col-span-3" value={familienaam} onChange={(e) => setFamilienaam(e.target.value)} />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="leidingsploeg" className="text-right">Ploeg</Label>
+                  <Label htmlFor="leidingsploeg" className="text-right">Leidingsgroep</Label>
                   <Select onValueChange={setLeidingsploeg}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Kies ploeg" />
@@ -132,7 +136,7 @@ export default function Users() {
             <TabsContent key={group.id} value={`${group.id}`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-1">
                 {leiding?.filter(persoon => persoon.leidingsploeg === group.id).map(persoon => (
-                  <LeidingCard key={persoon.id} leiding={persoon} />
+                  <LeidingCard key={persoon.id} leiding={persoon} onDelete={handleDeleteLeiding} />
                 ))}
               </div>
             </TabsContent>

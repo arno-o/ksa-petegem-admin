@@ -1,84 +1,110 @@
-import { useState, useEffect } from "react";
-import { ImageUpIcon, XIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
-import { uploadLeidingPhoto } from "~/utils/data";
+import { useCallback, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Label } from "~/components/ui/label";
 import { toast } from "sonner";
+import { cn } from "~/lib/utils";
+import { ImageIcon, Loader2, Trash } from "lucide-react";
 
-interface SimpleUploadProps {
-  leidingId: string;
+import imageCompression from "browser-image-compression"; // ⬅️ add this import at the top
+import { uploadLeidingPhoto, uploadPostCover, deleteFromBucket } from "~/utils/data";
+
+interface FileUploadProps {
+  bucket: "leiding-fotos" | "post-covers";
+  path: string;
   initialUrl?: string;
-  onSuccess: (url: string) => void;
+  onChange: (url: string) => void;
 }
 
-export default function SimpleUpload({ leidingId, initialUrl, onSuccess }: SimpleUploadProps) {
-  const [preview, setPreview] = useState<string | null>(initialUrl || null);
-  const [loading, setLoading] = useState(false);
-  const [filename, setFilename] = useState<string | null>(null);
+export default function FileUpload({ bucket, path, initialUrl, onChange }: FileUploadProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(initialUrl || null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setLoading(true);
+  const handleRemove = useCallback(async () => {
+    if (!previewUrl) return;
     try {
-      const url = await uploadLeidingPhoto(file, leidingId);
-      setPreview(url);
-      setFilename(file.name);
-      onSuccess(url);
-      toast.success("Foto geüpload!");
-    } catch (err: any) {
-      toast.error("Upload mislukt: " + err.message);
-    } finally {
-      setLoading(false);
+      await deleteFromBucket(bucket, previewUrl);
+      setPreviewUrl(null);
+      onChange("");
+      toast.success("Afbeelding verwijderd");
+    } catch (error) {
+      console.error(error);
+      toast.error("Verwijderen mislukt");
     }
-  };
+  }, [previewUrl, bucket, onChange]);
 
-  const handleRemove = () => {
-    setPreview(null);
-    setFilename(null);
-    onSuccess("");
+const handleUpload = async (file: File) => {
+  setUploading(true);
+  try {
+    // ⬇️ Compress image
+    const compressedFile = await imageCompression(file, {
+      maxSizeMB: 0.3, // Adjust max file size (in MB)
+      maxWidthOrHeight: 1280, // Optional: resize large images
+      useWebWorker: true,
+    });
+
+    const uploadFunction = bucket === "leiding-fotos" ? uploadLeidingPhoto : uploadPostCover;
+    const url = await uploadFunction(compressedFile, path);
+
+    setPreviewUrl(url);
+    onChange(url);
+    toast.success("Afbeelding geüpload");
+  } catch (err) {
+    console.error(err);
+    toast.error("Uploaden mislukt");
+  } finally {
+    setUploading(false);
+  }
+};
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await handleUpload(file);
   };
 
   return (
     <div className="space-y-2">
-      <Label className="block text-sm font-medium">Profielfoto</Label>
-
-      {preview ? (
-        <div className="relative group">
+      {previewUrl ? (
+        <div className="relative group w-full rounded-md overflow-hidden aspect-video border">
           <img
-            src={preview}
-            alt="Preview"
-            className="w-full aspect-square object-cover rounded-lg border"
+            src={previewUrl}
+            alt="Voorbeeld"
+            className="object-cover w-full h-full"
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-3 py-1 rounded-b-lg flex items-center justify-between">
-            <span className="truncate max-w-[80%]">{filename || "Foto geupload"}</span>
-            {!loading ? <CheckCircle2Icon className="w-4 h-4 text-green-400" /> : <Loader2Icon className="w-4 h-4 animate-spin" />}
-          </div>
-          <button
-            onClick={handleRemove}
+          <Button
             type="button"
-            className="absolute top-2 right-2 z-10 rounded-full bg-black/70 p-1 text-white hover:bg-black"
-            aria-label="Foto verwijderen"
+            variant="ghost"
+            size="icon"
+            onClick={handleRemove}
+            className="absolute top-2 right-2 z-10 bg-white/70 hover:bg-white"
           >
-            <XIcon className="w-4 h-4" />
-          </button>
+            <Trash className="h-4 w-4 text-red-500" />
+          </Button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-accent transition">
-          <ImageUpIcon className="w-6 h-6 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Klik om een foto te kiezen</span>
+        <div
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "flex flex-col items-center justify-center border border-dashed border-muted-foreground/40 rounded-md p-6 cursor-pointer hover:bg-muted/40 aspect-video",
+            uploading && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          {uploading ? (
+            <Loader2 className="animate-spin w-5 h-5 text-muted-foreground" />
+          ) : (
+            <>
+              <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+              <p className="text-sm text-muted-foreground">Klik om afbeelding te uploaden</p>
+            </>
+          )}
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileChange}
+            ref={inputRef}
+            onChange={onFileChange}
             className="hidden"
-            disabled={loading}
           />
-        </label>
+        </div>
       )}
-
-      {loading && <p className="text-sm text-muted-foreground">Bezig met uploaden…</p>}
     </div>
   );
 }
