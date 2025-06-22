@@ -1,25 +1,39 @@
-import PageLayout from "../pageLayout"
-import type { Route } from "./+types/users"
-import PrivateRoute from "~/context/PrivateRoute"
-import LeidingCard from "~/components/leiding-card"
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
-
-import type { Group, Leiding } from "~/types";
-import { fetchGroups, fetchLeiding } from "~/utils/data";
-
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+
+import PageLayout from "../pageLayout";
+import type { Route } from "./+types/users";
+import { Button } from "~/components/ui/button";
+import PrivateRoute from "~/context/PrivateRoute";
+import LeidingCard from "~/components/leiding-card";
+
+import { UserPlus } from "lucide-react";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import type { Group, Leiding } from "~/types";
+import { fetchGroups, fetchLeiding, createLeiding } from "~/utils/data";
+import {
+  Dialog, DialogClose, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle, DialogTrigger
+} from "~/components/ui/dialog";
+import { Label } from "~/components/ui/label";
+import { Input } from "~/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
 export function meta({ }: Route.MetaArgs) {
-  return [
-    { title: "KSA Admin - Leiding" },
-  ];
+  return [{ title: "KSA Admin - Leiding" }];
 }
 
 export default function Users() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [groups, setGroups] = useState<Group[]>()
-  const [leiding, setLeiding] = useState<Leiding[]>()
+  const [groups, setGroups] = useState<Group[]>();
+  const [leiding, setLeiding] = useState<Leiding[]>();
+
+  const [voornaam, setVoornaam] = useState("");
+  const [familienaam, setFamilienaam] = useState("");
+  const [leidingsploeg, setLeidingsploeg] = useState<string>("");
 
   useEffect(() => {
     const loadGroups = async () => {
@@ -39,39 +53,91 @@ export default function Users() {
         const data = await fetchLeiding();
         setLeiding(data);
       } catch (err) {
-        console.error("Failed to fetch leiding: ", err);
+        console.error("Failed to fetch leiding:", err);
       }
-    }
+    };
 
     loadGroups();
     loadLeiding();
   }, []);
 
+  const handleCreate = async () => {
+    if (!voornaam || !familienaam || !leidingsploeg) return;
+
+    try {
+      const newId = await createLeiding({ voornaam, familienaam, leidingsploeg: Number(leidingsploeg) });
+      setOpen(false);
+      navigate(`/leiding/edit/${newId.id}`);
+    } catch (err) {
+      console.error("Failed to create new leiding:", err);
+    }
+  };
+
   return (
     <PrivateRoute>
       <PageLayout>
-
         <header className="flex justify-between items-center mb-6">
-          <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
+          <h3 className="text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><UserPlus className="mr-2" />Voeg leiding toe</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Nieuwe leiding aanmaken</DialogTitle>
+                <DialogDescription>
+                  Vul snel de gegevens in om een nieuw profiel te starten.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="voornaam" className="text-right">Voornaam</Label>
+                  <Input id="voornaam" className="col-span-3" value={voornaam} onChange={(e) => setVoornaam(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="familienaam" className="text-right">Familienaam</Label>
+                  <Input id="familienaam" className="col-span-3" value={familienaam} onChange={(e) => setFamilienaam(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="leidingsploeg" className="text-right">Ploeg</Label>
+                  <Select onValueChange={setLeidingsploeg}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Kies ploeg" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {groups?.map((g) => (
+                        <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">Annuleer</Button>
+                </DialogClose>
+                <Button onClick={handleCreate}>Ga naar profiel</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </header>
 
         <Tabs defaultValue="1" className="w-fill">
           <TabsList>
             {groups?.sort((a, b) => a.id - b.id).map((group) => (
-              <TabsTrigger value={`${group.id}`}>{group.naam}</TabsTrigger>
+              <TabsTrigger key={group.id} value={`${group.id}`}>{group.naam}</TabsTrigger>
             ))}
           </TabsList>
           {groups?.sort((a, b) => a.id - b.id).map((group) => (
-            <TabsContent value={`${group.id}`}>
+            <TabsContent key={group.id} value={`${group.id}`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-1">
                 {leiding?.filter(persoon => persoon.leidingsploeg === group.id).map(persoon => (
-                  <LeidingCard leiding={persoon} />
+                  <LeidingCard key={persoon.id} leiding={persoon} />
                 ))}
               </div>
             </TabsContent>
           ))}
         </Tabs>
-
       </PageLayout>
     </PrivateRoute>
   );

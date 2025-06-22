@@ -11,7 +11,7 @@ import { Switch } from "~/components/ui/switch";
 import { Separator } from "~/components/ui/separator";
 import FullScreenLoader from "~/components/full-screen-loader";
 
-import FileUpload from "~/components/comp-544"
+import FileUpload from "~/components/FileUpload"
 import { SimpleEditor } from "~/components/editor"
 
 import {

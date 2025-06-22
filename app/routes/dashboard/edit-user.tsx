@@ -13,8 +13,8 @@ import FullScreenLoader from "~/components/full-screen-loader";
 
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
-import FileUpload from "~/components/comp-544";
-import { Calendar } from "~/components/ui/calendar"
+import SimpleUpload from "~/components/FileUpload";
+import { Calendar } from "~/components/ui/calendar";
 import {
     Popover,
     PopoverContent,
@@ -55,6 +55,7 @@ const EditUser = () => {
         werk: "",
         studies: "",
 
+        foto_url: "",
         werkgroepen: "",
         ksa_ervaring: "",
         ksa_betekenis: "",
@@ -107,6 +108,7 @@ const EditUser = () => {
                     trekker: fetchedLeiding.trekker,
                     ksa_ervaring: fetchedLeiding.ksa_ervaring,
                     ksa_betekenis: fetchedLeiding.ksa_betekenis,
+                    foto_url: fetchedLeiding.foto_url,
                 });
             } catch (err) {
                 setError("Dit profiel bestaat niet");
@@ -181,7 +183,7 @@ const EditUser = () => {
                                     <p className="text-sm text-muted-foreground">Naam en geboortedatum van de leiding.</p>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="flex flex-col gap-2">
                                         <Label htmlFor="voornaam">Voornaam</Label>
                                         <Input id="voornaam" value={form.voornaam} onChange={(e) => setForm({ ...form, voornaam: e.target.value })} />
@@ -190,31 +192,30 @@ const EditUser = () => {
                                         <Label htmlFor="familienaam">Familienaam</Label>
                                         <Input id="familienaam" value={form.familienaam} onChange={(e) => setForm({ ...form, familienaam: e.target.value })} />
                                     </div>
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <Label>Geboortedatum</Label>
-                                    <Popover open={dobDatePicker} onOpenChange={setDobDatePicker}>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="outline" className="w-full justify-between font-normal">
-                                                {form.geboortedatum ? form.geboortedatum.toLocaleDateString("nl-BE") : "Kies een datum"}
-                                                <ChevronDownIcon className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={form.geboortedatum}
-                                                captionLayout="dropdown"
-                                                onSelect={(date) => {
-                                                    if (date) {
-                                                        setForm({ ...form, geboortedatum: date });
-                                                        setDobDatePicker(false);
-                                                    }
-                                                }}
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                    <div className="flex flex-col gap-2">
+                                        <Label>Geboortedatum</Label>
+                                        <Popover open={dobDatePicker} onOpenChange={setDobDatePicker}>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" className="w-full justify-between font-normal">
+                                                    {form.geboortedatum ? form.geboortedatum.toLocaleDateString("nl-BE") : "Kies een datum"}
+                                                    <ChevronDownIcon className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={form.geboortedatum}
+                                                    captionLayout="dropdown"
+                                                    onSelect={(date) => {
+                                                        if (date) {
+                                                            setForm({ ...form, geboortedatum: date });
+                                                            setDobDatePicker(false);
+                                                        }
+                                                    }}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
                                 </div>
                             </div>
 
@@ -318,7 +319,11 @@ const EditUser = () => {
                                     <h2 className="text-lg font-semibold">Profielfoto</h2>
                                     <p className="text-sm text-muted-foreground">Upload een recente foto van deze leiding.</p>
                                 </div>
-                                <FileUpload />
+                                <SimpleUpload
+                                    leidingId={leidingId || ""}
+                                    initialUrl={form.foto_url}
+                                    onSuccess={(url) => setForm({ ...form, foto_url: url })}
+                                />
                             </div>
 
                             <Separator />

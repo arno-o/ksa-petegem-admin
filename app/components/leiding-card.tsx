@@ -10,6 +10,7 @@ import {
 import { MoreVertical, Edit, Trash2 } from "lucide-react"; // Import all necessary icons
 
 import { useNavigate } from "react-router";
+import { deleteLeiding } from "~/utils/data";
 
 interface LeidingCardProps {
   leiding: Leiding;
@@ -43,7 +44,7 @@ const LeidingCard = ({ leiding }: LeidingCardProps) => {
             <DropdownMenuItem className="cursor-pointer" onClick={() => navigate(`edit/${leiding.id}`, { viewTransition: true })}>
               <Edit className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer"> {/* Use ShadCN's destructive color */}
+            <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={() => deleteLeiding(leiding.id)}>
               <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -28,6 +28,27 @@ export const deleteLeiding = async (id: number) => {
   if (error) throw error;
 }
 
+export const createLeiding = async (newLeiding: {
+  voornaam: string;
+  familienaam: string;
+  leidingsploeg: number;
+}) => {
+  const { data, error } = await supabase
+    .from("leiding")
+    .insert([{
+      ...newLeiding,
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating leiding:", error);
+    throw error;
+  }
+
+  return data;
+};
+
 export const createPost = async (post: {
   title: string;
   description: string;
@@ -60,9 +81,7 @@ export const fetchPostById = async (id: string) => {
 };
 
 export const updatePost = async (id: string | number, updates: Partial<any>) => {
-  // Check if the 'published' status is being set to true
   if (updates.published === true) {
-    // If it is, add or update the 'published_at' timestamp
     updates.published_at = new Date().toISOString();
   }
 
@@ -70,7 +89,7 @@ export const updatePost = async (id: string | number, updates: Partial<any>) => 
     .from("posts")
     .update(updates)
     .eq("id", Number(id))
-    .select(); // 👈 for debugging
+    .select();
 
   console.log("🔁 Supabase update result:", data, error);
   if (error) throw error;
@@ -86,4 +105,31 @@ export const fetchGroups = async () => {
   const { data, error } = await supabase.from("groepen").select("*");
   if (error) throw error;
   return data;
+};
+
+export const uploadLeidingPhoto = async (file: File, userId: string): Promise<string> => {
+  const uniqueName = `${Date.now()}-${file.name}`;
+  const filePath = `${userId}/${uniqueName}`;
+
+  const { data, error } = await supabase.storage
+    .from("leiding-fotos")
+    .upload(filePath, file, {
+      upsert: true,
+      contentType: file.type,
+    });
+
+  if (error) {
+    throw new Error(`Upload failed: ${error.message}`);
+  }
+
+  const { data: publicUrlData } = supabase
+    .storage
+    .from("leiding-fotos")
+    .getPublicUrl(filePath);
+
+  if (!publicUrlData?.publicUrl) {
+    throw new Error("Could not retrieve public URL after upload.");
+  }
+
+  return publicUrlData.publicUrl;
 };
