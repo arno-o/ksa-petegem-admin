@@ -43,7 +43,7 @@ const stripHtmlAndTruncate = (html: string, maxLength: number = 150) => {
 export default function Posts() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", cover_img: "" });
-  const [posts, setPosts] = useState<Post[]>([]); // Use Post interface
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const { session } = UserAuth();
 
@@ -114,7 +114,7 @@ export default function Posts() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="title" className="text-right">
                     Titel
                   </Label>
@@ -126,7 +126,7 @@ export default function Posts() {
                     className="col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="description" className="text-right">
                     Beschrijving
                   </Label>
@@ -135,18 +135,6 @@ export default function Posts() {
                     placeholder="Korte samenvatting (optioneel)"
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="cover_img" className="text-right">
-                    Cover URL
-                  </Label>
-                  <Input
-                    id="cover_img"
-                    placeholder="Link naar cover afbeelding (optioneel)"
-                    value={form.cover_img}
-                    onChange={(e) => setForm({ ...form, cover_img: e.target.value })}
                     className="col-span-3"
                   />
                 </div>
@@ -173,15 +161,6 @@ export default function Posts() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {posts.map((post) => {
-                        // Determine author's name for display
-                        const authorFirstName = post.author_first_name || session?.user?.user_metadata?.first_name;
-                        const authorLastName = post.author_last_name || session?.user?.user_metadata?.last_name;
-                        const authorFullName = [authorFirstName, authorLastName].filter(Boolean).join(' ').trim();
-                        const authorInitials = (authorFirstName && authorLastName)
-                            ? `${authorFirstName[0]}${authorLastName[0]}`.toUpperCase()
-                            : (authorFirstName || authorLastName || session?.user?.email?.[0] || '??').toUpperCase();
-                        const avatarSeed = authorFullName || session?.user?.email || post.user_id;
-
 
                         return (
                             <Link to={`/berichten/${post.id}`} key={post.id} className="block group">

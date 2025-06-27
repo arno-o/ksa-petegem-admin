@@ -102,7 +102,7 @@ export const deletePost = async (id: string | number) => {
 };
 
 export const fetchGroups = async () => {
-  const { data, error } = await supabase.from("groepen").select("*");
+  const { data, error } = await supabase.from("groepen").select("*").eq("active", true);
   if (error) throw error;
   return data;
 };

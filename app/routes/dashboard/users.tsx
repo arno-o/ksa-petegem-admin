@@ -94,19 +94,19 @@ export default function Users() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="voornaam" className="text-right">Voornaam</Label>
                   <Input id="voornaam" className="col-span-3" value={voornaam} onChange={(e) => setVoornaam(e.target.value)} />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="familienaam" className="text-right">Familienaam</Label>
                   <Input id="familienaam" className="col-span-3" value={familienaam} onChange={(e) => setFamilienaam(e.target.value)} />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="leidingsploeg" className="text-right">Leidingsgroep</Label>
                   <Select onValueChange={setLeidingsploeg}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Kies ploeg" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Kies groep" />
                     </SelectTrigger>
                     <SelectContent>
                       {groups?.map((g) => (

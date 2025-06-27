@@ -257,7 +257,7 @@ const EditUser = () => {
                                             defaultValue={String(form.leidingsploeg)}
                                         >
                                             <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Kies ploeg" />
+                                                <SelectValue placeholder="Kies groep" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {groepen.sort((a, b) => a.id - b.id).map((g) => (

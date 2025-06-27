@@ -41,4 +41,5 @@ export interface Group {
     id: number;
     naam: string;
     omschrijving: string;
+    active: boolean;
 }
