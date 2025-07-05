@@ -43,3 +43,13 @@ export interface Group {
     omschrijving: string;
     active: boolean;
 }
+
+export interface Event {
+    id: number;
+    title: string;
+    description: string;
+    location: string;
+    published: boolean;
+    date_start: Date | null;
+    date_end: Date | null;
+}
