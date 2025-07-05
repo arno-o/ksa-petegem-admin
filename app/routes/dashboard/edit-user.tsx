@@ -1,7 +1,7 @@
 import type { Leiding, Group } from "~/types";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { fetchLeidingById, updateLeiding, fetchGroups } from "~/utils/data";
+import { fetchLeidingById, updateLeiding, fetchActiveGroups } from "~/utils/data";
 
 import { toast } from "sonner";
 import { ChevronDownIcon, SaveIcon, ChevronLeft } from "lucide-react"; // Import all necessary icons
@@ -82,7 +82,7 @@ const EditUser = () => {
                 const fetchedLeiding = await fetchLeidingById(leidingId);
                 setLeiding(fetchedLeiding);
 
-                const allGroups = await fetchGroups();
+                const allGroups = await fetchActiveGroups();
                 setGroepen(allGroups);
 
                 // Convert geboortedatum string to a Date object

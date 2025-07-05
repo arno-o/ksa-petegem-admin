@@ -101,10 +101,21 @@ export const deletePost = async (id: string | number) => {
   if (error) throw error;
 };
 
-export const fetchGroups = async () => {
+export const fetchActiveGroups = async () => {
   const { data, error } = await supabase.from("groepen").select("*").eq("active", true);
   if (error) throw error;
   return data;
+};
+
+export const fetchAllGroups = async () => {
+  const { data, error } = await supabase.from("groepen").select("*");
+  if (error) throw error;
+  return data;
+};
+
+export const updateGroup = async (id: string | number, updates: Partial<any>) => {
+  const { error } = await supabase.from("groepen").update(updates).eq("id", id);
+  if (error) throw error;
 };
 
 export const uploadLeidingPhoto = async (file: File, userId: string): Promise<string> => {

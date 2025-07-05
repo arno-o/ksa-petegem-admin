@@ -11,7 +11,7 @@ import { UserPlus } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import type { Group, Leiding } from "~/types";
-import { fetchGroups, fetchLeiding, createLeiding } from "~/utils/data";
+import { fetchActiveGroups, fetchLeiding, createLeiding } from "~/utils/data";
 import {
   Dialog, DialogClose, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle, DialogTrigger
@@ -39,7 +39,7 @@ export default function Users() {
     const loadGroups = async () => {
       setLoading(true);
       try {
-        const data = await fetchGroups();
+        const data = await fetchActiveGroups();
         setGroups(data);
       } catch (err) {
         console.error("Failed to fetch groups:", err);
