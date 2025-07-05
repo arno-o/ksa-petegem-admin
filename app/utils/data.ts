@@ -118,6 +118,22 @@ export const updateGroup = async (id: string | number, updates: Partial<any>) =>
   if (error) throw error;
 };
 
+export const fetchEvents = async () => {
+  const { data, error } = await supabase.from("events").select("*");
+  if (error) throw error;
+  return data;
+}
+
+export const updateEvent = async (id: string | number, updates: Partial<any>) => {
+  const { error } = await supabase.from("events").update(updates).eq("id", id);
+  if (error) throw error;
+}
+
+export const deleteEvent = async (id: string | number) => {
+  const { error } = await supabase.from("events").delete().eq("id", Number(id));
+  if (error) throw error;
+};
+
 export const uploadLeidingPhoto = async (file: File, userId: string): Promise<string> => {
   const uniqueName = `${Date.now()}-${file.name}`;
   const filePath = `${userId}/${uniqueName}`;
