@@ -42,6 +42,7 @@ export interface Group {
     naam: string;
     omschrijving: string;
     active: boolean;
+    color: string;
 }
 
 export interface Event {

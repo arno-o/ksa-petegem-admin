@@ -134,6 +134,37 @@ export const deleteEvent = async (id: string | number) => {
   if (error) throw error;
 };
 
+export const fetchGroupsByEventID = async (eventId: number): Promise<any> => {
+  // Step 1: Get the target_groups array from the event
+  const { data: eventData, error: eventError } = await supabase
+    .from("events")
+    .select("target_groups")
+    .eq("id", eventId)
+    .single();
+
+  if (eventError) {
+    console.error("Error fetching event:", eventError);
+    throw eventError;
+  }
+
+  const groupIds: number[] = eventData?.target_groups || [];
+
+  if (groupIds.length === 0) return [];
+
+  // Step 2: Fetch the corresponding groepen
+  const { data: groepen, error: groepenError } = await supabase
+    .from("groepen")
+    .select("*")
+    .in("id", groupIds);
+
+  if (groepenError) {
+    console.error("Error fetching groepen:", groepenError);
+    throw groepenError;
+  }
+
+  return groepen;
+};
+
 export const uploadLeidingPhoto = async (file: File, userId: string): Promise<string> => {
   const uniqueName = `${Date.now()}-${file.name}`;
   const filePath = `${userId}/${uniqueName}`;

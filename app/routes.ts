@@ -5,7 +5,7 @@ export default [
     index("routes/auth/login.tsx"),
     
     route("/berichten", "routes/dashboard/posts.tsx"),
-    route("/activiteiten", "routes/dashboard/calendar.tsx"),
+    route("/activiteiten", "routes/dashboard/events.tsx"),
     route("/leiding", "routes/dashboard/users.tsx"),
     route("/groepen", "routes/dashboard/groups.tsx"),
 
