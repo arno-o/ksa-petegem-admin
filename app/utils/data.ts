@@ -134,6 +134,26 @@ export const deleteEvent = async (id: string | number) => {
   if (error) throw error;
 };
 
+export const createEvent = async (newEvent: {
+  title: string;
+  description: string;
+  location: string;
+  target_groups: string[]; // json field
+}) => {
+  const { data, error } = await supabase
+    .from("events")
+    .insert([newEvent])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating event:", error);
+    throw error;
+  }
+
+  return data;
+};
+
 export const fetchGroupsByEventID = async (eventId: number): Promise<any> => {
   // Step 1: Get the target_groups array from the event
   const { data: eventData, error: eventError } = await supabase

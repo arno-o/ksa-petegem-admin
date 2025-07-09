@@ -53,4 +53,6 @@ export interface Event {
     published: boolean;
     date_start: Date | null;
     date_end: Date | null;
+    time_start: string | null;
+    time_end: string | null;
 }
