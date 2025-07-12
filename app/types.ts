@@ -57,3 +57,14 @@ export interface Event {
     time_start: string | null;
     time_end: string | null;
 }
+
+export interface EventFormState {
+  title: string;
+  description: string;
+  location: string;
+  target_groups: number[];
+  date_start?: Date;
+  date_end?: Date;
+  time_start: string;
+  time_end: string;
+}

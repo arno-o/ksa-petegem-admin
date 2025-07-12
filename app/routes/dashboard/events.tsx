@@ -6,29 +6,16 @@ import { fetchEvents, fetchActiveGroups, createEvent, deleteEvent, updateEvent }
 
 import type { Event, Group } from "~/types";
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "~/components/ui/dialog";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "~/components/ui/tooltip"
+} from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
-import { Label } from "~/components/ui/label";
-import { Plus, Edit, Trash2, MapPin, Calendar as CalendarIcon, Clock, MoreHorizontal } from "lucide-react";
+import { Edit, Trash2, MapPin, Calendar as CalendarIcon, Clock, MoreHorizontal } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import MultipleSelector, { type Option } from "~/components/ui/multiselect";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { cn } from "~/lib/utils";
-
 import {
     type ColumnDef,
     flexRender,
@@ -57,9 +44,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Calendar } from "~/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { EventDialog } from "~/components/event-dialogs";
 
 // --- Constants & Utility Functions (Move to a separate 'utils' file if growing) ---
 const COLOR_MAP: Record<string, string> = {
@@ -100,7 +85,6 @@ function useEvents() {
         const load = async () => {
             try {
                 const data = await fetchEvents();
-                // Map the incoming data to ensure date_start and date_end are Date objects
                 const processedData: Event[] = data.map(event => ({
                     ...event,
                     date_start: event.date_start ? new Date(event.date_start) : null,
@@ -262,6 +246,38 @@ export default function Events() {
         } catch (error) {
             console.error("❌ Fout bij aanmaken activiteit:", error);
             toast.error("Er is een fout opgetreden bij het aanmaken van de activiteit.");
+        }
+    };
+
+    const handleEditEvent = async () => {
+        if (!validateForm()) {
+            toast.error("Vul alle verplichte velden in.");
+            return;
+        }
+
+        try {
+            const updates = {
+                title: form.title.trim(),
+                description: form.description.trim(),
+                location: form.location.trim(),
+                target_groups: form.target_groups,
+                date_start: form.date_start ? format(form.date_start, "yyyy-MM-dd") : null,
+                date_end: form.date_end ? format(form.date_end, "yyyy-MM-dd") : null,
+                time_start: form.time_start,
+                time_end: form.time_end || null,
+            };
+
+            if (editingEvent) {
+                await updateEvent(editingEvent.id, updates);
+                toast.success("Activiteit bijgewerkt!");
+                setEditDialogOpen(false);
+                setEditingEvent(null);
+                setForm(INITIAL_FORM_STATE);
+                await refreshEvents();
+            }
+        } catch (error) {
+            console.error("❌ Fout bij bewerken:", error);
+            toast.error("Bijwerken mislukt.");
         }
     };
 
@@ -469,385 +485,43 @@ export default function Events() {
                             className="w-full sm:w-64"
                         />
 
-                        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow duration-200">
-                                    <Plus className="mr-2 h-4 w-4" />Nieuwe activiteit
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px] rounded-lg shadow-xl max-h-[90vh]"> {/* Added overflow-y-auto and max-h */}
-                                <DialogHeader>
-                                    <DialogTitle className="text-2xl font-bold">Nieuwe activiteit</DialogTitle>
-                                    <DialogDescription>
-                                        Vul alle velden in om een nieuwe activiteit aan te maken.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                    <div className="flex flex-col gap-2">
-                                        <Label htmlFor="title">Titel</Label>
-                                        <Input
-                                            id="title"
-                                            value={form.title}
-                                            onChange={(e) => {
-                                                setForm((prev) => ({ ...prev, title: e.target.value }));
-                                                setErrors((prev) => ({ ...prev, title: "" }));
-                                            }}
-                                            className={`${errors.title ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                                        />
-                                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <Label htmlFor="location">Locatie</Label>
-                                        <Input
-                                            id="location"
-                                            value={form.location}
-                                            onChange={(e) => {
-                                                setForm((prev) => ({ ...prev, location: e.target.value }));
-                                                setErrors((prev) => ({ ...prev, location: "" }));
-                                            }}
-                                            className={`${errors.location ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                                        />
-                                        {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="date_start">Startdatum</Label>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full justify-start text-left font-normal",
-                                                            !form.date_start && "text-muted-foreground",
-                                                            errors.date_start ? "border-red-500 focus-visible:ring-red-500" : ""
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {form.date_start ? format(form.date_start, "PPP") : <span>Kies een datum</span>}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={form.date_start}
-                                                        onSelect={(date) => {
-                                                            setForm((prev) => ({ ...prev, date_start: date ?? undefined }));
-                                                            setErrors((prev) => ({ ...prev, date_start: "" }));
-                                                        }}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            {errors.date_start && <p className="text-red-500 text-sm mt-1">{errors.date_start}</p>}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="time_start">Starttijd</Label>
-                                            <Select
-                                                value={form.time_start}
-                                                onValueChange={(value) => {
-                                                    setForm((prev) => ({ ...prev, time_start: value }));
-                                                    setErrors((prev) => ({ ...prev, time_start: "" }));
-                                                }}
-                                            >
-                                                <SelectTrigger className={cn(
-                                                    "w-full",
-                                                    errors.time_start ? "border-red-500 focus-visible:ring-red-500" : ""
-                                                )}>
-                                                    <SelectValue placeholder="Kies een tijd" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {TIME_OPTIONS.map((time) => (
-                                                        <SelectItem key={time} value={time}>
-                                                            {time}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.time_start && <p className="text-red-500 text-sm mt-1">{errors.time_start}</p>}
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="date_end">Einddatum (optioneel)</Label>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full justify-start text-left font-normal",
-                                                            !form.date_end && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {form.date_end ? format(form.date_end, "PPP") : <span>Kies een datum</span>}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={form.date_end}
-                                                        onSelect={(date) => setForm((prev) => ({ ...prev, date_end: date ?? undefined }))}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="time_end">Eindtijd (optioneel)</Label>
-                                            <Select
-                                                value={form.time_end}
-                                                onValueChange={(value) => setForm((prev) => ({ ...prev, time_end: value }))}
-                                            >
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Kies een tijd" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {TIME_OPTIONS.map((time) => (
-                                                        <SelectItem key={time} value={time}>
-                                                            {time}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <Label htmlFor="groups">Groepen</Label>
-                                        <MultipleSelector
-                                            value={groupOptions.filter(opt => form.target_groups.includes(Number(opt.value)))}
-                                            onChange={(selected) => {
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    target_groups: selected.map((option) => Number(option.value)),
-                                                }));
-                                                setErrors((prev) => ({ ...prev, target_groups: "" }));
-                                            }}
-                                            defaultOptions={groupOptions}
-                                            hidePlaceholderWhenSelected
-                                            emptyIndicator={<p className="text-center text-sm">Geen resultaten gevonden</p>}
-                                            className={`${errors.target_groups ? "border border-red-500 focus-visible:ring-red-500" : ""}`}
-                                        />
-                                        {errors.target_groups && <p className="text-red-500 text-sm mt-1">{errors.target_groups}</p>}
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button type="button" variant="outline">
-                                            Annuleer
-                                        </Button>
-                                    </DialogClose>
-                                    <Button
-                                        type="submit"
-                                        onClick={handleCreateEvent}
-                                        disabled={loadingEvents || loadingGroups} // Disable if data is still loading
-                                    >
-                                        Activiteit aanmaken
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
+                        <EventDialog
+                            open={isCreateDialogOpen}
+                            setOpen={(open) => {
+                                setIsCreateDialogOpen(open);
+                                if (open) {
+                                    setForm(INITIAL_FORM_STATE);
+                                    setErrors({});
+                                }
+                            }}
+                            form={form}
+                            setForm={setForm}
+                            errors={errors}
+                            setErrors={setErrors}
+                            groupOptions={groupOptions}
+                            TIME_OPTIONS={TIME_OPTIONS}
+                            onSubmit={handleCreateEvent}
+                        />
 
-                        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                            <DialogContent className="sm:max-w-[425px] rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
-                                <DialogHeader>
-                                    <DialogTitle className="text-2xl font-bold">Bewerk activiteit</DialogTitle>
-                                    <DialogDescription>Pas de details van deze activiteit aan.</DialogDescription>
-                                </DialogHeader>
-
-                                <div className="grid gap-4 py-4">
-                                    <div className="flex flex-col gap-2">
-                                        <Label htmlFor="title">Titel</Label>
-                                        <Input
-                                            id="title"
-                                            value={form.title}
-                                            onChange={(e) => {
-                                                setForm((prev) => ({ ...prev, title: e.target.value }));
-                                                setErrors((prev) => ({ ...prev, title: "" }));
-                                            }}
-                                            className={`${errors.title ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                                        />
-                                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <Label htmlFor="location">Locatie</Label>
-                                        <Input
-                                            id="location"
-                                            value={form.location}
-                                            onChange={(e) => {
-                                                setForm((prev) => ({ ...prev, location: e.target.value }));
-                                                setErrors((prev) => ({ ...prev, location: "" }));
-                                            }}
-                                            className={`${errors.location ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                                        />
-                                        {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="date_start">Startdatum</Label>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full justify-start text-left font-normal",
-                                                            !form.date_start && "text-muted-foreground",
-                                                            errors.date_start ? "border-red-500 focus-visible:ring-red-500" : ""
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {form.date_start ? format(form.date_start, "PPP") : <span>Kies een datum</span>}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={form.date_start}
-                                                        onSelect={(date) => {
-                                                            setForm((prev) => ({ ...prev, date_start: date ?? undefined }));
-                                                            setErrors((prev) => ({ ...prev, date_start: "" }));
-                                                        }}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            {errors.date_start && <p className="text-red-500 text-sm mt-1">{errors.date_start}</p>}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="time_start">Starttijd</Label>
-                                            <Select
-                                                value={form.time_start}
-                                                onValueChange={(value) => {
-                                                    setForm((prev) => ({ ...prev, time_start: value }));
-                                                    setErrors((prev) => ({ ...prev, time_start: "" }));
-                                                }}
-                                            >
-                                                <SelectTrigger className={cn(
-                                                    "w-full",
-                                                    errors.time_start ? "border-red-500 focus-visible:ring-red-500" : ""
-                                                )}>
-                                                    <SelectValue placeholder="Kies een tijd" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {TIME_OPTIONS.map((time) => (
-                                                        <SelectItem key={time} value={time}>
-                                                            {time}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.time_start && <p className="text-red-500 text-sm mt-1">{errors.time_start}</p>}
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="date_end">Einddatum (optioneel)</Label>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full justify-start text-left font-normal",
-                                                            !form.date_end && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {form.date_end ? format(form.date_end, "PPP") : <span>Kies een datum</span>}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={form.date_end}
-                                                        onSelect={(date) => setForm((prev) => ({ ...prev, date_end: date ?? undefined }))}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <Label htmlFor="time_end">Eindtijd (optioneel)</Label>
-                                            <Select
-                                                value={form.time_end}
-                                                onValueChange={(value) => setForm((prev) => ({ ...prev, time_end: value }))}
-                                            >
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Kies een tijd" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {TIME_OPTIONS.map((time) => (
-                                                        <SelectItem key={time} value={time}>
-                                                            {time}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <Label htmlFor="groups">Groepen</Label>
-                                        <MultipleSelector
-                                            value={groupOptions.filter(opt => form.target_groups.includes(Number(opt.value)))}
-                                            onChange={(selected) => {
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    target_groups: selected.map((option) => Number(option.value)),
-                                                }));
-                                                setErrors((prev) => ({ ...prev, target_groups: "" }));
-                                            }}
-                                            defaultOptions={groupOptions}
-                                            hidePlaceholderWhenSelected
-                                            emptyIndicator={<p className="text-center text-sm">Geen resultaten gevonden</p>}
-                                            className={`${errors.target_groups ? "border border-red-500 focus-visible:ring-red-500" : ""}`}
-                                        />
-                                        {errors.target_groups && <p className="text-red-500 text-sm mt-1">{errors.target_groups}</p>}
-                                    </div>
-                                </div>
-
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button type="button" variant="outline">
-                                            Annuleer
-                                        </Button>
-                                    </DialogClose>
-                                    <Button
-                                        type="submit"
-                                        onClick={async () => {
-                                            if (!validateForm()) {
-                                                toast.error("Vul alle verplichte velden in.");
-                                                return;
-                                            }
-
-                                            try {
-                                                const updates = {
-                                                    title: form.title.trim(),
-                                                    description: form.description.trim(),
-                                                    location: form.location.trim(),
-                                                    target_groups: form.target_groups,
-                                                    date_start: form.date_start ? format(form.date_start, "yyyy-MM-dd") : null,
-                                                    date_end: form.date_end ? format(form.date_end, "yyyy-MM-dd") : null,
-                                                    time_start: form.time_start,
-                                                    time_end: form.time_end || null,
-                                                };
-
-                                                if (editingEvent) {
-                                                    await updateEvent(editingEvent.id, updates);
-                                                    toast.success("Activiteit bijgewerkt!");
-                                                    setEditDialogOpen(false);
-                                                    setEditingEvent(null);
-                                                    setForm(INITIAL_FORM_STATE);
-                                                    await refreshEvents();
-                                                }
-                                            } catch (error) {
-                                                console.error("❌ Fout bij bewerken:", error);
-                                                toast.error("Bijwerken mislukt.");
-                                            }
-                                        }}
-                                    >
-                                        Opslaan
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
+                        <EventDialog
+                            open={editDialogOpen}
+                            setOpen={(open) => {
+                                setEditDialogOpen(open);
+                                if (!open) {
+                                    setForm(INITIAL_FORM_STATE);
+                                    setErrors({});
+                                    setEditingEvent(null);
+                                }
+                            }}
+                            form={form}
+                            setForm={setForm}
+                            errors={errors}
+                            setErrors={setErrors}
+                            groupOptions={groupOptions}
+                            TIME_OPTIONS={TIME_OPTIONS}
+                            onSubmit={handleEditEvent} // define this based on your current inline logic
+                            isEdit
+                        />
                     </div>
                 </div>
 
