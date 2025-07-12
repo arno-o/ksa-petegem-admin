@@ -101,10 +101,88 @@ export const deletePost = async (id: string | number) => {
   if (error) throw error;
 };
 
-export const fetchGroups = async () => {
+export const fetchActiveGroups = async () => {
+  const { data, error } = await supabase.from("groepen").select("*").eq("active", true);
+  if (error) throw error;
+  return data;
+};
+
+export const fetchAllGroups = async () => {
   const { data, error } = await supabase.from("groepen").select("*");
   if (error) throw error;
   return data;
+};
+
+export const updateGroup = async (id: string | number, updates: Partial<any>) => {
+  const { error } = await supabase.from("groepen").update(updates).eq("id", id);
+  if (error) throw error;
+};
+
+export const fetchEvents = async () => {
+  const { data, error } = await supabase.from("events").select("*");
+  if (error) throw error;
+  return data;
+}
+
+export const updateEvent = async (id: string | number, updates: Partial<any>) => {
+  const { error } = await supabase.from("events").update(updates).eq("id", id);
+  if (error) throw error;
+}
+
+export const deleteEvent = async (id: string | number) => {
+  const { error } = await supabase.from("events").delete().eq("id", Number(id));
+  if (error) throw error;
+};
+
+export const createEvent = async (newEvent: {
+  title: string;
+  description: string;
+  location: string;
+  target_groups: number[]; // json field
+}) => {
+  const { data, error } = await supabase
+    .from("events")
+    .insert([newEvent])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating event:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const fetchGroupsByEventID = async (eventId: number): Promise<any> => {
+  // Step 1: Get the target_groups array from the event
+  const { data: eventData, error: eventError } = await supabase
+    .from("events")
+    .select("target_groups")
+    .eq("id", eventId)
+    .single();
+
+  if (eventError) {
+    console.error("Error fetching event:", eventError);
+    throw eventError;
+  }
+
+  const groupIds: number[] = eventData?.target_groups || [];
+
+  if (groupIds.length === 0) return [];
+
+  // Step 2: Fetch the corresponding groepen
+  const { data: groepen, error: groepenError } = await supabase
+    .from("groepen")
+    .select("*")
+    .in("id", groupIds);
+
+  if (groepenError) {
+    console.error("Error fetching groepen:", groepenError);
+    throw groepenError;
+  }
+
+  return groepen;
 };
 
 export const uploadLeidingPhoto = async (file: File, userId: string): Promise<string> => {
