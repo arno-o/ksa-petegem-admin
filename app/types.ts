@@ -51,6 +51,7 @@ export interface Event {
     description: string;
     location: string;
     published: boolean;
+    target_groups: number[];
     date_start: Date | null;
     date_end: Date | null;
     time_start: string | null;

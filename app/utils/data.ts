@@ -138,7 +138,7 @@ export const createEvent = async (newEvent: {
   title: string;
   description: string;
   location: string;
-  target_groups: string[]; // json field
+  target_groups: number[]; // json field
 }) => {
   const { data, error } = await supabase
     .from("events")

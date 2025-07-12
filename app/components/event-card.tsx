@@ -2,11 +2,19 @@ import { useNavigate } from "react-router";
 import type { Event, Group } from "~/types";
 import { fetchGroupsByEventID, deleteEvent } from "~/utils/data";
 
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogDescription, 
+    DialogFooter, 
+    DialogHeader, 
+    DialogTitle
+} from "~/components/ui/dialog";
+
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Edit, Trash2, MapPin, Calendar, Clock } from "lucide-react";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 
 interface EventCardProps {
     event: Event;
@@ -43,7 +51,6 @@ const EventCard = ({ event, onDelete }: EventCardProps) => {
     const handleDelete = async () => {
         try {
             await deleteEvent(event.id);
-            toast.success("Leiding werd verwijderd.");
             setDialogOpen(false);
             onDelete?.(event.id);
         } catch (err) {
@@ -98,7 +105,7 @@ const EventCard = ({ event, onDelete }: EventCardProps) => {
                 </div>
 
                 <div className="flex gap-2">
-                    <Button variant="outline" size="icon" className="size-8">
+                    <Button variant="outline" size="icon" className="size-8" onClick={() => navigate(`edit/${event.id}`, { viewTransition: true     })}>
                         <Edit />
                     </Button>
                     <Button variant="destructive" size="icon" className="size-8" onClick={() => setDialogOpen(true)}>
