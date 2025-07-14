@@ -4,10 +4,10 @@ import PrivateRoute from "~/context/PrivateRoute";
 
 import type { Group } from "~/types";
 import { useEffect, useState } from "react";
-import GroupCard from "~/components/group-card";
 import { fetchAllGroups } from "~/utils/data";
-import { Skeleton } from "~/components/ui/skeleton";
 import { Button } from "~/components/ui/button";
+import GroupCard from "~/components/group-card";
+import { Skeleton } from "~/components/ui/skeleton";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Groepen" }];
