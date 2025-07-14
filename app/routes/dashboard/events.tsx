@@ -13,7 +13,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { Edit, Trash2, MapPin, Calendar as CalendarIcon, Clock, MoreHorizontal } from "lucide-react";
 import { Input } from "~/components/ui/input";
-import MultipleSelector, { type Option } from "~/components/ui/multiselect";
+import { type Option } from "~/components/ui/multiselect";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -72,11 +72,6 @@ const generateTimeOptions = (): string[] => {
 
 const TIME_OPTIONS = generateTimeOptions();
 
-// --- Custom Hooks ---
-
-/**
- * Custom hook to fetch and manage events.
- */
 function useEvents() {
     const [events, setEvents] = useState<Event[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
@@ -122,9 +117,6 @@ function useEvents() {
     return { events, setEvents, loadingEvents, refreshEvents };
 }
 
-/**
- * Custom hook to fetch and manage active groups.
- */
 function useActiveGroups() {
     const [allGroups, setAllGroups] = useState<Group[]>([]);
     const [groupOptions, setGroupOptions] = useState<Option[]>([]);
@@ -136,7 +128,7 @@ function useActiveGroups() {
                 const groups: Group[] = await fetchActiveGroups();
                 setAllGroups(groups);
                 const options: Option[] = groups.map((g) => ({
-                    value: String(g.id), // Ensure value is a string for MultipleSelector
+                    value: String(g.id),
                     label: g.naam,
                 }));
                 setGroupOptions(options);
@@ -153,7 +145,6 @@ function useActiveGroups() {
     return { allGroups, groupOptions, loadingGroups };
 }
 
-// --- Event Form Initial State & Type ---
 interface EventFormState {
     title: string;
     description: string;
@@ -176,12 +167,10 @@ const INITIAL_FORM_STATE: EventFormState = {
     time_end: "",
 };
 
-// --- Meta for the route ---
 export function meta({ }: Route.MetaArgs) {
     return [{ title: "KSA Admin - Activiteiten" }];
 }
 
-// --- Main Events Component ---
 export default function Events() {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [form, setForm] = useState<EventFormState>(INITIAL_FORM_STATE);
@@ -228,7 +217,7 @@ export default function Events() {
                 title: form.title.trim(),
                 description: form.description.trim(),
                 location: form.location.trim(),
-                target_groups: form.target_groups, // This is the crucial fix: keep as numbers
+                target_groups: form.target_groups,
                 date_start: form.date_start ? format(form.date_start, 'yyyy-MM-dd') : "",
                 date_end: form.date_end ? format(form.date_end, 'yyyy-MM-dd') : null,
                 time_start: form.time_start,
@@ -238,11 +227,11 @@ export default function Events() {
             await createEvent(newEventData);
 
             setIsCreateDialogOpen(false);
-            setForm(INITIAL_FORM_STATE); // Reset form to initial state
-            setErrors({}); // Clear any validation errors
+            setForm(INITIAL_FORM_STATE);
+            setErrors({});
             toast.success("Activiteit succesvol aangemaakt!");
 
-            await refreshEvents(); // Re-fetch all events to update the table
+            await refreshEvents();
         } catch (error) {
             console.error("❌ Fout bij aanmaken activiteit:", error);
             toast.error("Er is een fout opgetreden bij het aanmaken van de activiteit.");
@@ -284,7 +273,7 @@ export default function Events() {
     const handleDeleteEvent = async (id: number) => {
         try {
             await deleteEvent(id);
-            setEvents((prev) => prev.filter((event) => event.id !== id)); // Optimistic UI update
+            setEvents((prev) => prev.filter((event) => event.id !== id));
             toast.success("Activiteit succesvol verwijderd.");
         } catch (err) {
             console.error("Failed to delete event:", err);
@@ -292,7 +281,6 @@ export default function Events() {
         }
     };
 
-    // --- DataTable Logic ---
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState("");
@@ -317,7 +305,7 @@ export default function Events() {
                 ),
             },
             {
-                accessorKey: "date_start", // Use date_start as accessorKey for sorting/filtering consistency
+                accessorKey: "date_start",
                 header: "Datum",
                 cell: ({ row }) => {
                     const event = row.original;
@@ -334,7 +322,7 @@ export default function Events() {
                 },
             },
             {
-                accessorKey: "time_start", // Use time_start as accessorKey
+                accessorKey: "time_start",
                 header: "Tijd",
                 cell: ({ row }) => {
                     const event = row.original;
@@ -356,9 +344,8 @@ export default function Events() {
                 accessorKey: "target_groups",
                 header: "Groepen",
                 cell: ({ row }) => {
-                    // Ensure targetGroupIds is treated as an array of numbers
                     const targetGroupIds: number[] = Array.isArray(row.original.target_groups)
-                        ? row.original.target_groups.map(Number) // Explicitly map to Number just in case
+                        ? row.original.target_groups.map(Number)
                         : [];
 
                     return (
@@ -450,7 +437,7 @@ export default function Events() {
                 },
             },
         ],
-        [allGroups, handleDeleteEvent] // Dependency on allGroups and handleDeleteEvent
+        [allGroups, handleDeleteEvent]
     );
 
     const table = useReactTable({
@@ -519,7 +506,7 @@ export default function Events() {
                             setErrors={setErrors}
                             groupOptions={groupOptions}
                             TIME_OPTIONS={TIME_OPTIONS}
-                            onSubmit={handleEditEvent} // define this based on your current inline logic
+                            onSubmit={handleEditEvent}
                             isEdit
                         />
                     </div>

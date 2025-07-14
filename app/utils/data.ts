@@ -102,13 +102,13 @@ export const deletePost = async (id: string | number) => {
 };
 
 export const fetchActiveGroups = async () => {
-  const { data, error } = await supabase.from("groepen").select("*").eq("active", true);
+  const { data, error } = await supabase.from("groepen").select("*").eq("active", true).order('id', { ascending: true });
   if (error) throw error;
   return data;
 };
 
 export const fetchAllGroups = async () => {
-  const { data, error } = await supabase.from("groepen").select("*");
+  const { data, error } = await supabase.from("groepen").select("*").order('id', { ascending: true });
   if (error) throw error;
   return data;
 };

@@ -2,6 +2,8 @@ import { cn } from "~/lib/utils"
 import { useState } from "react"
 import { useNavigate } from "react-router"
 import { UserAuth } from "~/context/AuthContext"
+import { toast } from "sonner"; // Import toast from sonner
+import { Eye, EyeOff } from "lucide-react"; // Import Eye and EyeOff icons
 
 import { Button } from "~/components/ui/button"
 import {
@@ -13,6 +15,7 @@ import {
 } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
+import { Separator } from "~/components/ui/separator"
 
 export function LoginForm({
   className,
@@ -21,8 +24,9 @@ export function LoginForm({
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const navigate = useNavigate();
 
@@ -30,30 +34,54 @@ export function LoginForm({
 
   interface SignInResult {
     success: boolean;
-    // Add other properties if the result object has more
   }
 
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!email.trim()) {
+      newErrors.email = "E-mailadres is vereist.";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Voer een geldig e-mailadres in.";
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Wachtwoord is vereist.";
+    }
+
+    setFormErrors(newErrors); // Update the errors state
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
+
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default HTML5 validation
     setLoading(true);
-    setError(""); // Clear previous errors
+    setFormErrors({}); // Clear previous errors
+
+    // Run validation before attempting to sign in
+    if (!validateForm()) {
+      toast.error("Vul alle verplichte velden correct in."); // Show toast for validation failure
+      setLoading(false); // Stop loading if validation fails
+      return; // Stop the function if validation fails
+    }
 
     try {
       const result: SignInResult | undefined = await signInUser(email, password);
       if (result?.success) {
+        toast.success("Succesvol aangemeld!"); // Show success toast
         navigate("/berichten");
       } else {
-        // Optionally handle the case where result is undefined or success is false
-        setError("Sign up failed. Please try again.");
+        // This case might be for specific backend errors not caught by the general catch block
+        toast.error("Aanmelden mislukt. Controleer uw e-mail en wachtwoord.");
       }
     } catch (error: unknown) {
-      // It's good practice to check the type of error if you need to access its properties
       if (error instanceof Error) {
-        setError(error.message);
+        console.error("Sign in error:", error);
+        toast.error(`Fout bij aanmelden: ${error.message}`); // Show specific error message
       } else {
-        setError("An unexpected error occurred during sign up.");
+        console.error("Sign in error:", error);
+        toast.error("Er is een onverwachte fout opgetreden tijdens het aanmelden.");
       }
-      console.error("Sign up error:", error);
     } finally {
       setLoading(false);
     }
@@ -69,33 +97,57 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignIn}>
+          <form onSubmit={handleSignIn} noValidate> {/* Add noValidate to disable browser's default validation */}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFormErrors((prev) => ({ ...prev, email: "" })); // Clear error on change
+                  }}
                   id="email"
                   type="email"
-                  placeholder="arno@ksapetegem.be"
-                  required
+                  placeholder="tjeuden@gasolina.be"
+                  className={`${formErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 />
+                {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Wachtwoord</Label> {/* Changed label to Dutch */}
                 </div>
-                <Input
-                  onChange={(e) => setPassword(e.target.value)}
-                  id="password"
-                  type="password"
-                  required />
+                <div className="relative"> {/* Added relative positioning for the icon */}
+                  <Input
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setFormErrors((prev) => ({ ...prev, password: "" }));
+                    }}
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    className={`${formErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""} pr-10`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-neutral-500" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-neutral-500" />
+                    )}
+                  </Button>
+                </div>
+                {formErrors.password && <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>}
               </div>
+              <Separator />
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
-                  Aanmelden
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Aanmelden..." : "Aanmelden"}
                 </Button>
-                {error && <p className="text-red-500 text-center text-sm">{error}</p>}
               </div>
             </div>
           </form>
