@@ -40,18 +40,34 @@ export function ThemeProvider({
 
     root.classList.remove("light", "dark")
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
 
-      root.classList.add(systemTheme)
-      return
+    const applyTheme = (themeValue: Theme) => {
+      if (themeValue === "system") {
+        root.classList.add(systemTheme.matches ? "dark" : "light")
+      } else {
+        root.classList.add(themeValue)
+      }
     }
 
-    root.classList.add(theme)
-  }, [theme])
+    applyTheme(theme); // Apply initial theme
+
+    // Listen for system theme changes if current theme is "system"
+    const mediaQueryListener = (event: MediaQueryListEvent) => {
+      if (theme === "system") {
+        root.classList.remove("light", "dark")
+        root.classList.add(event.matches ? "dark" : "light")
+      }
+    }
+
+    systemTheme.addEventListener("change", mediaQueryListener)
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      systemTheme.removeEventListener("change", mediaQueryListener)
+    }
+
+  }, [theme]) // Depend on 'theme' so the effect re-runs if the user manually changes theme
 
   const value = {
     theme,
