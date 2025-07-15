@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import { ChevronLeft, Pencil, Trash, Save, Eye } from "lucide-react";
+import { ChevronLeft, Pencil, Trash, Save, Eye, Badge, BadgeCheck } from "lucide-react";
 
 import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
-import { Switch } from "~/components/ui/switch";
+// import { Switch } from "~/components/ui/switch"; // Removed, as publish is now a button
 import { Separator } from "~/components/ui/separator";
 import FullScreenLoader from "~/components/full-screen-loader";
 
@@ -39,7 +39,7 @@ export default function EditPostPage() {
     const { postId } = useParams();
     const navigate = useNavigate();
 
-    const [post, setPost] = useState<Post | null>(null);
+    const [post, setPost] = useState<Post | null>(null); // Post state directly holds published status
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +47,7 @@ export default function EditPostPage() {
         title: "",
         description: "",
         cover_img: "",
-        published: false,
+        // published: false, // Removed from form state
     });
 
     useEffect(() => {
@@ -59,12 +59,12 @@ export default function EditPostPage() {
             }
             try {
                 const fetchedPost = await fetchPostById(postId);
-                setPost(fetchedPost);
+                setPost(fetchedPost); // Set the full post object
                 setForm({
                     title: fetchedPost.title,
                     description: fetchedPost.description ?? "",
                     cover_img: fetchedPost.cover_img,
-                    published: fetchedPost.published,
+                    // We no longer set 'published' in the form
                 });
             } catch (err) {
                 console.error("Failed to fetch post:", err);
@@ -83,22 +83,68 @@ export default function EditPostPage() {
         };
 
         document.addEventListener('keydown', handleKeyDown);
-    }, [postId]);
+        return () => { // Cleanup event listener
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [postId, navigate]); // Added navigate to dependencies
 
     const handleSave = async () => {
         if (!postId) {
             toast.error("Geen Post ID gevonden om op te slaan.");
             return;
         }
+
         try {
-            await updatePost(postId, form);
+            await updatePost(postId, {
+                title: form.title,
+                description: form.description,
+                cover_img: form.cover_img,
+            });
             toast.success("Bericht succesvol bewerkt.");
-            navigate("/berichten", { viewTransition: true });
         } catch (err) {
             toast.error("Er is iets foutgelopen bij het opslaan.");
             console.error(err);
         }
     };
+
+    const handlePublishToggle = async () => {
+        if (!postId || !post) {
+            toast.error("Geen Post ID of berichtgegevens gevonden.");
+            return;
+        }
+
+        const newPublishedStatus = !post.published;
+        const publishDate = newPublishedStatus ? new Date().toISOString() : null; // Set publish date if publishing
+
+        try {
+            const updatedPostData = await updatePost(postId, {
+                published: newPublishedStatus,
+                published_at: publishDate // Send published_at
+            });
+
+            // Update local state with the new published status and published_at date
+            setPost(prevPost => ({
+                ...(prevPost as Post), // Ensure prevPost is treated as Post type
+                published: newPublishedStatus,
+                published_at: publishDate,
+            }));
+
+            if (newPublishedStatus) {
+                toast.success("Gelukt!", {
+                    description: "De post is gepubliceerd en is nu beschikbaar voor iedereen."
+                });
+            } else {
+                toast.info("Publicatie ongedaan gemaakt", {
+                    description: "De post is niet langer publiekelijk zichtbaar."
+                });
+            }
+        } catch (err: any) { // Use 'any' or more specific error type if available
+            toast.error("Error", {
+                description: `Fout bij publiceren/depubliceren: ${err.message || err}`
+            });
+            console.error("Publish toggle failed:", err);
+        }
+    }
 
     const handleDelete = async () => {
         if (!postId) {
@@ -174,14 +220,20 @@ export default function EditPostPage() {
                             </DialogContent>
                         </Dialog>
 
-                        <Button variant="outline" onClick={() => navigate(`/berichten/preview/${post.id}`)}>
+                        <Button variant="outline" onClick={() => { handleSave(); navigate(`/berichten/preview/${post.id}`); }}>
                             <Eye />
                             Preview
                         </Button>
 
-                        <Button onClick={handleSave}>
+                        <Button variant="outline" onClick={handleSave}>
                             <Save />
                             Opslaan
+                        </Button>
+
+                        {/* New Publish Button */}
+                        <Button variant={post.published ? "default" : "outline"} onClick={handlePublishToggle}>
+                            {!post.published ? <Badge /> : <BadgeCheck />}
+                            {!post.published ? 'Publiceer' : 'Gepubliceerd'}
                         </Button>
                     </div>
                 </div>
@@ -227,13 +279,12 @@ export default function EditPostPage() {
                             </div>
                             <Separator />
                             <div>
+                                {/* Removed the Switch component */}
                                 <div className="flex items-center justify-between space-x-2">
-                                    <Label htmlFor="published" className="text-sm font-medium cursor-pointer">Gepubliceerd</Label>
-                                    <Switch
-                                        id="published"
-                                        checked={form.published}
-                                        onCheckedChange={(value) => setForm({ ...form, published: value })}
-                                    />
+                                    <p className="text-sm font-medium">Status</p>
+                                    <p className={`text-sm font-semibold ${post.published ? 'text-green-600' : 'text-orange-500'}`}>
+                                        {post.published ? 'Gepubliceerd' : 'Concept'}
+                                    </p>
                                 </div>
                                 {post?.published && post.published_at && (
                                     <p className="text-sm text-muted-foreground mt-2">

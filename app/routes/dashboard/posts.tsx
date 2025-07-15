@@ -91,7 +91,7 @@ export default function Posts() {
       setOpen(false);
 
       setPosts((prevPosts) => [enrichedNewPost, ...prevPosts]);
-      navigate(`/berichten/${newPost.id}`, { viewTransition: true });
+      navigate(`/berichten/edit/${newPost.id}`, { viewTransition: true });
     } catch (err) {
       console.error("Failed to create post:", err);
     }
