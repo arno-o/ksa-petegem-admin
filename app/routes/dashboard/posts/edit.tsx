@@ -148,7 +148,9 @@ export default function EditPostPage() {
 
     const handleDelete = async () => {
         if (!postId) {
-            toast.error("Geen Post ID gevonden om te verwijderen.");
+            toast.error("Geen Post ID gevonden om te verwijderen.", {
+                richColors: true
+            });
             return;
         }
         try {

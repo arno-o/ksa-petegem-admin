@@ -68,7 +68,7 @@ export function LoginForm({
     try {
       const result: SignInResult | undefined = await signInUser(email, password);
       if (result?.success) {
-        toast.success("Succesvol aangemeld!"); // Show success toast
+        toast.info("Succesvol aangemeld"); // Show success toast
         navigate("/berichten");
       } else {
         // This case might be for specific backend errors not caught by the general catch block
