@@ -136,7 +136,7 @@ const EditUser = () => {
         try {
             await updateLeiding(leidingId, form);
             toast.success("Leiding succesvol bewerkt.");
-            navigate("/leiding", { viewTransition: true });
+            navigate("/leiding/actief", { viewTransition: true });
         } catch (err) {
             toast.error("Er is iets foutgelopen bij het opslaan.");
             console.error(err);

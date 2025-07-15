@@ -18,6 +18,12 @@ export const fetchLeidingById = async (id: string | number) => {
   return data;
 }
 
+export const fetchActiveLeiding = async () => {
+  const { data, error } = await supabase.from("leiding").select("*").eq("actief", true);
+  if (error) throw error;
+  return data;
+}
+
 export const updateLeiding = async (id: string | number, updates: Partial<any>) => {
   const { error } = await supabase.from("leiding").update(updates).eq("id", id);
   if (error) throw error;

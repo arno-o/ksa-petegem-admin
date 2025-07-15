@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
+import { cn } from "~/lib/utils"; // For combining Tailwind classes
 import PageLayout from "../../pageLayout";
 import { Button } from "~/components/ui/button";
 import PrivateRoute from "~/context/PrivateRoute";
 import LeidingCard from "~/components/cards/leiding-card";
 import type { Route } from "../users/+types/active";
 
-import { UserPlus } from "lucide-react";
+import { UserPlus, ChevronDown } from "lucide-react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import type { Group, Leiding } from "~/types";
-import { fetchActiveGroups, fetchLeiding, createLeiding } from "~/utils/data";
+import { fetchActiveGroups, fetchActiveLeiding, createLeiding } from "~/utils/data";
 import {
   Dialog, DialogClose, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle, DialogTrigger
@@ -19,6 +19,12 @@ import {
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible"
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Leiding" }];
@@ -50,7 +56,7 @@ export default function Active() {
 
     const loadLeiding = async () => {
       try {
-        const data = await fetchLeiding();
+        const data = await fetchActiveLeiding();
         setLeiding(data);
       } catch (err) {
         console.error("Failed to fetch leiding:", err);
@@ -67,7 +73,7 @@ export default function Active() {
     try {
       const newId = await createLeiding({ voornaam, familienaam, leidingsploeg: Number(leidingsploeg) });
       setOpen(false);
-      navigate(`/leiding/edit/${newId.id}`);
+      navigate(`/leiding/actief/edit/${newId.id}`);
     } catch (err) {
       console.error("Failed to create new leiding:", err);
     }
@@ -76,6 +82,17 @@ export default function Active() {
   const handleDeleteLeiding = (id: number) => {
     setLeiding((prev) => prev?.filter((persoon) => persoon.id !== id));
   };
+
+  const colorMap: Record<string, string> = {
+        yellow: "bg-yellow-500 dark:bg-yellow-400",
+        blue: "bg-blue-500 dark:bg-blue-400",
+        green: "bg-green-500 dark:bg-green-400",
+        purple: "bg-purple-500 dark:bg-purple-400",
+        red: "bg-red-500 dark:bg-red-400",
+        orange: "bg-orange-500 dark:bg-orange-400",
+        lime: "bg-lime-500 dark:bg-lime-400",
+        rose: "bg-rose-500 dark:bg-rose-400",
+    };
 
   return (
     <PrivateRoute>
@@ -126,22 +143,29 @@ export default function Active() {
           </Dialog>
         </header>
 
-        <Tabs defaultValue="1" className="w-fill">
-          <TabsList>
-            {groups?.sort((a, b) => a.id - b.id).map((group) => (
-              <TabsTrigger key={group.id} value={`${group.id}`}>{group.naam}</TabsTrigger>
-            ))}
-          </TabsList>
+        <div className="flex flex-col p-4">
           {groups?.sort((a, b) => a.id - b.id).map((group) => (
-            <TabsContent key={group.id} value={`${group.id}`}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-1">
-                {leiding?.filter(persoon => persoon.leidingsploeg === group.id).map(persoon => (
-                  <LeidingCard key={persoon.id} leiding={persoon} onDelete={handleDeleteLeiding} />
-                ))}
+            <div className="w-full ">
+              <div className="flex items-center justify-between border-b py-4 mb-4">
+                <h1 className="text-2xl font-bold">{group.naam}</h1>
+                <div key={group.id} className={`h-6 w-6 ${colorMap[group.color] ?? "bg-gray-300"} ring-background rounded-full ring-2`}></div>
               </div>
-            </TabsContent>
+
+              <div className="flex flex-col gap-3">
+                {leiding?.filter(persoon => persoon.leidingsploeg === group.id)
+                  .sort((a, b) => {
+                    if (a.trekker && !b.trekker) { return -1; }
+                    if (!a.trekker && b.trekker) { return 1; }
+                    return 0;
+                  })
+                  .map(persoon => (
+                    <LeidingCard key={persoon.id} leiding={persoon} onDelete={handleDeleteLeiding} />
+                  ))}
+              </div>
+            </div>
           ))}
-        </Tabs>
+        </div>
+
       </PageLayout>
     </PrivateRoute>
   );
