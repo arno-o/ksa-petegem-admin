@@ -9,7 +9,7 @@ export default [
     
     route("/leiding/actief", "routes/dashboard/users/active.tsx"),
     route("/leiding/inactief", "routes/dashboard/users/inactive.tsx"),
-    route("/leiding/edit/:leidingId", "routes/dashboard/users/edit.tsx"),
+    route("/leiding/actief/edit/:leidingId", "routes/dashboard/users/edit.tsx"),
     
     route("/berichten/edit/:postId", "routes/dashboard/posts/edit.tsx"),
     route("/berichten/preview/:postId", "routes/dashboard/posts/preview.tsx"),

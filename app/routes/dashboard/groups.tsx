@@ -5,7 +5,7 @@ import PrivateRoute from "~/context/PrivateRoute";
 import type { Group } from "~/types";
 import { useEffect, useState, useCallback } from "react";
 import { fetchAllGroups } from "~/utils/data";
-import GroupCard from "~/components/group-card"; // Your updated GroupCard component
+import GroupCard from "~/components/cards/group-card"; // Your updated GroupCard component
 import { Skeleton } from "~/components/ui/skeleton";
 import { Button } from "~/components/ui/button";
 import { CircleFadingPlus } from "lucide-react";

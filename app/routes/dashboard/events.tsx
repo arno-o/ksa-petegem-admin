@@ -44,7 +44,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { EventDialog } from "~/components/event-dialogs";
+import { EventDialog } from "~/components/events/event-dialogs";
 
 // --- Constants & Utility Functions (Move to a separate 'utils' file if growing) ---
 const COLOR_MAP: Record<string, string> = {

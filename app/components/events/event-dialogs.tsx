@@ -13,7 +13,7 @@ import { Button } from "~/components/ui/button";
 
 import { EventFormFields } from "./event-form-fields";
 
-import type { EventFormState } from "../types";
+import type { EventFormState } from "../../types";
 import type { Option } from "~/components/ui/multiselect";
 
 interface Props {

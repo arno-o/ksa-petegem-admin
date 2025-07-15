@@ -6,7 +6,7 @@ import { ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import FullScreenLoader from "~/components/full-screen-loader";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 
 import type { Post } from "~/types";
 import PageLayout from "../../pageLayout";

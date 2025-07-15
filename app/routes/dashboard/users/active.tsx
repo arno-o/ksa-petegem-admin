@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import PageLayout from "../../pageLayout";
 import { Button } from "~/components/ui/button";
 import PrivateRoute from "~/context/PrivateRoute";
-import LeidingCard from "~/components/leiding-card";
+import LeidingCard from "~/components/cards/leiding-card";
 import type { Route } from "../users/+types/active";
 
 import { UserPlus } from "lucide-react";

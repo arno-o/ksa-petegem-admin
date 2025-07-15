@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/login";
 import { UserAuth } from "~/context/AuthContext";
-import { LoginForm } from "~/components/login-form";
-import FullScreenLoader from "~/components/full-screen-loader";
+import { LoginForm } from "~/components/allround/login-form";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 
 export function meta({ }: Route.MetaArgs) {
   return [

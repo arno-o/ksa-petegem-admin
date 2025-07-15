@@ -11,7 +11,7 @@ import "./app.css";
 import type { Route } from "./+types/root";
 
 import { Toaster } from "~/components/ui/sonner"
-import { ThemeProvider } from "./components/theme-provider"
+import { ThemeProvider } from "./components/sidebar/theme-provider"
 import { AuthContextProvider } from "~/context/AuthContext"
 
 export const links: Route.LinksFunction = () => [

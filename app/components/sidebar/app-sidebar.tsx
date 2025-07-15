@@ -1,4 +1,4 @@
-import { NavUser } from "~/components/nav-user"
+import { NavUser } from "~/components/sidebar/nav-user"
 import { Link, useLocation } from "react-router"
 import React, { useState, useEffect } from "react";
 
@@ -17,7 +17,7 @@ import {
   SidebarRail,
 } from "~/components/ui/sidebar"
 
-import { ModeToggle } from "~/components/mode-toggle"
+import { ModeToggle } from "~/components/sidebar/mode-toggle"
 import { Newspaper, CalendarFold, User, Puzzle, ChevronRight } from 'lucide-react';
 import { cn } from "~/lib/utils";
 

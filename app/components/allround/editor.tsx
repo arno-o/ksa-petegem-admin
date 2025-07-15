@@ -25,7 +25,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "~/components/ui/toggle-group"
-import { Toggle } from "./ui/toggle"
+import { Toggle } from "../ui/toggle"
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"

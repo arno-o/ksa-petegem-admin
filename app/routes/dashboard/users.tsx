@@ -5,7 +5,7 @@ import PageLayout from "../pageLayout";
 import type { Route } from "./+types/users";
 import { Button } from "~/components/ui/button";
 import PrivateRoute from "~/context/PrivateRoute";
-import LeidingCard from "~/components/leiding-card";
+import LeidingCard from "~/components/cards/leiding-card";
 
 import { UserPlus } from "lucide-react";
 

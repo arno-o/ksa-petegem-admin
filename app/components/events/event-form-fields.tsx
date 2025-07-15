@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { cn } from "~/lib/utils";
 
 // Types
-import type { EventFormState } from "../types";
+import type { EventFormState } from "../../types";
 
 // External Libraries
 import { format } from "date-fns";

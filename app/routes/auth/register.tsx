@@ -1,5 +1,5 @@
 import type { Route } from "./+types/register";
-import { RegisterForm } from "~/components/register-form";
+import { RegisterForm } from "~/components/allround/register-form";
 
 
 export function meta({ }: Route.MetaArgs) {

@@ -8,10 +8,10 @@ import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 // import { Switch } from "~/components/ui/switch"; // Removed, as publish is now a button
 import { Separator } from "~/components/ui/separator";
-import FullScreenLoader from "~/components/full-screen-loader";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 
-import FileUpload from "~/components/FileUpload"
-import { SimpleEditor } from "~/components/editor"
+import FileUpload from "~/components/allround/file-upload"
+import { SimpleEditor } from "~/components/allround/editor"
 
 import {
     Dialog,

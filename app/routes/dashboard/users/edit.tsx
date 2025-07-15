@@ -17,9 +17,9 @@ import PrivateRoute from "~/context/PrivateRoute";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
-import FileUpload from "~/components/FileUpload";
+import FileUpload from "~/components/allround/file-upload";
 import { Calendar } from "~/components/ui/calendar";
-import FullScreenLoader from "~/components/full-screen-loader";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 import {
   Popover,
   PopoverContent,
