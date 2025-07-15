@@ -1,14 +1,22 @@
+// UI Components
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
+import { Separator } from "~/components/ui/separator";
+import MultipleSelector, { type Option } from "~/components/ui/multiselect";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { CalendarIcon } from "lucide-react";
+
+// Utilities
 import { cn } from "~/lib/utils";
-import MultipleSelector, { type Option } from "~/components/ui/multiselect";
-import { format } from "date-fns";
+
+// Types
 import type { EventFormState } from "../types";
-import { Button } from "./ui/button";
+
+// External Libraries
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 interface Props {
   form: EventFormState;
@@ -57,8 +65,10 @@ export function EventFormFields({
         {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
+      <Separator />
+
+      <div className="grid grid-cols-5 gap-4">
+        <div className="flex flex-col gap-2 col-span-3">
           <Label htmlFor="date_start">Startdatum</Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -88,7 +98,7 @@ export function EventFormFields({
           {errors.date_start && <p className="text-red-500 text-sm mt-1">{errors.date_start}</p>}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 col-span-2">
           <Label htmlFor="time_start">Starttijd</Label>
           <Select
             value={form.time_start}
@@ -112,8 +122,8 @@ export function EventFormFields({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-5 gap-4">
+        <div className="flex flex-col gap-2 col-span-3">
           <Label htmlFor="date_end">Einddatum (optioneel)</Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -139,7 +149,7 @@ export function EventFormFields({
           </Popover>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 col-span-2">
           <Label htmlFor="time_end">Eindtijd (optioneel)</Label>
           <Select
             value={form.time_end}
@@ -158,6 +168,8 @@ export function EventFormFields({
           </Select>
         </div>
       </div>
+
+      <Separator />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="groups">Groepen</Label>

@@ -7,8 +7,10 @@ export default [
     route("/leiding", "routes/dashboard/users.tsx"),
     route("/groepen", "routes/dashboard/groups.tsx"),
 
-    route("/leiding/edit/:leidingId", "routes/dashboard/edit-user.tsx"),
-    route("/berichten/:postId", "routes/dashboard/edit-post.tsx"),
+    route("/leiding/edit/:leidingId", "routes/dashboard/users/edit.tsx"),
+    
+    route("/berichten/edit/:postId", "routes/dashboard/posts/edit.tsx"),
+    route("/berichten/preview/:postId", "routes/dashboard/posts/preview.tsx"),
 
     route("/login", "routes/auth/login.tsx"),
     route("/register", "routes/auth/register.tsx"),

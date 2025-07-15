@@ -1,37 +1,44 @@
-import type { Leiding, Group } from "~/types";
+// React and Router
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { fetchLeidingById, updateLeiding, fetchActiveGroups } from "~/utils/data";
 
+// External Libraries
 import { toast } from "sonner";
-import { ChevronDownIcon, SaveIcon, ChevronLeft } from "lucide-react"; // Import all necessary icons
+import { ChevronDownIcon, ChevronLeft, SaveIcon } from "lucide-react";
 
-import PageLayout from "../pageLayout";
-import type { Route } from "./+types/edit-user";
+// Utils and Data Fetching
+import { fetchActiveGroups, fetchLeidingById, updateLeiding } from "~/utils/data";
+
+// Context and Layouts
+import PageLayout from "../../pageLayout";
 import PrivateRoute from "~/context/PrivateRoute";
-import FullScreenLoader from "~/components/full-screen-loader";
 
-import { Label } from "~/components/ui/label";
+// Components (UI)
 import { Input } from "~/components/ui/input";
-import { Calendar } from "~/components/ui/calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "~/components/ui/popover"
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "~/components/ui/select"
+import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
+import FileUpload from "~/components/FileUpload";
+import { Calendar } from "~/components/ui/calendar";
+import FullScreenLoader from "~/components/full-screen-loader";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
-import FileUpload from "~/components/FileUpload";
+
+// Types
+import type { Leiding, Group } from "~/types";
+import type { Route } from "../users/+types/edit";
 
 export function meta({ }: Route.MetaArgs) {
     return [{ title: "Leiding Bewerken" }];
@@ -159,13 +166,13 @@ const EditUser = () => {
             <PageLayout>
                 <div className="flex flex-col gap-6 pb-20">
                     {/* Header */}
-                    <header className="flex justify-between items-center">
+                    <header className="flex flex-col gap-3 md:justify-between md:items-center md:flex-row">
                         <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
                                 <ChevronLeft className="h-5 w-5" />
                                 <span className="sr-only">Terug</span>
                             </Button>
-                            <h1 className="text-2xl font-bold">Profiel bewerken: {leiding.voornaam}</h1>
+                            <h3 className="text-2xl font-semibold tracking-tight">Profiel bewerken: {leiding.voornaam}</h3>
                         </div>
                         <Button onClick={handleSave}>
                             <SaveIcon className="mr-2 h-4 w-4" />

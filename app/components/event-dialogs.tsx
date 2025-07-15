@@ -1,15 +1,18 @@
 import {
   Dialog,
-  DialogTrigger,
+  DialogClose,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "~/components/ui/dialog";
+import { Plus } from "lucide-react";
 import { Button } from "~/components/ui/button";
+
 import { EventFormFields } from "./event-form-fields";
+
 import type { EventFormState } from "../types";
 import type { Option } from "~/components/ui/multiselect";
 
@@ -43,11 +46,11 @@ export function EventDialog({
       <DialogTrigger asChild>
         {!isEdit && (
           <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow duration-200">
-            + Nieuwe activiteit
+            <Plus className="h-4 w-4" /> Nieuwe activiteit
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px] rounded-lg shadow-xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}

@@ -1,7 +1,6 @@
-// edit-post.tsx
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import { ChevronLeft, Pencil, Trash, Save } from "lucide-react";
+import { ChevronLeft, Pencil, Trash, Save, Eye } from "lucide-react";
 
 import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
@@ -25,18 +24,15 @@ import {
     DialogDescription,
 } from "~/components/ui/dialog";
 
-import { fetchPostById, updatePost, deletePost, supabase } from "~/utils/data";
-import PageLayout from "../pageLayout";
+import type { Post } from "~/types";
+import PageLayout from "../../pageLayout";
 import PrivateRoute from "~/context/PrivateRoute";
+import type { Route } from "../posts/+types/edit";
+import { fetchPostById, updatePost, deletePost } from "~/utils/data";
 
-interface Post {
-    id: string;
-    title: string;
-    description: string;
-    cover_img: string;
-    published: boolean;
-    created_at: Date;
-    published_at: Date | null;
+
+export function meta({ }: Route.MetaArgs) {
+    return [{ title: "Post Bewerken" }];
 }
 
 export default function EditPostPage() {
@@ -79,6 +75,14 @@ export default function EditPostPage() {
             }
         };
         getPost();
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                navigate("/berichten", { viewTransition: true });
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
     }, [postId]);
 
     const handleSave = async () => {
@@ -145,9 +149,8 @@ export default function EditPostPage() {
                     <div className="flex gap-2">
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="outline">
+                                <Button variant="destructive" size="icon">
                                     <Trash />
-                                    Verwijder
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
@@ -170,6 +173,11 @@ export default function EditPostPage() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+
+                        <Button variant="outline" onClick={() => navigate(`/berichten/preview/${post.id}`)}>
+                            <Eye />
+                            Preview
+                        </Button>
 
                         <Button onClick={handleSave}>
                             <Save />
@@ -203,7 +211,7 @@ export default function EditPostPage() {
                     {/* Sidebar Metadata Column */}
                     <div className="space-y-4">
                         {/* Berichtdetails section */}
-                        <div className="bg-background p-4 rounded-md border border-input shadow-sm space-y-8">
+                        <div className="bg-background p-4 rounded-md border border-input space-y-8">
                             <div>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
