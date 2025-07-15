@@ -460,9 +460,9 @@ export default function Events() {
         <PrivateRoute>
             <PageLayout>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 mb-6 w-full">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                    <h3 className="text-2xl font-semibold tracking-tight">
                         Activiteiten
-                    </h1>
+                    </h3>
 
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-fit md:ml-auto">
                         <Input

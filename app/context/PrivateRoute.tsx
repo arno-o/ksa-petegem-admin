@@ -12,7 +12,7 @@ export default function PrivateRoute({ children }: PageProps) {
 
   useEffect(() => {
     if (!loading && !session) {
-      navigate("/");
+      navigate("/login");
     }
   }, [loading, session, navigate]);
 

@@ -101,10 +101,10 @@ export default function Posts() {
     <PrivateRoute>
       <PageLayout>
         <header className="flex justify-between items-center mb-6">
-          <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Berichten</h3>
+          <h3 className="text-2xl font-semibold tracking-tight">Berichten</h3>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" />Nieuw bericht</Button>
+              <Button><Plus className="h-4 w-4" />Nieuw bericht</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -156,14 +156,14 @@ export default function Posts() {
         ) : (
             posts.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
-                    Er zijn nog geen berichten aangemaakt. Klik op "Nieuw bericht" om te beginnen!
+                    Er zijn nog geen berichten aangemaakt. Klik op "Nieuw bericht" om te beginnen.
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {posts.map((post) => {
 
                         return (
-                            <Link to={`/berichten/${post.id}`} key={post.id} className="block group">
+                            <Link to={`/berichten/edit/${post.id}`} key={post.id} className="block group">
                                 <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden h-full flex flex-col hover:shadow-lg transition-all duration-200 ease-in-out">
                                     {post.cover_img ? (
                                     <div className="w-full h-40 overflow-hidden bg-gray-100 flex items-center justify-center">

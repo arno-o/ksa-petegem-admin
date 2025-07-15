@@ -8,7 +8,7 @@ import { fetchAllGroups } from "~/utils/data";
 import GroupCard from "~/components/group-card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Button } from "~/components/ui/button"; // Assuming you have a button component
-import { PlusCircle } from "lucide-react"; // Icon for adding new group
+import { CircleFadingPlus } from "lucide-react"; // Icon for adding new group
 import { toast } from "sonner"; // For notifications
 
 export function meta({}: Route.MetaArgs) {
@@ -59,9 +59,9 @@ export default function Groups() {
     <PrivateRoute>
       <PageLayout>
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Groepsbeheer</h1>
+          <h3 className="text-2xl font-semibold tracking-tight">Groepsbeheer</h3>
           <Button onClick={handleAddGroup} className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
+            <CircleFadingPlus className="h-4 w-4" />
             Nieuwe Groep Toevoegen
           </Button>
         </div>

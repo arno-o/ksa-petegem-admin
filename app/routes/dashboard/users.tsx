@@ -84,7 +84,7 @@ export default function Users() {
           <h3 className="text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><UserPlus className="mr-2" />Voeg leiding toe</Button>
+              <Button><UserPlus />Voeg Leiding Toe</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
