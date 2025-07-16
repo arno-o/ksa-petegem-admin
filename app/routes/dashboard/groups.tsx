@@ -3,13 +3,14 @@ import type { Route } from "./+types/groups";
 import PrivateRoute from "~/context/PrivateRoute";
 
 import type { Group } from "~/types";
-import { useEffect, useState, useCallback } from "react"; // Added useCallback
+import { useEffect, useState, useCallback } from "react";
 import { fetchAllGroups } from "~/utils/data";
-import GroupCard from "~/components/group-card";
+import GroupCard from "~/components/cards/group-card"; // Your updated GroupCard component
 import { Skeleton } from "~/components/ui/skeleton";
-import { Button } from "~/components/ui/button"; // Assuming you have a button component
-import { CircleFadingPlus } from "lucide-react"; // Icon for adding new group
-import { toast } from "sonner"; // For notifications
+import { Button } from "~/components/ui/button";
+import { CircleFadingPlus } from "lucide-react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router"; // Import useNavigate for potential add group flow
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "KSA Admin - Groepen" }];
@@ -18,41 +19,48 @@ export function meta({}: Route.MetaArgs) {
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // State for error handling
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate(); // Initialize navigate
 
-  // Centralized function to load groups, memoized with useCallback
   const loadGroups = useCallback(async () => {
     setLoading(true);
-    setError(null); // Clear previous errors
+    setError(null);
     try {
       const data = await fetchAllGroups();
       setGroups(data ?? []);
     } catch (err) {
       console.error("Failed to fetch groups:", err);
       setError("Fout bij het laden van groepen. Probeer opnieuw.");
-      toast.error("Fout bij het laden van groepen."); // User-friendly notification
+      toast.error("Fout bij het laden van groepen.");
     } finally {
       setLoading(false);
     }
-  }, []); // No dependencies, so it only gets created once
+  }, []);
 
   useEffect(() => {
     loadGroups();
-  }, [loadGroups]); // Depend on loadGroups
+  }, [loadGroups]);
 
   const handleGroupUpdate = (updatedGroup: Group) => {
     setGroups((prev) =>
       prev.map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
     );
-    toast.success(`Groep "${updatedGroup.naam}" succesvol bijgewerkt!`); // Confirmation for user
+    toast.success(`Groep "${updatedGroup.naam}" succesvol bijgewerkt!`);
   };
+
+  // Function to handle editing a group (to pass to GroupCard)
+  const handleEditGroup = useCallback((group: Group) => {
+    // Navigate to an edit page or open a dialog
+    // For now, let's assume a dedicated edit page.
+    navigate(`/groepen/bewerken/${group.id}`); // Adjust this route as needed
+  }, [navigate]);
 
   // Function to handle adding a new group (placeholder for now)
   const handleAddGroup = () => {
-    // In a real application, this would open a modal or navigate to a new page
-    // for creating a new group.
-    toast.info("Functie voor het toevoegen van een nieuwe groep is in ontwikkeling.");
-    console.log("Add new group functionality not yet implemented.");
+    // Example: navigate to a create group page
+    navigate("/groepen/nieuw"); // Adjust this route as needed for creating a new group
+    // toast.info("Functie voor het toevoegen van een nieuwe groep is in ontwikkeling.");
+    // console.log("Add new group functionality not yet implemented.");
   };
 
   return (
@@ -80,16 +88,49 @@ export default function Groups() {
         )}
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-[180px] w-full rounded-lg" />
+          // Adjusted skeleton to better reflect the new table-like layout
+          <div className="rounded-lg border border-input shadow-sm overflow-hidden">
+             {/* Header Skeleton */}
+            <div className="grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-1/2 mx-auto" /> {/* Adjusted width for status column */}
+              <Skeleton className="h-4 w-1/4 ml-auto" /> {/* Adjusted width for actions column */}
+            </div>
+            {/* Row Skeletons */}
+            {Array.from({ length: 5 }).map((_, index) => ( // Show a few rows
+              <div key={index} className="flex items-center py-3 px-4 border-b border-input last:border-b-0 bg-background">
+                <div className="grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 w-full pl-2">
+                  <Skeleton className="h-5 w-4/5" />
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-1/2 mx-auto" />
+                  <Skeleton className="h-5 w-1/4 ml-auto" />
+                </div>
+              </div>
             ))}
           </div>
         ) : groups?.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {groups.map((group) => (
-              <GroupCard key={group.id} group={group} onGroupUpdate={handleGroupUpdate} />
-            ))}
+          // This is the new "table" container
+          <div className="rounded-lg border border-input shadow-sm overflow-hidden">
+            {/* Table Header */}
+            <div className="grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
+              <div>Naam</div>
+              <div>Omschrijving</div>
+              <div className="text-center">Status</div> {/* Center align for Status */}
+              <div className="text-right">Acties</div> {/* Right align for Acties */}
+            </div>
+
+            {/* Table Body - Map through groups to render GroupCard as rows */}
+            <div>
+              {groups.map((group) => (
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  onGroupUpdate={handleGroupUpdate}
+                  onEdit={handleEditGroup} // Pass the handleEditGroup function
+                />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="text-center py-20 text-gray-500 text-lg">

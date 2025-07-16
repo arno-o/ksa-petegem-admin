@@ -1,42 +1,31 @@
-// React and Router
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-
-// External Libraries
 import { toast } from "sonner";
 import { ChevronDownIcon, ChevronLeft, SaveIcon } from "lucide-react";
-
-// Utils and Data Fetching
 import { fetchActiveGroups, fetchLeidingById, updateLeiding } from "~/utils/data";
-
-// Context and Layouts
 import PageLayout from "../../pageLayout";
 import PrivateRoute from "~/context/PrivateRoute";
-
-// Components (UI)
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
-import FileUpload from "~/components/FileUpload";
+import FileUpload from "~/components/allround/file-upload";
 import { Calendar } from "~/components/ui/calendar";
-import FullScreenLoader from "~/components/full-screen-loader";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "~/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
-
-// Types
 import type { Leiding, Group } from "~/types";
 import type { Route } from "../users/+types/edit";
 
@@ -46,8 +35,6 @@ export function meta({ }: Route.MetaArgs) {
 
 const EditUser = () => {
     const [dobDatePicker, setDobDatePicker] = useState(false);
-    const [leadDatePicker, setLeadDatePicker] = useState(false);
-
     const navigate = useNavigate();
     const { leidingId } = useParams();
     const [loading, setLoading] = useState(false);
@@ -58,19 +45,15 @@ const EditUser = () => {
     const [form, setForm] = useState({
         voornaam: "",
         familienaam: "",
-
         werk: "",
         studies: "",
-
         foto_url: "",
         werkgroepen: "",
         ksa_ervaring: "",
         ksa_betekenis: "",
         leidingsploeg: "",
-
         trekker: false,
         hoofdleiding: false,
-
         leiding_sinds: undefined as Date | undefined,
         geboortedatum: undefined as Date | undefined,
     });
@@ -92,19 +75,22 @@ const EditUser = () => {
                 const allGroups = await fetchActiveGroups();
                 setGroepen(allGroups);
 
-                // Convert geboortedatum string to a Date object
-                const geboortedatumDate = fetchedLeiding.geboortedatum
-                    ? new Date(fetchedLeiding.geboortedatum)
-                    : undefined;
+                // Helper function to safely parse date strings
+                const parseDateSafely = (dateString: string | undefined): Date | undefined => {
+                    if (!dateString) return undefined;
+                    // Assuming dateString is "YYYY-MM-DD"
+                    // Create a new Date object directly from components to avoid timezone issues
+                    const [year, month, day] = dateString.split('-').map(Number);
+                    // Use UTC method to avoid local timezone conversion when setting
+                    return new Date(Date.UTC(year, month - 1, day));
+                };
 
-                const leidingSindsDate = fetchedLeiding.leiding_sinds
-                    ? new Date(fetchedLeiding.leiding_sinds)
-                    : undefined;
+                const geboortedatumDate = parseDateSafely(fetchedLeiding.geboortedatum);
+                const leidingSindsDate = parseDateSafely(fetchedLeiding.leiding_sinds);
 
                 setForm({
                     voornaam: fetchedLeiding.voornaam,
                     familienaam: fetchedLeiding.familienaam,
-
                     leiding_sinds: leidingSindsDate,
                     geboortedatum: geboortedatumDate,
                     studies: fetchedLeiding.studies,
@@ -133,14 +119,33 @@ const EditUser = () => {
             toast.error("Geen Leiding ID gevonden om op te slaan.");
             return;
         }
+
+        const formToSave = {
+            ...form,
+            geboortedatum: form.geboortedatum ? form.geboortedatum.toISOString().split('T')[0] : null,
+            // Default to September 1st (month 9) of the selected year for leiding_sinds
+            leiding_sinds: form.leiding_sinds ? `${form.leiding_sinds.getUTCFullYear()}-09-01` : null, // Changed this line
+        };
+
         try {
-            await updateLeiding(leidingId, form);
+            await updateLeiding(leidingId, formToSave);
             toast.success("Leiding succesvol bewerkt.");
-            navigate("/leiding", { viewTransition: true });
+            navigate("/leiding/actief", { viewTransition: true });
         } catch (err) {
             toast.error("Er is iets foutgelopen bij het opslaan.");
             console.error(err);
         }
+    };
+
+    const currentYear = new Date().getFullYear();
+    const startYear = 2015;
+    const years = Array.from({ length: currentYear - startYear + 1 }, (_, i) => currentYear - i);
+
+    const handleLeidingSindsYearChange = (yearString: string) => {
+        const year = parseInt(yearString, 10);
+        // When setting the year, also ensure it's treated as UTC to avoid local timezone issues if saved as a date
+        const newDate = new Date(Date.UTC(year, 8, 1)); // Month 8 is September (0-indexed)
+        setForm({ ...form, leiding_sinds: newDate });
     };
 
     if (loading) {
@@ -204,21 +209,29 @@ const EditUser = () => {
                                         <Popover open={dobDatePicker} onOpenChange={setDobDatePicker}>
                                             <PopoverTrigger asChild>
                                                 <Button variant="outline" className="w-full justify-between font-normal">
-                                                    {form.geboortedatum ? form.geboortedatum.toLocaleDateString("nl-BE") : "Kies een datum"}
+                                                    {/* Display the date correctly, potentially using UTC methods */}
+                                                    {form.geboortedatum ? new Date(form.geboortedatum).toLocaleDateString("nl-BE", { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }) : "Kies een datum"}
                                                     <ChevronDownIcon className="ml-2 h-4 w-4" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="p-0">
+                                            <PopoverContent>
                                                 <Calendar
+                                                    hideWeekdays
                                                     mode="single"
                                                     selected={form.geboortedatum}
                                                     captionLayout="dropdown"
                                                     onSelect={(date) => {
                                                         if (date) {
-                                                            setForm({ ...form, geboortedatum: date });
+                                                            // When selecting, create a date object that represents the selected day in UTC
+                                                            const newDateUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+                                                            setForm({ ...form, geboortedatum: newDateUTC });
                                                             setDobDatePicker(false);
                                                         }
                                                     }}
+                                                    disabled={(date) =>
+                                                        date > new Date() || date < new Date("1900-01-01")
+                                                    }
+                                                    defaultMonth={form.geboortedatum}
                                                 />
                                             </PopoverContent>
                                         </Popover>
@@ -276,27 +289,21 @@ const EditUser = () => {
 
                                     <div className="flex flex-col gap-2">
                                         <Label>Leiding sinds</Label>
-                                        <Popover open={leadDatePicker} onOpenChange={setLeadDatePicker}>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" className="w-full justify-between font-normal">
-                                                    {form.leiding_sinds ? form.leiding_sinds.toLocaleDateString("nl-BE") : "Kies een datum"}
-                                                    <ChevronDownIcon className="ml-2 h-4 w-4" />
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={form.leiding_sinds}
-                                                    captionLayout="dropdown"
-                                                    onSelect={(date) => {
-                                                        if (date) {
-                                                            setForm({ ...form, leiding_sinds: date });
-                                                            setLeadDatePicker(false);
-                                                        }
-                                                    }}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <Select
+                                            onValueChange={handleLeidingSindsYearChange}
+                                            value={form.leiding_sinds ? String(form.leiding_sinds.getUTCFullYear()) : ""} // Use UTC year for display
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Kies een jaar" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {years.map((year) => (
+                                                    <SelectItem key={year} value={String(year)}>
+                                                        {year}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 
@@ -328,7 +335,7 @@ const EditUser = () => {
                                 </div>
                                 <FileUpload
                                     bucket="leiding-fotos"
-                                    path={`leiding-${leiding.id}`} // or just `${leiding.id}` if you want the raw ID
+                                    path={`leiding-${leiding.id}`}
                                     initialUrl={leiding.foto_url || ""}
                                     onChange={(url) => setForm({ ...form, foto_url: url })}
                                 />

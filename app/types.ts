@@ -13,6 +13,7 @@ export type Leiding = {
   foto_url: string | null;
   leidingsploeg: number;
   trekker: boolean;
+  actief: boolean;
 };
 
 export interface Post {
