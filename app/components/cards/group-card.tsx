@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 
 import { Switch } from "~/components/ui/switch";
 import { Button } from "~/components/ui/button";
-// Card and CardContent are no longer needed for a table-like structure
-// import { Card, CardContent } from "~/components/ui/card";
 import { PencilIcon } from "lucide-react";
-import { cn } from "~/lib/utils"; // Assuming you have a utility for class concatenation (e.g., clsx or tailwind-merge)
+import { cn } from "~/lib/utils";
 
 interface GroupCardProps {
   group: Group;

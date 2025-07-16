@@ -6,8 +6,8 @@ export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-export const fetchLeiding = async () => {
-  const { data, error } = await supabase.from("leiding").select("*");
+export const fetchInactiveLeiding = async () => {
+  const { data, error } = await supabase.from("leiding").select("*").eq("actief", false);
   if (error) throw error;
   return data;
 };
@@ -29,6 +29,17 @@ export const updateLeiding = async (id: string | number, updates: Partial<any>) 
   if (error) throw error;
 };
 
+export const disableLeiding = async (id: number) => {
+  const { error } = await supabase.from("leiding").update({ actief: false }).eq("id", id);
+  if (error) throw error;
+};
+
+export const restoreLeiding = async (id: number) => {
+  const { error } = await supabase.from("leiding").update({ actief: true }).eq("id", id);
+  if (error) throw error;
+};
+
+
 export const deleteLeiding = async (id: number) => {
   const { error } = await supabase.from("leiding").delete().eq("id", id);
   if (error) throw error;
@@ -43,6 +54,7 @@ export const createLeiding = async (newLeiding: {
     .from("leiding")
     .insert([{
       ...newLeiding,
+      actief: true, // New leiding are active by default
     }])
     .select()
     .single();

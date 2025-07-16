@@ -1,32 +1,44 @@
+// React and Hooks
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
-import PageLayout from "../../pageLayout";
+// Lucide Icons
+import { CalendarArrowUp, Crown, Star, UserPlus } from "lucide-react";
+
+// UI Components (shadcn/ui or custom)
 import { Button } from "~/components/ui/button";
-import PrivateRoute from "~/context/PrivateRoute";
-import type { Route } from "../users/+types/active";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import LeidingCard from "~/components/cards/leiding-card";
 
-import { UserPlus, CalendarArrowUp, Star, Crown } from "lucide-react";
+// Context & Layout
+import PrivateRoute from "~/context/PrivateRoute";
+import PageLayout from "../../pageLayout";
 
+// Data Utilities & Types
 import type { Group, Leiding } from "~/types";
-import { fetchActiveGroups, fetchActiveLeiding, createLeiding } from "~/utils/data";
-import {
-  Dialog, DialogClose, DialogContent, DialogDescription,
-  DialogFooter, DialogHeader, DialogTitle, DialogTrigger
-} from "~/components/ui/dialog";
-import { Label } from "~/components/ui/label";
-import { Input } from "~/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectGroup, SelectSeparator } from "~/components/ui/select";
-
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "~/components/ui/tabs"
-import { Badge } from "~/components/ui/badge";
-
+import type { Route } from "../users/+types/active"; // Assuming this path is correct
+import { createLeiding, fetchActiveGroups, fetchActiveLeiding } from "~/utils/data";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Leiding" }];
@@ -81,6 +93,7 @@ export default function Active() {
     let tempLeiding = [...leiding]; // Create a mutable copy to sort
 
     if (selectedFilter === "*") {
+      // Sort by leiding_sinds (ancieniteit) then geboortedatum
       tempLeiding.sort((a, b) => {
         const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
         const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
@@ -90,17 +103,31 @@ export default function Active() {
 
         const dateA_geb = a.geboortedatum ? new Date(a.geboortedatum) : new Date(0);
         const dateB_geb = b.geboortedatum ? new Date(b.geboortedatum) : new Date(0);
-        return dateA_geb.getTime() - dateB_geb.getTime(); // Changed: Sort ascending for birth date
+        return dateA_geb.getTime() - dateB_geb.getTime(); // Sort ascending for birth date
       });
     } else if (selectedFilter === "trekkers") {
+      // Filter for trekkers and sort by leidingsploeg (group ID)
       tempLeiding = leiding.filter(person => person.trekker);
-      tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
+      tempLeiding.sort((a, b) => a.leidingsploeg - b.leidingsploeg);
     } else if (selectedFilter === "hoofdleiding") {
+      // Filter for hoofdleiding and sort by voornaam
       tempLeiding = leiding.filter(person => person.hoofdleiding);
       tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
     } else {
-      tempLeiding = leiding.filter(person => person.leidingsploeg === Number(selectedFilter));
-      tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
+      // Filter by specific group and sort trekkers first, then by ancieniteit
+      const selectedGroupId = Number(selectedFilter);
+      tempLeiding = leiding.filter(person => person.leidingsploeg === selectedGroupId);
+
+      tempLeiding.sort((a, b) => {
+        // Trekkers first (true comes before false)
+        if (a.trekker && !b.trekker) return -1;
+        if (!a.trekker && b.trekker) return 1;
+
+        // Then by ancieniteit (leiding_sinds)
+        const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
+        const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
+        return dateA_sinds.getTime() - dateB_sinds.getTime();
+      });
     }
     setFilteredLeiding(tempLeiding);
   }, [leiding, selectedFilter]);
@@ -122,16 +149,38 @@ export default function Active() {
     setLeiding((prev) => prev?.filter((persoon) => persoon.id !== id));
   };
 
-  // const colorMap: Record<string, string> = {
-  //   yellow: "bg-yellow-500 dark:bg-yellow-400",
-  //   blue: "bg-blue-500 dark:bg-blue-400",
-  //   green: "bg-green-500 dark:bg-green-400",
-  //   purple: "bg-purple-500 dark:bg-purple-400",
-  //   red: "bg-red-500 dark:bg-red-400",
-  //   orange: "bg-orange-500 dark:bg-orange-400",
-  //   lime: "bg-lime-500 dark:bg-lime-400",
-  //   rose: "bg-rose-500 dark:bg-rose-400",
-  // };
+  const COLOR_MAP: Record<string, string> = {
+    yellow: "text-yellow-600 dark:text-yellow-300",
+    blue: "text-blue-600 dark:text-blue-300",
+    green: "text-green-600 dark:text-green-300",
+    purple: "text-purple-600 dark:text-purple-300",
+    red: "text-red-600 dark:text-red-300",
+    orange: "text-orange-600 dark:text-orange-300",
+    lime: "text-lime-600 dark:text-lime-300",
+    rose: "text-rose-600 dark:text-rose-300",
+  };
+
+  const BADGE_BACKGROUND_COLOR_MAP: Record<string, string> = {
+    yellow: "bg-yellow-50 dark:bg-yellow-900",
+    blue: "bg-blue-50 dark:bg-blue-900",
+    green: "bg-green-50 dark:bg-green-900",
+    purple: "bg-purple-50 dark:bg-purple-900",
+    red: "bg-red-50 dark:bg-red-900",
+    orange: "bg-orange-50 dark:bg-orange-900",
+    lime: "bg-lime-50 dark:bg-lime-900",
+    rose: "bg-rose-50 dark:bg-rose-900",
+  };
+
+  const BADGE_BORDER_COLOR_MAP: Record<string, string> = {
+    yellow: "border-yellow-200 dark:border-yellow-700",
+    blue: "border-blue-200 dark:border-blue-700",
+    green: "border-green-200 dark:border-green-700",
+    purple: "border-purple-200 dark:border-purple-700",
+    red: "border-red-200 dark:border-red-700",
+    orange: "border-orange-200 dark:border-orange-700",
+    lime: "border-lime-200 dark:border-lime-700",
+    rose: "border-rose-200 dark:border-rose-700",
+  };
 
   return (
     <PrivateRoute>
@@ -211,9 +260,8 @@ export default function Active() {
           </div>
         </header>
 
-        <div className="rounded-lg border border-input shadow-sm overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-[1fr_1fr_1fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
+        <div className="rounded-lg border bg-background/50 dark:bg-background/30 shadow-md overflow-hidden">
+          <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-border bg-accent/20 dark:bg-accent/10">
             <div>Persoon</div>
             <div>Jaren leiding</div>
             <div className="flex justify-center">Geboortedatum</div>
@@ -221,23 +269,30 @@ export default function Active() {
             <div className="flex justify-end">Acties</div>
           </div>
 
-          {/* Table Body - Map through leiding to render LeidingCard as rows */}
           <div>
             {filteredLeiding?.map((person) => {
-              const groupName = groups?.find(g => g.id === person.leidingsploeg)?.naam;
+              const group = groups?.find(g => g.id === person.leidingsploeg);
+              const groupName = group?.naam;
+              const groupTextColorClass = group?.color ? COLOR_MAP[group.color] : "text-foreground";
+              const groupBadgeBgClass = group?.color ? BADGE_BACKGROUND_COLOR_MAP[group.color] : "bg-muted";
+              const groupBadgeBorderClass = group?.color ? BADGE_BORDER_COLOR_MAP[group.color] : "border-border";
+
               return (
                 <LeidingCard
                   key={person.id}
                   leiding={person}
                   onDelete={handleDeleteLeiding}
-                  groupName={groupName} // Pass the group name
+                  groupName={groupName}
+                  groupTextColorClass={groupTextColorClass}
+                  groupBadgeBgClass={groupBadgeBgClass}
+                  groupBadgeBorderClass={groupBadgeBorderClass}
                 />
               );
             })}
             {filteredLeiding?.length === 0 && (
-                <div className="p-4 text-center text-muted-foreground">
-                    Geen leiding gevonden voor de geselecteerde filter.
-                </div>
+              <div className="p-4 text-center text-muted-foreground">
+                Geen leiding gevonden voor de geselecteerde filter.
+              </div>
             )}
           </div>
         </div>
