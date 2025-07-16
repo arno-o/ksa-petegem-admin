@@ -145,15 +145,10 @@ const LeidingCard = ({
             <p className="font-medium leading-none">
               {leiding.voornaam} {leiding.familienaam}
             </p>
-            {!isInactiveMode && age !== null && (
+            {isInactiveMode && age !== null && (
               <p className="text-sm text-muted-foreground leading-none mt-0.5">
                 {age} jaar oud
               </p>
-            )}
-            {isInactiveMode && groupName && (
-              <Badge className={`mt-1 ${groupTextColorClass} ${groupBadgeBgClass} border ${groupBadgeBorderClass}`}>
-                {groupName}
-              </Badge>
             )}
           </div>
         </div>
