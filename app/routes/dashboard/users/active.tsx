@@ -1,9 +1,19 @@
 // React and Hooks
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner"; // Assuming toast is already configured for ShadCN
+
+// TanStack Table
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  createColumnHelper,
+} from "@tanstack/react-table";
 
 // Lucide Icons
-import { CalendarArrowUp, Crown, Star, UserPlus } from "lucide-react";
+import { CalendarArrowUp, Crown, Star, UserPlus, MoreVertical, Edit, ShieldX, Trash2, Search, Users } from "lucide-react"; // Added Search icon
 
 // UI Components (shadcn/ui or custom)
 import { Button } from "~/components/ui/button";
@@ -17,7 +27,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import { Input } from "~/components/ui/input"; // Already imported, but noting its importance for search
 import { Label } from "~/components/ui/label";
 import {
   Select,
@@ -29,7 +44,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import LeidingCard from "~/components/cards/leiding-card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "~/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Badge } from "~/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 
 // Context & Layout
 import PrivateRoute from "~/context/PrivateRoute";
@@ -37,12 +61,14 @@ import PageLayout from "../../pageLayout";
 
 // Data Utilities & Types
 import type { Group, Leiding } from "~/types";
-import type { Route } from "../users/+types/active"; // Assuming this path is correct
-import { createLeiding, fetchActiveGroups, fetchActiveLeiding } from "~/utils/data";
+import type { Route } from "../users/+types/active";
+import { createLeiding, fetchActiveGroups, fetchActiveLeiding, deleteLeiding, disableLeiding } from "~/utils/data";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Leiding" }];
 }
+
+const columnHelper = createColumnHelper<Leiding>();
 
 export default function Active() {
   const navigate = useNavigate();
@@ -51,104 +77,34 @@ export default function Active() {
   const [groups, setGroups] = useState<Group[]>();
   const [leiding, setLeiding] = useState<Leiding[]>();
   const [filteredLeiding, setFilteredLeiding] = useState<Leiding[]>();
-  const [selectedFilter, setSelectedFilter] = useState<string>("*");
+  const [selectedFilter, setSelectedFilter] = useState<string>("all_by_group");
 
+  // State for "Nieuwe leiding aanmaken" form
   const [voornaam, setVoornaam] = useState("");
   const [familienaam, setFamilienaam] = useState("");
   const [leidingsploeg, setLeidingsploeg] = useState<string>("");
 
+  // States for action dialogs (Delete, Disable)
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [disableConfirmDialog, setDisableConfirmDialog] = useState(false);
+  const [selectedLeidingForDialog, setSelectedLeidingForDialog] = useState<Leiding | null>(null);
+
+  // New states for search functionality
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  // Debounce effect for search term
   useEffect(() => {
-    const loadGroups = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchActiveGroups();
-        setGroups(data);
-      } catch (err) {
-        console.error("Failed to fetch groups:", err);
-      } finally {
-        setLoading(false);
-      }
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce
+
+    return () => {
+      clearTimeout(handler);
     };
+  }, [searchTerm]);
 
-    const loadLeiding = async () => {
-      try {
-        const data = await fetchActiveLeiding();
-        setLeiding(data);
-      } catch (err) {
-        console.error("Failed to fetch leiding:", err);
-      }
-    };
-
-    loadGroups();
-    loadLeiding();
-  }, []);
-
-  // Effect to filter and sort leiding whenever 'leiding' data or 'selectedFilter' changes
-  useEffect(() => {
-    if (!leiding) {
-      setFilteredLeiding([]);
-      return;
-    }
-
-    let tempLeiding = [...leiding]; // Create a mutable copy to sort
-
-    if (selectedFilter === "*") {
-      // Sort by leiding_sinds (ancieniteit) then geboortedatum
-      tempLeiding.sort((a, b) => {
-        const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
-        const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
-        if (dateA_sinds.getTime() !== dateB_sinds.getTime()) {
-          return dateA_sinds.getTime() - dateB_sinds.getTime();
-        }
-
-        const dateA_geb = a.geboortedatum ? new Date(a.geboortedatum) : new Date(0);
-        const dateB_geb = b.geboortedatum ? new Date(b.geboortedatum) : new Date(0);
-        return dateA_geb.getTime() - dateB_geb.getTime(); // Sort ascending for birth date
-      });
-    } else if (selectedFilter === "trekkers") {
-      // Filter for trekkers and sort by leidingsploeg (group ID)
-      tempLeiding = leiding.filter(person => person.trekker);
-      tempLeiding.sort((a, b) => a.leidingsploeg - b.leidingsploeg);
-    } else if (selectedFilter === "hoofdleiding") {
-      // Filter for hoofdleiding and sort by voornaam
-      tempLeiding = leiding.filter(person => person.hoofdleiding);
-      tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
-    } else {
-      // Filter by specific group and sort trekkers first, then by ancieniteit
-      const selectedGroupId = Number(selectedFilter);
-      tempLeiding = leiding.filter(person => person.leidingsploeg === selectedGroupId);
-
-      tempLeiding.sort((a, b) => {
-        // Trekkers first (true comes before false)
-        if (a.trekker && !b.trekker) return -1;
-        if (!a.trekker && b.trekker) return 1;
-
-        // Then by ancieniteit (leiding_sinds)
-        const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
-        const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
-        return dateA_sinds.getTime() - dateB_sinds.getTime();
-      });
-    }
-    setFilteredLeiding(tempLeiding);
-  }, [leiding, selectedFilter]);
-
-
-  const handleCreate = async () => {
-    if (!voornaam || !familienaam || !leidingsploeg) return;
-
-    try {
-      const newId = await createLeiding({ voornaam, familienaam, leidingsploeg: Number(leidingsploeg) });
-      setOpen(false);
-      navigate(`/leiding/actief/edit/${newId.id}`);
-    } catch (err) {
-      console.error("Failed to create new leiding:", err);
-    }
-  };
-
-  const handleDeleteLeiding = (id: number) => {
-    setLeiding((prev) => prev?.filter((persoon) => persoon.id !== id));
-  };
-
+  // Color maps
   const COLOR_MAP: Record<string, string> = {
     yellow: "text-yellow-600 dark:text-yellow-300",
     blue: "text-blue-600 dark:text-blue-300",
@@ -182,28 +138,336 @@ export default function Active() {
     rose: "border-rose-200 dark:border-rose-700",
   };
 
+  useEffect(() => {
+    const loadGroups = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchActiveGroups();
+        setGroups(data);
+      } catch (err) {
+        console.error("Failed to fetch groups:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const loadLeiding = async () => {
+      try {
+        const data = await fetchActiveLeiding();
+        setLeiding(data);
+      } catch (err) {
+        console.error("Failed to fetch leiding:", err);
+      }
+    };
+
+    loadGroups();
+    loadLeiding();
+  }, []);
+
+  // Effect to filter and sort leiding whenever 'leiding' data, 'selectedFilter', or 'debouncedSearchTerm' changes
+  useEffect(() => {
+    if (!leiding) {
+      setFilteredLeiding([]);
+      return;
+    }
+
+    let tempLeiding = [...leiding]; // Create a mutable copy to sort
+
+    // Apply main filter based on selected group/category
+    if (selectedFilter === "*") {
+      tempLeiding.sort((a, b) => {
+        const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
+        const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
+        if (dateA_sinds.getTime() !== dateB_sinds.getTime()) {
+          return dateA_sinds.getTime() - dateB_sinds.getTime();
+        }
+
+        const dateA_geb = a.geboortedatum ? new Date(a.geboortedatum) : new Date(0);
+        const dateB_geb = b.geboortedatum ? new Date(b.geboortedatum) : new Date(0);
+        return dateA_geb.getTime() - dateB_geb.getTime();
+      });
+    } else if (selectedFilter === "trekkers") {
+      tempLeiding = leiding.filter(person => person.trekker);
+      tempLeiding.sort((a, b) => a.leidingsploeg - b.leidingsploeg);
+    } else if (selectedFilter === "hoofdleiding") {
+      tempLeiding = leiding.filter(person => person.hoofdleiding);
+      tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
+    } else if (selectedFilter === "all_by_group") { // New option: All Leiding (by Group)
+      // Sort first by leidingsploeg, then by voornaam
+      tempLeiding.sort((a, b) => {
+        if (a.leidingsploeg !== b.leidingsploeg) {
+          return a.leidingsploeg - b.leidingsploeg;
+        }
+        // If groups are the same, sort by first name
+        return (a.voornaam || '').localeCompare(b.voornaam || '');
+      });
+    } else {
+      const selectedGroupId = Number(selectedFilter);
+      tempLeiding = leiding.filter(person => person.leidingsploeg === selectedGroupId);
+
+      tempLeiding.sort((a, b) => {
+        if (a.trekker && !b.trekker) return -1;
+        if (!a.trekker && b.trekker) return 1;
+
+        const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
+        const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
+        return dateA_sinds.getTime() - dateB_sinds.getTime();
+      });
+    }
+
+    // Apply search filter (case-insensitive on voornaam and familienaam)
+    if (debouncedSearchTerm) {
+      const lowerCaseSearchTerm = debouncedSearchTerm.toLowerCase();
+      tempLeiding = tempLeiding.filter(person =>
+        (person.voornaam?.toLowerCase().includes(lowerCaseSearchTerm) ?? false) ||
+        (person.familienaam?.toLowerCase().includes(lowerCaseSearchTerm) ?? false)
+      );
+    }
+
+    setFilteredLeiding(tempLeiding);
+  }, [leiding, selectedFilter, debouncedSearchTerm]);
+
+
+  const handleCreate = async () => {
+    if (!voornaam || !familienaam || !leidingsploeg) {
+      toast.error("Vul alle velden in om een nieuwe leiding aan te maken.");
+      return;
+    }
+
+    try {
+      const newId = await createLeiding({ voornaam, familienaam, leidingsploeg: Number(leidingsploeg) });
+      setOpen(false);
+      setVoornaam("");
+      setFamilienaam("");
+      setLeidingsploeg("");
+      navigate(`/leiding/actief/edit/${newId.id}`);
+    } catch (err) {
+      toast.error("Aanmaken mislukt. Probeer opnieuw.");
+      console.error("Failed to create new leiding:", err);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedLeidingForDialog) return;
+    try {
+      await deleteLeiding(selectedLeidingForDialog.id);
+      toast.success("Leiding werd definitief verwijderd.");
+      setDeleteDialog(false);
+      setLeiding((prev) => prev?.filter((persoon) => persoon.id !== selectedLeidingForDialog.id));
+      setSelectedLeidingForDialog(null);
+    } catch (err) {
+      toast.error("Verwijderen mislukt. Probeer opnieuw.");
+      console.error("Failed to delete leiding:", err);
+    }
+  };
+
+  const handleDisable = async () => {
+    if (!selectedLeidingForDialog) return;
+    try {
+      await disableLeiding(selectedLeidingForDialog.id);
+      toast.success("Leiding is succesvol inactief gezet.");
+      setDisableConfirmDialog(false);
+      setLeiding((prev) => prev?.filter((persoon) => persoon.id !== selectedLeidingForDialog.id));
+      setSelectedLeidingForDialog(null);
+    } catch (err) {
+      toast.error("Inactief zetten mislukt. Probeer opnieuw.");
+      console.error("Failed to disable leiding:", err);
+    }
+  };
+
+  // @ts-ignore
+  const columns: ColumnDef<Leiding, unknown>[] = useMemo(
+    () => [
+      columnHelper.accessor("voornaam", {
+        id: "persoon",
+        header: () => "Persoon",
+        cell: info => (
+          <div className="flex items-center gap-4">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={info.row.original.foto_url ?? ""} alt={`${info.row.original.voornaam || ''} ${info.row.original.familienaam || ''}`} />
+              <AvatarFallback>
+                {info.row.original.voornaam?.charAt(0) || ''}
+                {info.row.original.familienaam?.charAt(0) || ''}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-row items-center gap-2">
+              <p className="font-medium leading-none">
+                {info.row.original.voornaam} {info.row.original.familienaam}
+              </p>
+              {info.row.original.trekker && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Star fill={"true"} className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Trekker
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {info.row.original.hoofdleiding && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Crown fill={"true"} className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Hoofdleiding
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        ),
+      }),
+      columnHelper.accessor("leiding_sinds", {
+        id: "jarenLeiding",
+        header: () => "Jaren leiding",
+        // Explicitly type the value as string or undefined, as it comes from Leiding type
+        cell: info => {
+          const leidingSindsValue = info.getValue<string | undefined>(); // Use getValue with explicit type
+          const yearsInLeiding = leidingSindsValue
+            ? (() => {
+              const leidingSinds = new Date(leidingSindsValue);
+              const today = new Date();
+              let years = today.getFullYear() - leidingSinds.getFullYear();
+              const m = today.getMonth() - leidingSinds.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < leidingSinds.getDate())) {
+                years--;
+              }
+              return years + 1;
+            })()
+            : null;
+          return (
+            <div className="text-sm text-muted-foreground">
+              {yearsInLeiding !== null ? `${yearsInLeiding} jaar` : 'Onbekend'}
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor("geboortedatum", {
+        id: "geboortedatum",
+        header: () => <div className="flex justify-center">Geboortedatum</div>,
+        // Explicitly type the value as string or undefined
+        cell: info => {
+          const geboortedatumValue = info.getValue<string | undefined>(); // Use getValue with explicit type
+          const formattedGeboortedatum = geboortedatumValue
+            ? new Date(geboortedatumValue).toLocaleDateString('nl-BE')
+            : 'Onbekend';
+          return (
+            <div className="text-sm text-muted-foreground flex justify-center">
+              {formattedGeboortedatum}
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor("leidingsploeg", {
+        id: "groep",
+        header: () => <div className="flex justify-center">Groep</div>,
+        cell: info => {
+          const leidingPerson = info.row.original;
+          const group = groups?.find(g => g.id === leidingPerson.leidingsploeg);
+          const groupName = group?.naam;
+          const groupTextColorClass = group?.color ? COLOR_MAP[group.color] : "text-foreground";
+          const groupBadgeBgClass = group?.color ? BADGE_BACKGROUND_COLOR_MAP[group.color] : "bg-muted";
+          const groupBadgeBorderClass = group?.color ? BADGE_BORDER_COLOR_MAP[group.color] : "border-border";
+
+          return (
+            <div className="flex justify-center">
+              {groupName ? (
+                <Badge className={`${groupTextColorClass} ${groupBadgeBgClass} border ${groupBadgeBorderClass}`}>
+                  {groupName}
+                </Badge>
+              ) : (
+                <span className="text-sm text-muted-foreground">Onbekend</span>
+              )}
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: () => <div className="flex justify-end">Acties</div>,
+        cell: ({ row }) => {
+          const leiding = row.original;
+          return (
+            <div className="flex justify-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">Meer opties</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    onClick={() => navigate(`edit/${leiding.id}`, { viewTransition: true })}
+                  >
+                    <Edit className="mr-2 h-4 w-4" /> Bewerken
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => { setSelectedLeidingForDialog(leiding); setDisableConfirmDialog(true); }}
+                  >
+                    <ShieldX className="mr-2 h-4 w-4" /> Inactief zetten
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => { setSelectedLeidingForDialog(leiding); setDeleteDialog(true); }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> Verwijderen
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      }),
+    ],
+    [groups, navigate, setSelectedLeidingForDialog, setDisableConfirmDialog, setDeleteDialog, COLOR_MAP, BADGE_BACKGROUND_COLOR_MAP, BADGE_BORDER_COLOR_MAP]
+  );
+
+  const table = useReactTable({
+    data: filteredLeiding || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
   return (
     <PrivateRoute>
       <PageLayout>
-        <header className="flex justify-between items-center mb-6">
+        <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"> {/* Adjusted for better layout with search */}
           <h3 className="text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
-          <div className="flex gap-2">
-            <Select defaultValue="*" onValueChange={setSelectedFilter}>
-              <SelectTrigger className="w-full">
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto"> {/* Adjusted for better layout */}
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Zoek op naam..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-full md:max-w-sm" // Increased padding for icon
+              />
+            </div>
+            <Select defaultValue="all_by_group" onValueChange={setSelectedFilter}>
+              <SelectTrigger className="w-fit"> {/* Adjusted width for consistency */}
                 <SelectValue placeholder="Kies een groep" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Nuttig</SelectLabel>
+                  <SelectItem value="all_by_group">
+                    <Users className="mr-2 h-4 w-4" />
+                    Alle leiding (per groep)
+                  </SelectItem>
                   <SelectItem value="*">
-                    <CalendarArrowUp />
+                    <CalendarArrowUp className="mr-2 h-4 w-4" />
                     Alle leiding (Anciëniteit)
                   </SelectItem>
+                  <SelectSeparator />
                   <SelectItem value="trekkers">
-                    <Star />Trekkers
+                    <Star className="mr-2 h-4 w-4" />Trekkers
                   </SelectItem>
                   <SelectItem value="hoofdleiding">
-                    <Crown />Hoofdleiding
+                    <Crown className="mr-2 h-4 w-4" />Hoofdleiding
                   </SelectItem>
                 </SelectGroup>
                 <SelectSeparator />
@@ -217,7 +481,7 @@ export default function Active() {
             </Select>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button><UserPlus />Voeg Leiding Toe</Button>
+                <Button className="w-full md:w-auto"><UserPlus className="mr-2 h-4 w-4" />Voeg Leiding Toe</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -237,7 +501,7 @@ export default function Active() {
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="leidingsploeg" className="text-right">Leidingsgroep</Label>
-                    <Select onValueChange={setLeidingsploeg}>
+                    <Select onValueChange={setLeidingsploeg} value={leidingsploeg}> {/* Added value prop */}
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Kies groep" />
                       </SelectTrigger>
@@ -261,41 +525,92 @@ export default function Active() {
         </header>
 
         <div className="rounded-lg border bg-background/50 dark:bg-background/30 shadow-md overflow-hidden">
-          <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-border bg-accent/20 dark:bg-accent/10">
-            <div>Persoon</div>
-            <div>Jaren leiding</div>
-            <div className="flex justify-center">Geboortedatum</div>
-            <div className="flex justify-center">Groep</div>
-            <div className="flex justify-end">Acties</div>
-          </div>
-
-          <div>
-            {filteredLeiding?.map((person) => {
-              const group = groups?.find(g => g.id === person.leidingsploeg);
-              const groupName = group?.naam;
-              const groupTextColorClass = group?.color ? COLOR_MAP[group.color] : "text-foreground";
-              const groupBadgeBgClass = group?.color ? BADGE_BACKGROUND_COLOR_MAP[group.color] : "bg-muted";
-              const groupBadgeBorderClass = group?.color ? BADGE_BORDER_COLOR_MAP[group.color] : "border-border";
-
-              return (
-                <LeidingCard
-                  key={person.id}
-                  leiding={person}
-                  onDelete={handleDeleteLeiding}
-                  groupName={groupName}
-                  groupTextColorClass={groupTextColorClass}
-                  groupBadgeBgClass={groupBadgeBgClass}
-                  groupBadgeBorderClass={groupBadgeBorderClass}
-                />
-              );
-            })}
-            {filteredLeiding?.length === 0 && (
-              <div className="p-4 text-center text-muted-foreground">
-                Geen leiding gevonden voor de geselecteerde filter.
-              </div>
-            )}
-          </div>
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    Geen leiding gevonden voor de geselecteerde filter.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Weet je het zeker?</DialogTitle>
+              <DialogDescription>
+                Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> definitief te verwijderen. Deze actie kan niet ongedaan worden gemaakt.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialog(false)}>
+                Annuleren
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Verwijder
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Disable Confirmation Dialog (for active -> inactive) */}
+        <Dialog open={disableConfirmDialog} onOpenChange={setDisableConfirmDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Weet je het zeker?</DialogTitle>
+              <DialogDescription>
+                Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDisableConfirmDialog(false)}>
+                Annuleren
+              </Button>
+              <Button variant="destructive" onClick={handleDisable}>
+                Inactief plaatsen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </PageLayout>
     </PrivateRoute>
   );
