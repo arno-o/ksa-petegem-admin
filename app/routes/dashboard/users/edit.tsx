@@ -21,16 +21,16 @@ import FileUpload from "~/components/allround/file-upload";
 import { Calendar } from "~/components/ui/calendar";
 import FullScreenLoader from "~/components/allround/full-screen-loader";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "~/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
@@ -46,7 +46,8 @@ export function meta({ }: Route.MetaArgs) {
 
 const EditUser = () => {
     const [dobDatePicker, setDobDatePicker] = useState(false);
-    const [leadDatePicker, setLeadDatePicker] = useState(false);
+    // Remove leadDatePicker state as it's no longer a date picker
+    // const [leadDatePicker, setLeadDatePicker] = useState(false); 
 
     const navigate = useNavigate();
     const { leidingId } = useParams();
@@ -143,6 +144,17 @@ const EditUser = () => {
         }
     };
 
+    // --- New logic for year selection ---
+    const currentYear = new Date().getFullYear();
+    const startYear = 2015;
+    const years = Array.from({ length: currentYear - startYear + 1 }, (_, i) => currentYear - i);
+
+    const handleLeidingSindsYearChange = (yearString: string) => {
+        const year = parseInt(yearString, 10);
+        const newDate = new Date(year, 8, 1);
+        setForm({ ...form, leiding_sinds: newDate });
+    };
+
     if (loading) {
         return (
             <PageLayout>
@@ -208,8 +220,9 @@ const EditUser = () => {
                                                     <ChevronDownIcon className="ml-2 h-4 w-4" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="p-0">
+                                            <PopoverContent>
                                                 <Calendar
+                                                    hideWeekdays
                                                     mode="single"
                                                     selected={form.geboortedatum}
                                                     captionLayout="dropdown"
@@ -219,6 +232,10 @@ const EditUser = () => {
                                                             setDobDatePicker(false);
                                                         }
                                                     }}
+                                                    disabled={(date) =>
+                                                        date > new Date() || date < new Date("1900-01-01")
+                                                    }
+                                                    defaultMonth={form.geboortedatum}
                                                 />
                                             </PopoverContent>
                                         </Popover>
@@ -274,29 +291,24 @@ const EditUser = () => {
                                         </Select>
                                     </div>
 
+                                    {/* Replace Popover/Calendar for 'leiding_sinds' with Select dropdown */}
                                     <div className="flex flex-col gap-2">
                                         <Label>Leiding sinds</Label>
-                                        <Popover open={leadDatePicker} onOpenChange={setLeadDatePicker}>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" className="w-full justify-between font-normal">
-                                                    {form.leiding_sinds ? form.leiding_sinds.toLocaleDateString("nl-BE") : "Kies een datum"}
-                                                    <ChevronDownIcon className="ml-2 h-4 w-4" />
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={form.leiding_sinds}
-                                                    captionLayout="dropdown"
-                                                    onSelect={(date) => {
-                                                        if (date) {
-                                                            setForm({ ...form, leiding_sinds: date });
-                                                            setLeadDatePicker(false);
-                                                        }
-                                                    }}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <Select
+                                            onValueChange={handleLeidingSindsYearChange}
+                                            value={form.leiding_sinds ? String(form.leiding_sinds.getFullYear()) : ""}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Kies een jaar" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {years.map((year) => (
+                                                    <SelectItem key={year} value={String(year)}>
+                                                        {year}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 

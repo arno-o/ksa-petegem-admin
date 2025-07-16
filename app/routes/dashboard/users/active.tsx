@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
-import { cn } from "~/lib/utils"; // For combining Tailwind classes
 import PageLayout from "../../pageLayout";
 import { Button } from "~/components/ui/button";
 import PrivateRoute from "~/context/PrivateRoute";
-import LeidingCard from "~/components/cards/leiding-card";
 import type { Route } from "../users/+types/active";
+import LeidingCard from "~/components/cards/leiding-card";
 
-import { UserPlus, ChevronDown } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 import type { Group, Leiding } from "~/types";
 import { fetchActiveGroups, fetchActiveLeiding, createLeiding } from "~/utils/data";
@@ -21,10 +20,12 @@ import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible"
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "~/components/ui/tabs"
+import { Badge } from "~/components/ui/badge";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Leiding" }];
@@ -84,15 +85,15 @@ export default function Active() {
   };
 
   const colorMap: Record<string, string> = {
-        yellow: "bg-yellow-500 dark:bg-yellow-400",
-        blue: "bg-blue-500 dark:bg-blue-400",
-        green: "bg-green-500 dark:bg-green-400",
-        purple: "bg-purple-500 dark:bg-purple-400",
-        red: "bg-red-500 dark:bg-red-400",
-        orange: "bg-orange-500 dark:bg-orange-400",
-        lime: "bg-lime-500 dark:bg-lime-400",
-        rose: "bg-rose-500 dark:bg-rose-400",
-    };
+    yellow: "bg-yellow-500 dark:bg-yellow-400",
+    blue: "bg-blue-500 dark:bg-blue-400",
+    green: "bg-green-500 dark:bg-green-400",
+    purple: "bg-purple-500 dark:bg-purple-400",
+    red: "bg-red-500 dark:bg-red-400",
+    orange: "bg-orange-500 dark:bg-orange-400",
+    lime: "bg-lime-500 dark:bg-lime-400",
+    rose: "bg-rose-500 dark:bg-rose-400",
+  };
 
   return (
     <PrivateRoute>
@@ -143,15 +144,40 @@ export default function Active() {
           </Dialog>
         </header>
 
-        <div className="flex flex-col p-4">
-          {groups?.sort((a, b) => a.id - b.id).map((group) => (
-            <div className="w-full ">
-              <div className="flex items-center justify-between border-b py-4 mb-4">
-                <h1 className="text-2xl font-bold">{group.naam}</h1>
-                <div key={group.id} className={`h-6 w-6 ${colorMap[group.color] ?? "bg-gray-300"} ring-background rounded-full ring-2`}></div>
-              </div>
+        <Tabs defaultValue="0">
+          <TabsList className="text-foreground mb-3 h-auto gap-2 rounded-none border-b bg-transparent px-0 py-1">
+            <TabsTrigger
+              value="0"
+              className="hover:bg-accent hover:text-foreground data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Alle leiding
+              <Badge variant={"secondary"} className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums">
+                {leiding?.length}
+              </Badge>
+            </TabsTrigger>
 
-              <div className="flex flex-col gap-3">
+            {groups?.sort((a, b) => a.id - b.id).map((group) => (
+              <TabsTrigger
+                value={`${group.id}`}
+                className="hover:bg-accent hover:text-foreground data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                {group.naam}
+                <Badge variant={"secondary"} className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums">
+                  {leiding?.filter(persoon => persoon.leidingsploeg === group.id).length}
+                </Badge>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent key="0" value="0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-1">
+              {leiding?.map(persoon => (
+                <LeidingCard key={persoon.id} leiding={persoon} onDelete={handleDeleteLeiding} />
+              ))}
+            </div>
+          </TabsContent>
+          {groups?.sort((a, b) => a.id - b.id).map((group) => (
+            <TabsContent key={group.id} value={`${group.id}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-1">
                 {leiding?.filter(persoon => persoon.leidingsploeg === group.id)
                   .sort((a, b) => {
                     if (a.trekker && !b.trekker) { return -1; }
@@ -162,10 +188,9 @@ export default function Active() {
                     <LeidingCard key={persoon.id} leiding={persoon} onDelete={handleDeleteLeiding} />
                   ))}
               </div>
-            </div>
+            </TabsContent>
           ))}
-        </div>
-
+        </Tabs>
       </PageLayout>
     </PrivateRoute>
   );
