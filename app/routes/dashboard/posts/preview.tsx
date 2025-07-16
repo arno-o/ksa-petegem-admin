@@ -95,7 +95,7 @@ export default function PreviewPost() {
                             <img
                                 src={post.cover_img}
                                 alt={post.title}
-                                className="w-full h-auto max-h-[24rem] object-cover transition-transform duration-300 hover:scale-105"
+                                className="w-full h-auto max-h-[24rem] object-cover transition-transform duration-300"
                                 onError={(e) => {
                                     e.currentTarget.src = `https://placehold.co/800x400/CCCCCC/333333?text=Image+Not+Found`;
                                 }}
