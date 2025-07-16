@@ -85,6 +85,8 @@ function useEvents() {
                     date_start: event.date_start ? new Date(event.date_start) : null,
                     date_end: event.date_end ? new Date(event.date_end) : null,
                 }));
+                // Sort events by ID here
+                processedData.sort((a, b) => a.id - b.id);
                 setEvents(processedData);
             } catch (err) {
                 console.error("Failed to fetch events:", err);
@@ -105,6 +107,8 @@ function useEvents() {
                 date_start: event.date_start ? new Date(event.date_start) : null,
                 date_end: event.date_end ? new Date(event.date_end) : null,
             }));
+            // Sort events by ID here as well
+            processedData.sort((a, b) => a.id - b.id);
             setEvents(processedData);
         } catch (err) {
             console.error("Failed to refresh events:", err);
@@ -273,7 +277,8 @@ export default function Events() {
     const handleDeleteEvent = async (id: number) => {
         try {
             await deleteEvent(id);
-            setEvents((prev) => prev.filter((event) => event.id !== id));
+            // After deletion, refresh all events to ensure the sorted order is maintained
+            await refreshEvents();
             toast.success("Activiteit succesvol verwijderd.");
         } catch (err) {
             console.error("Failed to delete event:", err);

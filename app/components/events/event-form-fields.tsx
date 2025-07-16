@@ -91,7 +91,7 @@ export function EventFormFields({
                   setForm((prev) => ({ ...prev, date_start: date ?? undefined }));
                   setErrors((prev) => ({ ...prev, date_start: "" }));
                 }}
-                initialFocus
+                defaultMonth={form.date_start}
               />
             </PopoverContent>
           </Popover>
@@ -143,7 +143,7 @@ export function EventFormFields({
                 mode="single"
                 selected={form.date_end}
                 onSelect={(date) => setForm((prev) => ({ ...prev, date_end: date ?? undefined }))}
-                initialFocus
+                defaultMonth={form.date_end}
               />
             </PopoverContent>
           </Popover>
