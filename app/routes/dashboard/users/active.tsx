@@ -283,7 +283,7 @@ export default function Active() {
         header: () => "Persoon",
         cell: info => (
           <div className="flex items-center gap-4">
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-12 w-12">
               <AvatarImage src={info.row.original.foto_url ?? ""} alt={`${info.row.original.voornaam || ''} ${info.row.original.familienaam || ''}`} />
               <AvatarFallback>
                 {info.row.original.voornaam?.charAt(0) || ''}
@@ -291,7 +291,7 @@ export default function Active() {
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-row items-center gap-2">
-              <p className="font-medium leading-none">
+              <p className="text-md font-medium leading-none">
                 {info.row.original.voornaam} {info.row.original.familienaam}
               </p>
               {info.row.original.trekker && (
