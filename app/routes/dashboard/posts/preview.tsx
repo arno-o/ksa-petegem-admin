@@ -72,7 +72,7 @@ export default function PreviewPost() {
 
                     <div className="mb-6 flex flex-row md:justify-between gap-2">
                         <Button
-                            className="w-1/2 md:w-fit"
+                            className="grow md:w-fit"
                             variant="outline"
                             onClick={() => navigate(`/berichten/edit/${post.id}`, { viewTransition: true })}
                         >
@@ -81,7 +81,7 @@ export default function PreviewPost() {
                         </Button>
 
                         <Button
-                            className="w-1/2 md:w-fit"
+                            className="w-fit md:w-fit"
                             variant="default"
                             onClick={() => navigate(`/berichten/`, { viewTransition: true })}
                         >
