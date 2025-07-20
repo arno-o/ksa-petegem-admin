@@ -66,7 +66,7 @@ export default function Groups() {
   return (
     <PrivateRoute>
       <PageLayout>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
           <h3 className="text-2xl font-semibold tracking-tight">Groepsbeheer</h3>
           <Button onClick={handleAddGroup} className="flex items-center gap-2">
             <CircleFadingPlus className="h-4 w-4" />

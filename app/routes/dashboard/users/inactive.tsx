@@ -107,10 +107,6 @@ export default function Inactive() {
             )}
             {!loading && leiding?.map((person) => {
               const group = groups?.find(g => g.id === person.leidingsploeg);
-              const groupName = group?.naam;
-              const groupTextColorClass = group?.color ? COLOR_MAP[group.color] : "text-foreground";
-              const groupBadgeBgClass = group?.color ? BADGE_BACKGROUND_COLOR_MAP[group.color] : "bg-muted";
-              const groupBadgeBorderClass = group?.color ? BADGE_BORDER_COLOR_MAP[group.color] : "border-border";
 
               return (
                 <LeidingCard
@@ -118,10 +114,6 @@ export default function Inactive() {
                   leiding={person}
                   onDelete={handleDeleteLeiding}
                   onRestore={handleRestoreLeiding}
-                  groupName={groupName}
-                  groupTextColorClass={groupTextColorClass}
-                  groupBadgeBgClass={groupBadgeBgClass}
-                  groupBadgeBorderClass={groupBadgeBorderClass}
                   isInactiveMode={true}
                 />
               );

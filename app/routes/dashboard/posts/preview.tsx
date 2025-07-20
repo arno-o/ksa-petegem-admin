@@ -68,11 +68,11 @@ export default function PreviewPost() {
     return (
         <PrivateRoute>
             <PageLayout>
-                <div className="flex flex-col w-full max-w-screen-md mx-auto px-4 sm:px-6 pb-8">
+                <div className="flex flex-col w-full max-w-screen-md mx-auto px-2 md:px-4 pb-8">
 
-                    <div className="mb-6 flex flex-col md:flex-row md:justify-between gap-2">
+                    <div className="mb-6 flex flex-row md:justify-between gap-2">
                         <Button
-                            className="w-full md:w-fit"
+                            className="w-1/2 md:w-fit"
                             variant="outline"
                             onClick={() => navigate(`/berichten/edit/${post.id}`, { viewTransition: true })}
                         >
@@ -81,8 +81,8 @@ export default function PreviewPost() {
                         </Button>
 
                         <Button
-                            className="w-full md:w-fit"
-                            variant="secondary"
+                            className="w-1/2 md:w-fit"
+                            variant="default"
                             onClick={() => navigate(`/berichten/`, { viewTransition: true })}
                         >
                             <X />
@@ -95,7 +95,7 @@ export default function PreviewPost() {
                             <img
                                 src={post.cover_img}
                                 alt={post.title}
-                                className="w-full h-auto max-h-[24rem] object-cover transition-transform duration-300"
+                                className="w-full h-auto max-h-[14rem] md:max-h-[24rem] object-cover transition-transform duration-300"
                                 onError={(e) => {
                                     e.currentTarget.src = `https://placehold.co/800x400/CCCCCC/333333?text=Image+Not+Found`;
                                 }}

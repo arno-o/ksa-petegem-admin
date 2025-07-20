@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
-import { Edit, Trash2, MapPin, Calendar as CalendarIcon, Clock, MoreHorizontal } from "lucide-react";
+import { Edit, Trash2, MapPin, Calendar as CalendarIcon, Clock, MoreHorizontal, Calendar, MoreVertical } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { type Option } from "~/components/ui/multiselect";
 import { toast } from "sonner";
@@ -571,17 +571,21 @@ export default function Events() {
                                         return (
                                             <div
                                                 key={event.id}
-                                                className="bg-card border rounded-lg p-4 shadow-sm flex flex-col gap-2"
+                                                className="bg-card border rounded-lg p-4 shadow-sm flex flex-col gap-3"
                                             >
                                                 <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <h2 className="text-lg font-semibold leading-tight">{event.title}</h2>
-                                                        <p className="text-sm text-muted-foreground">{event.location}</p>
+                                                    <div className="flex-1 pr-4">
+                                                        <h2 className="text-lg font-bold leading-snug text-foreground">
+                                                            {event.title}
+                                                        </h2>
+                                                        <p className="text-sm text-muted-foreground flex items-center mt-1">
+                                                            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" /> {event.location}
+                                                        </p>
                                                     </div>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <MoreHorizontal className="h-4 w-4" />
+                                                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
@@ -605,29 +609,32 @@ export default function Events() {
                                                                     setEditDialogOpen(true);
                                                                 }}
                                                             >
-                                                                <Edit className="mr-2 h-4 w-4" /> Bewerken
+                                                                <Edit className="mr-2 h-4 w-4" /> Edit
                                                             </DropdownMenuItem>
                                                             <AlertDialog>
                                                                 <AlertDialogTrigger asChild>
-                                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600">
-                                                                        <Trash2 className="mr-2 h-4 w-4" /> Verwijderen
+                                                                    <DropdownMenuItem
+                                                                        onSelect={(e) => e.preventDefault()}
+                                                                        className="text-red-600 focus:text-red-600"
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                                     </DropdownMenuItem>
                                                                 </AlertDialogTrigger>
                                                                 <AlertDialogContent>
                                                                     <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                                         <AlertDialogDescription>
-                                                                            Je staat op het punt om dit evenement permanent te verwijderen.
-                                                                            Deze actie kan niet ongedaan worden gemaakt.
+                                                                            You are about to permanently delete this event. This action
+                                                                            cannot be undone.
                                                                         </AlertDialogDescription>
                                                                     </AlertDialogHeader>
                                                                     <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                                         <AlertDialogAction
                                                                             onClick={() => handleDeleteEvent(event.id)}
                                                                             className="bg-red-600 hover:bg-red-700"
                                                                         >
-                                                                            Verwijder
+                                                                            Delete
                                                                         </AlertDialogAction>
                                                                     </AlertDialogFooter>
                                                                 </AlertDialogContent>
@@ -636,19 +643,27 @@ export default function Events() {
                                                     </DropdownMenu>
                                                 </div>
 
-                                                <p className="text-md">
-                                                    📅 {event.date_start?.toLocaleDateString("nl-BE")}
-                                                    {event.date_end &&
-                                                        event.date_start?.toDateString() !== event.date_end?.toDateString() &&
-                                                        ` - ${event.date_end?.toLocaleDateString("nl-BE")}`}
-                                                </p>
+                                                <div className="grid grid-cols-2 gap-2 text-sm text-foreground">
+                                                    <p className="flex items-center">
+                                                        <Calendar class="h-4 w-4 mr-2 text-muted-foreground" />
+                                                        <span>
+                                                            {event.date_start?.toLocaleDateString("nl-BE")}
+                                                            {event.date_end &&
+                                                                event.date_start?.toDateString() !== event.date_end?.toDateString() &&
+                                                                ` - ${event.date_end?.toLocaleDateString("nl-BE")}`}
+                                                        </span>
+                                                    </p>
 
-                                                <p className="text-md">
-                                                    ⏰ {event.time_start}
-                                                    {event.time_end && ` - ${event.time_end}`}
-                                                </p>
+                                                    <p className="flex items-center">
+                                                        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                                                        <span>
+                                                            {event.time_start}
+                                                            {event.time_end && ` - ${event.time_end}`}
+                                                        </span>
+                                                    </p>
+                                                </div>
 
-                                                <div className="flex gap-1">{groupBadges}</div>
+                                                <div className="flex flex-wrap gap-2 mt-2">{groupBadges}</div>
                                             </div>
                                         );
                                     })}
