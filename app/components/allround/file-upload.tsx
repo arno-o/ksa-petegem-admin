@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { cn } from "~/lib/utils";
 import { ImageIcon, Loader2, Trash } from "lucide-react";
 
-import imageCompression from "browser-image-compression"; // ⬅️ add this import at the top
+import imageCompression from "browser-image-compression";
 import { uploadLeidingPhoto, uploadPostCover, deleteFromBucket } from "~/utils/data";
 
 interface FileUploadProps {
@@ -47,7 +47,9 @@ const handleUpload = async (file: File) => {
 
     setPreviewUrl(url);
     onChange(url);
-    toast.success("Afbeelding geüpload");
+    toast.success("Afbeelding geüpload", {
+      description: String(url),
+    });
   } catch (err) {
     console.error(err);
     toast.error("Uploaden mislukt");
