@@ -10,6 +10,7 @@ import {
 } from "~/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { ScrollArea } from "~/components/ui/scroll-area";
 
 import { EventFormFields } from "./event-form-fields";
 
@@ -50,37 +51,39 @@ export function EventDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] rounded-lg shadow-xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Pas de details van deze activiteit aan."
-              : "Vul alle velden in om een nieuwe activiteit aan te maken."}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="overflow-x-scroll sm:max-w-[425px] rounded-lg shadow-xl max-h-[90vh]">
+        <ScrollArea className="">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}
+            </DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? "Pas de details van deze activiteit aan."
+                : "Vul alle velden in om een nieuwe activiteit aan te maken."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <EventFormFields
-          form={form}
-          setForm={setForm}
-          errors={errors}
-          setErrors={setErrors}
-          groupOptions={groupOptions}
-          TIME_OPTIONS={TIME_OPTIONS}
-        />
+          <EventFormFields
+            form={form}
+            setForm={setForm}
+            errors={errors}
+            setErrors={setErrors}
+            groupOptions={groupOptions}
+            TIME_OPTIONS={TIME_OPTIONS}
+          />
 
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Annuleer
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Annuleer
+              </Button>
+            </DialogClose>
+            <Button type="submit" onClick={onSubmit}>
+              {isEdit ? "Opslaan" : "Activiteit aanmaken"}
             </Button>
-          </DialogClose>
-          <Button type="submit" onClick={onSubmit}>
-            {isEdit ? "Opslaan" : "Activiteit aanmaken"}
-          </Button>
-        </DialogFooter>
+          </DialogFooter>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

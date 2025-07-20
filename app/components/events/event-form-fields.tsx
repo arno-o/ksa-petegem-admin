@@ -107,7 +107,7 @@ export function EventFormFields({
               setErrors((prev) => ({ ...prev, time_start: "" }));
             }}
           >
-            <SelectTrigger className={cn("w-full", errors.time_start && "border-red-500 focus-visible:ring-red-500")}> 
+            <SelectTrigger className={cn("w-full", errors.time_start && "border-red-500 focus-visible:ring-red-500")}>
               <SelectValue placeholder="Kies een tijd" />
             </SelectTrigger>
             <SelectContent>
@@ -124,7 +124,7 @@ export function EventFormFields({
 
       <div className="grid grid-cols-5 gap-4">
         <div className="flex flex-col gap-2 col-span-3">
-          <Label htmlFor="date_end">Einddatum (optioneel)</Label>
+          <Label htmlFor="date_end" className="text-neutral-500">Einddatum (*)</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -150,7 +150,7 @@ export function EventFormFields({
         </div>
 
         <div className="flex flex-col gap-2 col-span-2">
-          <Label htmlFor="time_end">Eindtijd (optioneel)</Label>
+          <Label htmlFor="time_end" className="text-neutral-500">Eindtijd (*)</Label>
           <Select
             value={form.time_end}
             onValueChange={(value) => setForm((prev) => ({ ...prev, time_end: value }))}

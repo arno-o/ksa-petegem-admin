@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { useNavigate, useParams, Link } from "react-router";
 import { ChevronLeft, Pencil, Trash, Save, Eye, Badge, BadgeCheck } from "lucide-react";
 
@@ -38,6 +39,7 @@ export function meta({ }: Route.MetaArgs) {
 export default function EditPostPage() {
     const { postId } = useParams();
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
 
     const [post, setPost] = useState<Post | null>(null); // Post state directly holds published status
     const [loading, setLoading] = useState(true);
@@ -47,7 +49,6 @@ export default function EditPostPage() {
         title: "",
         description: "",
         cover_img: "",
-        // published: false, // Removed from form state
     });
 
     useEffect(() => {
@@ -198,17 +199,17 @@ export default function EditPostPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div className="flex items-center gap-2">
                         <Link to="/berichten" viewTransition>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="">
                                 <ChevronLeft className="h-5 w-5" />
                                 <span className="sr-only">Terug naar berichten pagina</span>
                             </Button>
                         </Link>
                         <h1 className="text-2xl font-bold tracking-tight">Bewerk bericht</h1>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-row w-full md:w-fit gap-2">
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="destructive" size="icon">
+                                <Button variant="destructive" size={isMobile ? "lg" : "icon"}>
                                     <Trash />
                                 </Button>
                             </DialogTrigger>
@@ -233,18 +234,18 @@ export default function EditPostPage() {
                             </DialogContent>
                         </Dialog>
 
-                        <Button variant="outline" onClick={() => { handleSave(); navigate(`/berichten/preview/${post.id}`); }}>
+                        <Button variant="outline" size={isMobile ? "lg" : "default"} onClick={() => { handleSave(); navigate(`/berichten/preview/${post.id}`); }}>
                             <Eye />
-                            Preview
+                            {isMobile ? "" : "Preview"}
                         </Button>
 
-                        <Button variant="outline" onClick={handleSave}>
+                        <Button variant="outline" onClick={handleSave} className="grow md:w-fit">
                             <Save />
                             Opslaan
                         </Button>
 
                         {/* New Publish Button */}
-                        <Button variant={post.published ? "default" : "outline"} onClick={handlePublishToggle}>
+                        <Button variant={post.published ? "default" : "outline"} onClick={handlePublishToggle} className="grow md:w-fit">
                             {!post.published ? <Badge /> : <BadgeCheck />}
                             {!post.published ? 'Publiceer' : 'Gepubliceerd'}
                         </Button>
