@@ -645,7 +645,7 @@ export default function Events() {
 
                                                 <div className="grid grid-cols-2 gap-2 text-sm text-foreground">
                                                     <p className="flex items-center">
-                                                        <Calendar class="h-4 w-4 mr-2 text-muted-foreground" />
+                                                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                                                         <span>
                                                             {event.date_start?.toLocaleDateString("nl-BE")}
                                                             {event.date_end &&
