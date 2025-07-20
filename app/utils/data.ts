@@ -49,6 +49,7 @@ export const createLeiding = async (newLeiding: {
   voornaam: string;
   familienaam: string;
   leidingsploeg: number;
+  actief: boolean;
 }) => {
   const { data, error } = await supabase
     .from("leiding")
@@ -264,5 +265,33 @@ export const deleteFromBucket = async (bucket: string, publicUrl: string) => {
   } catch (err) {
     console.error("deleteFromBucket error:", err);
     throw err;
+  }
+};
+
+// NEW: Function to mass update leiding records
+interface MassUpdateLeidingData {
+  leidingIds: number[];
+  updateData: {
+    leidingsploeg?: number;
+    actief?: boolean;
+  };
+}
+
+export const massUpdateLeiding = async ({ leidingIds, updateData }: MassUpdateLeidingData) => {
+  if (leidingIds.length === 0) {
+    console.warn("No leiding IDs provided for mass update.");
+    return;
+  }
+
+  // Supabase's update method can handle updating multiple rows with a single query
+  // if you provide a filter that matches multiple rows.
+  const { error } = await supabase
+    .from("leiding")
+    .update(updateData)
+    .in("id", leidingIds);
+
+  if (error) {
+    console.error("Error during mass update:", error);
+    throw error;
   }
 };

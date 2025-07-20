@@ -1,7 +1,10 @@
+// active.tsx
+
 // React and Hooks
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router";
-import { toast } from "sonner"; // Assuming toast is already configured for ShadCN
+import { Link, useNavigate } from "react-router"; // Changed from "react-router"
+import { useIsMobile } from "~/hooks/use-mobile";
+import { toast } from "sonner";
 
 // TanStack Table
 import {
@@ -10,10 +13,15 @@ import {
   getCoreRowModel,
   useReactTable,
   createColumnHelper,
+  getFilteredRowModel,
+  getPaginationRowModel, // This isn't currently used, but keep if you plan to use pagination
 } from "@tanstack/react-table";
 
 // Lucide Icons
-import { CalendarArrowUp, Crown, Star, UserPlus, MoreVertical, Edit, ShieldX, Trash2, Search, Users } from "lucide-react"; // Added Search icon
+import {
+  CalendarArrowUp, Crown, Star, UserPlus, MoreVertical, Edit, ShieldX,
+  Trash2, Search, Users, Download, FileSpreadsheet, FileBadge2, ListChecks
+} from "lucide-react";
 
 // UI Components (shadcn/ui or custom)
 import { Button } from "~/components/ui/button";
@@ -32,7 +40,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { Input } from "~/components/ui/input"; // Already imported, but noting its importance for search
+import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
   Select,
@@ -49,11 +57,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "~/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
+import { Separator } from "~/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { Checkbox } from "~/components/ui/checkbox";
 
 // Context & Layout
 import PrivateRoute from "~/context/PrivateRoute";
@@ -62,7 +72,17 @@ import PageLayout from "../../pageLayout";
 // Data Utilities & Types
 import type { Group, Leiding } from "~/types";
 import type { Route } from "../users/+types/active";
-import { createLeiding, fetchActiveGroups, fetchActiveLeiding, deleteLeiding, disableLeiding } from "~/utils/data";
+import {
+  createLeiding, fetchActiveGroups, fetchActiveLeiding,
+  deleteLeiding, disableLeiding, massUpdateLeiding, // Import the new function
+  deleteFromBucket
+} from "~/utils/data";
+
+// Export Libraries
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+// @ts-ignore - autoTable might not have full TS definitions
+import autoTable from 'jspdf-autotable'; // Correct import for jspdf-autotable
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Leiding" }];
@@ -71,13 +91,17 @@ export function meta({ }: Route.MetaArgs) {
 const columnHelper = createColumnHelper<Leiding>();
 
 export default function Active() {
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // For "Nieuwe leiding aanmaken"
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<Group[]>();
   const [leiding, setLeiding] = useState<Leiding[]>();
   const [filteredLeiding, setFilteredLeiding] = useState<Leiding[]>();
   const [selectedFilter, setSelectedFilter] = useState<string>("all_by_group");
+
+  // State for row selection
+  const [rowSelection, setRowSelection] = useState({});
 
   // State for "Nieuwe leiding aanmaken" form
   const [voornaam, setVoornaam] = useState("");
@@ -93,6 +117,12 @@ export default function Active() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
+  // NEW: States for Mass Edit
+  const [massEditGroupDialog, setMassEditGroupDialog] = useState(false);
+  const [massDisableDialog, setMassDisableDialog] = useState(false);
+  const [selectedMassEditGroup, setSelectedMassEditGroup] = useState<string>("");
+
+
   // Debounce effect for search term
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -104,7 +134,7 @@ export default function Active() {
     };
   }, [searchTerm]);
 
-  // Color maps
+  // Color maps (assuming these are constant, can be moved outside the component)
   const COLOR_MAP: Record<string, string> = {
     yellow: "text-yellow-600 dark:text-yellow-300",
     blue: "text-blue-600 dark:text-blue-300",
@@ -138,31 +168,26 @@ export default function Active() {
     rose: "border-rose-200 dark:border-rose-700",
   };
 
+  // Helper to reload all necessary data
+  const reloadData = async () => {
+    setLoading(true);
+    try {
+      const groupData = await fetchActiveGroups();
+      setGroups(groupData);
+      const leidingData = await fetchActiveLeiding();
+      setLeiding(leidingData);
+      setRowSelection({}); // Clear row selection after data reload
+    } catch (err) {
+      console.error("Failed to reload data:", err);
+      toast.error("Fout bij het vernieuwen van de gegevens.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadGroups = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchActiveGroups();
-        setGroups(data);
-      } catch (err) {
-        console.error("Failed to fetch groups:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const loadLeiding = async () => {
-      try {
-        const data = await fetchActiveLeiding();
-        setLeiding(data);
-      } catch (err) {
-        console.error("Failed to fetch leiding:", err);
-      }
-    };
-
-    loadGroups();
-    loadLeiding();
-  }, []);
+    reloadData();
+  }, []); // Initial load
 
   // Effect to filter and sort leiding whenever 'leiding' data, 'selectedFilter', or 'debouncedSearchTerm' changes
   useEffect(() => {
@@ -188,7 +213,11 @@ export default function Active() {
       });
     } else if (selectedFilter === "trekkers") {
       tempLeiding = leiding.filter(person => person.trekker);
-      tempLeiding.sort((a, b) => a.leidingsploeg - b.leidingsploeg);
+      tempLeiding.sort((a, b) => {
+        const groupA = groups?.find(g => g.id === a.leidingsploeg)?.naam || '';
+        const groupB = groups?.find(g => g.id === b.leidingsploeg)?.naam || '';
+        return groupA.localeCompare(groupB);
+      });
     } else if (selectedFilter === "hoofdleiding") {
       tempLeiding = leiding.filter(person => person.hoofdleiding);
       tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
@@ -218,14 +247,21 @@ export default function Active() {
     // Apply search filter (case-insensitive on voornaam and familienaam)
     if (debouncedSearchTerm) {
       const lowerCaseSearchTerm = debouncedSearchTerm.toLowerCase();
-      tempLeiding = tempLeiding.filter(person =>
-        (person.voornaam?.toLowerCase().includes(lowerCaseSearchTerm) ?? false) ||
-        (person.familienaam?.toLowerCase().includes(lowerCaseSearchTerm) ?? false)
-      );
+      tempLeiding = tempLeiding.filter(person => {
+        const group = groups?.find(g => g.id === person.leidingsploeg);
+        const groupName = group?.naam?.toLowerCase() || '';
+
+        return (
+          (person.voornaam?.toLowerCase().includes(lowerCaseSearchTerm) ?? false) ||
+          (person.familienaam?.toLowerCase().includes(lowerCaseSearchTerm) ?? false) ||
+          (person.leiding_sinds?.toString().includes(lowerCaseSearchTerm) ?? false) ||
+          groupName.includes(lowerCaseSearchTerm)
+        );
+      });
     }
 
     setFilteredLeiding(tempLeiding);
-  }, [leiding, selectedFilter, debouncedSearchTerm]);
+  }, [leiding, selectedFilter, debouncedSearchTerm, groups]);
 
 
   const handleCreate = async () => {
@@ -235,11 +271,12 @@ export default function Active() {
     }
 
     try {
-      const newId = await createLeiding({ voornaam, familienaam, leidingsploeg: Number(leidingsploeg) });
+      const newId = await createLeiding({ voornaam, familienaam, leidingsploeg: Number(leidingsploeg), actief: true }); // Ensure new leiding is active
       setOpen(false);
       setVoornaam("");
       setFamilienaam("");
       setLeidingsploeg("");
+      toast.success("Nieuwe leiding succesvol aangemaakt!");
       navigate(`/leiding/actief/edit/${newId.id}`);
     } catch (err) {
       toast.error("Aanmaken mislukt. Probeer opnieuw.");
@@ -250,10 +287,20 @@ export default function Active() {
   const handleDelete = async () => {
     if (!selectedLeidingForDialog) return;
     try {
+      if (selectedLeidingForDialog.foto_url) {
+        try {
+          const deleteURL = selectedLeidingForDialog.foto_url;
+          await deleteFromBucket("leiding-fotos", deleteURL);
+        } catch (bucketErr) {
+          console.error("Failed to delete image from bucket:", bucketErr);
+          toast.error(String(bucketErr));
+          return;
+        }
+      }
       await deleteLeiding(selectedLeidingForDialog.id);
       toast.success("Leiding werd definitief verwijderd.");
       setDeleteDialog(false);
-      setLeiding((prev) => prev?.filter((persoon) => persoon.id !== selectedLeidingForDialog.id));
+      await reloadData();
       setSelectedLeidingForDialog(null);
     } catch (err) {
       toast.error("Verwijderen mislukt. Probeer opnieuw.");
@@ -267,7 +314,7 @@ export default function Active() {
       await disableLeiding(selectedLeidingForDialog.id);
       toast.success("Leiding is succesvol inactief gezet.");
       setDisableConfirmDialog(false);
-      setLeiding((prev) => prev?.filter((persoon) => persoon.id !== selectedLeidingForDialog.id));
+      await reloadData(); // Reload data after disabling
       setSelectedLeidingForDialog(null);
     } catch (err) {
       toast.error("Inactief zetten mislukt. Probeer opnieuw.");
@@ -275,9 +322,172 @@ export default function Active() {
     }
   };
 
-  // @ts-ignore
-  const columns: ColumnDef<Leiding, unknown>[] = useMemo(
+  // NEW: Handle Mass Update Group
+  const handleMassUpdateGroup = async () => {
+    const selectedLeidingIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+    if (selectedLeidingIds.length === 0) {
+      toast.info("Geen leiding geselecteerd voor massabewerking.");
+      return;
+    }
+    if (!selectedMassEditGroup) {
+      toast.error("Selecteer een nieuwe groep.");
+      return;
+    }
+
+    try {
+      await massUpdateLeiding({
+        leidingIds: selectedLeidingIds,
+        updateData: { leidingsploeg: Number(selectedMassEditGroup) }
+      });
+      toast.success(`${selectedLeidingIds.length} leiding aangepast naar de nieuwe groep.`);
+      setMassEditGroupDialog(false);
+      setSelectedMassEditGroup("");
+      await reloadData(); // Reload data to reflect changes
+    } catch (err) {
+      toast.error("Massabewerking groep mislukt. Probeer opnieuw.");
+      console.error("Failed to mass update group:", err);
+    }
+  };
+
+  // NEW: Handle Mass Disable
+  const handleMassDisable = async () => {
+    const selectedLeidingIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+    if (selectedLeidingIds.length === 0) {
+      toast.info("Geen leiding geselecteerd om inactief te maken.");
+      return;
+    }
+
+    try {
+      await massUpdateLeiding({
+        leidingIds: selectedLeidingIds,
+        updateData: { actief: false }
+      });
+      toast.success(`${selectedLeidingIds.length} leiding is succesvol inactief gezet.`);
+      setMassDisableDialog(false);
+      await reloadData(); // Reload data to reflect changes
+    } catch (err) {
+      toast.error("Massabewerking inactief zetten mislukt. Probeer opnieuw.");
+      console.error("Failed to mass disable leiding:", err);
+    }
+  };
+
+  const getFormattedExportData = () => {
+    return table.getSelectedRowModel().rows.map(row => {
+      const leiding = row.original;
+      const group = groups?.find(g => g.id === leiding.leidingsploeg);
+      const groupName = group?.naam || 'Onbekend';
+      const formattedDob = leiding.geboortedatum
+        ? new Date(leiding.geboortedatum).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        : 'Onbekend';
+
+      return {
+        Voornaam: leiding.voornaam || '',
+        Familienaam: leiding.familienaam || '',
+        Geboortedatum: formattedDob,
+        Groep: groupName,
+      };
+    });
+  };
+
+  const getFilterTitle = () => {
+    let filterTitle = "";
+    switch (selectedFilter) {
+      case "all_by_group":
+        filterTitle = "Alle Leiding (per groep)";
+        break;
+      case "*":
+        filterTitle = "Alle Leiding (Anciëniteit)";
+        break;
+      case "trekkers":
+        filterTitle = "Trekkers";
+        break;
+      case "hoofdleiding":
+        filterTitle = "Hoofdleiding";
+        break;
+      default:
+        // If it's a numeric group ID, find the group name
+        const selectedGroupId = Number(selectedFilter);
+        const group = groups?.find(g => g.id === selectedGroupId);
+        filterTitle = group ? `Groep: ${group.naam}` : "Onbekende Filter";
+        break;
+    }
+    return filterTitle;
+  };
+
+  const handleExportXLS = () => {
+    const exportData = getFormattedExportData();
+    if (exportData.length === 0) {
+      toast.info("Geen leiding geselecteerd voor export.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Actieve Leiding");
+    XLSX.writeFile(workbook, "actieve_leiding.xlsx");
+    toast.success("Geselecteerde leiding geëxporteerd als XLS!");
+  };
+
+  const handleExportPDF = () => {
+    const exportData = getFormattedExportData();
+    if (exportData.length === 0) {
+      toast.info("Geen leiding geselecteerd voor export.");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const filterTypeText = getFilterTitle();
+    const pdfTitle = `Leidinglijst - ${filterTypeText}`;
+
+    doc.text(pdfTitle, 14, 20);
+
+    const tableColumn = ["Voornaam", "Familienaam", "Geboortedatum", "Groep"];
+    const tableRows = exportData.map(item => [
+      item.Voornaam,
+      item.Familienaam,
+      item.Geboortedatum,
+      item.Groep,
+    ]);
+
+    // Use autoTable with the expected object format for head and body
+    autoTable(doc, {
+      head: [tableColumn], // 'head' expects an array of arrays (even for one row)
+      body: tableRows,
+      startY: 30
+    });
+
+    doc.save("actieve_leiding.pdf");
+    toast.success("Geselecteerde leiding geëxporteerd als PDF!");
+  };
+
+  //@ts-ignore (Remove this if you fix your Leiding type or ColumnDef typing)
+  const columns: ColumnDef<Leiding>[] = useMemo(
     () => [
+      // Selection Checkbox
+      columnHelper.display({
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Selecteer alles"
+            className="translate-y-[2px]" // Align checkbox better
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Selecteer rij"
+            className="translate-y-[2px]" // Align checkbox better
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      }),
       columnHelper.accessor("voornaam", {
         id: "persoon",
         header: () => "Persoon",
@@ -291,13 +501,15 @@ export default function Active() {
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-row items-center gap-2">
-              <p className="text-md font-medium leading-none">
-                {info.row.original.voornaam} {info.row.original.familienaam}
-              </p>
+              <Link to={`/leiding/actief/edit/${info.row.original.id}`} viewTransition>
+                <p className="text-md font-medium leading-none hover:underline">
+                  {info.row.original.voornaam} {info.row.original.familienaam}
+                </p>
+              </Link>
               {info.row.original.trekker && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <Star fill={"true"} className="h-4 w-4" />
+                    <Star className="h-4 w-4 fill-[#0167B1] stroke-[#0167B1]" />
                   </TooltipTrigger>
                   <TooltipContent>
                     Trekker
@@ -308,7 +520,7 @@ export default function Active() {
               {info.row.original.hoofdleiding && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <Crown fill={"true"} className="h-4 w-4" />
+                    <Crown className="h-4 w-4 fill-[#F37D31] stroke-[#F37D31]" />
                   </TooltipTrigger>
                   <TooltipContent>
                     Hoofdleiding
@@ -322,9 +534,8 @@ export default function Active() {
       columnHelper.accessor("leiding_sinds", {
         id: "jarenLeiding",
         header: () => "Jaren leiding",
-        // Explicitly type the value as string or undefined, as it comes from Leiding type
         cell: info => {
-          const leidingSindsValue = info.getValue<string | undefined>(); // Use getValue with explicit type
+          const leidingSindsValue = info.getValue<string | undefined>();
           const yearsInLeiding = leidingSindsValue
             ? (() => {
               const leidingSinds = new Date(leidingSindsValue);
@@ -338,20 +549,26 @@ export default function Active() {
             })()
             : null;
           return (
-            <div className="text-sm text-muted-foreground">
-              {yearsInLeiding !== null ? `${yearsInLeiding} jaar` : 'Onbekend'}
-            </div>
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="text-sm text-muted-foreground">
+                  {yearsInLeiding !== null ? `${yearsInLeiding} jaar` : 'Onbekend'}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Leiding sinds {leidingSindsValue ? new Date(leidingSindsValue).getFullYear() : 'Onbekend'}</p>
+              </TooltipContent>
+            </Tooltip>
           );
         },
       }),
       columnHelper.accessor("geboortedatum", {
         id: "geboortedatum",
         header: () => <div className="flex justify-center">Geboortedatum</div>,
-        // Explicitly type the value as string or undefined
         cell: info => {
-          const geboortedatumValue = info.getValue<string | undefined>(); // Use getValue with explicit type
+          const geboortedatumValue = info.getValue<string | undefined>();
           const formattedGeboortedatum = geboortedatumValue
-            ? new Date(geboortedatumValue).toLocaleDateString('nl-BE')
+            ? new Date(geboortedatumValue).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })
             : 'Onbekend';
           return (
             <div className="text-sm text-muted-foreground flex justify-center">
@@ -430,97 +647,155 @@ export default function Active() {
     data: filteredLeiding || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+    onRowSelectionChange: setRowSelection,
+    state: {
+      rowSelection,
+    },
   });
+
+  const selectedRowCount = Object.keys(rowSelection).length;
 
   return (
     <PrivateRoute>
       <PageLayout>
-        <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"> {/* Adjusted for better layout with search */}
+        <header className="flex flex-col mb-4 gap-4">
           <h3 className="text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
-          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto"> {/* Adjusted for better layout */}
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Zoek op naam..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-full md:max-w-sm" // Increased padding for icon
-              />
-            </div>
-            <Select defaultValue="all_by_group" onValueChange={setSelectedFilter}>
-              <SelectTrigger className="w-fit"> {/* Adjusted width for consistency */}
-                <SelectValue placeholder="Kies een groep" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Nuttig</SelectLabel>
-                  <SelectItem value="all_by_group">
-                    <Users className="mr-2 h-4 w-4" />
-                    Alle leiding (per groep)
-                  </SelectItem>
-                  <SelectItem value="*">
-                    <CalendarArrowUp className="mr-2 h-4 w-4" />
-                    Alle leiding (Anciëniteit)
-                  </SelectItem>
+          <div className="flex flex-col md:flex-row md:justify-between gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="relative ">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Zoek op naam, groep, jaar leiding..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 w-full md:w-xs"
+                />
+              </div>
+              <Select defaultValue="all_by_group" onValueChange={setSelectedFilter}>
+                <SelectTrigger className="w-full md:w-fit">
+                  <SelectValue placeholder="Kies een groep" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Nuttig</SelectLabel>
+                    <SelectItem value="all_by_group">
+                      <Users className="mr-2 h-4 w-4" />
+                      Alle leiding (per groep)
+                    </SelectItem>
+                    <SelectItem value="*">
+                      <CalendarArrowUp className="mr-2 h-4 w-4" />
+                      Alle leiding (Anciëniteit)
+                    </SelectItem>
+                    <SelectSeparator />
+                    <SelectItem value="trekkers">
+                      <Star className="mr-2 h-4 w-4" />Trekkers
+                    </SelectItem>
+                    <SelectItem value="hoofdleiding">
+                      <Crown className="mr-2 h-4 w-4" />Hoofdleiding
+                    </SelectItem>
+                  </SelectGroup>
                   <SelectSeparator />
-                  <SelectItem value="trekkers">
-                    <Star className="mr-2 h-4 w-4" />Trekkers
-                  </SelectItem>
-                  <SelectItem value="hoofdleiding">
-                    <Crown className="mr-2 h-4 w-4" />Hoofdleiding
-                  </SelectItem>
-                </SelectGroup>
-                <SelectSeparator />
-                <SelectGroup>
-                  <SelectLabel>Groepen</SelectLabel>
-                  {groups?.sort((a, b) => a.id - b.id).map((g) => (
-                    <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full md:w-auto"><UserPlus className="mr-2 h-4 w-4" />Voeg Leiding Toe</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Nieuwe leiding aanmaken</DialogTitle>
-                  <DialogDescription>
-                    Vul snel de gegevens in om een nieuw profiel te starten.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="voornaam" className="text-right">Voornaam</Label>
-                    <Input id="voornaam" className="col-span-3" value={voornaam} onChange={(e) => setVoornaam(e.target.value)} />
+                  <SelectGroup>
+                    <SelectLabel>Groepen</SelectLabel>
+                    {groups?.sort((a, b) => a.id - b.id).map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
+              {isMobile ? <Separator className="my-5" /> : ""}
+            </div>
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+              {/* NEW: Mass Action Dropdown */}
+              {selectedRowCount > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant={"outline"}>
+                      <ListChecks className="mr-2 h-4 w-4" />
+                      Massa Acties ({selectedRowCount})
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => setMassEditGroupDialog(true)}
+                      className="cursor-pointer"
+                    >
+                      <Users className="mr-2 h-4 w-4" /> Groep wijzigen
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setMassDisableDialog(true)}
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                    >
+                      <ShieldX className="mr-2 h-4 w-4" /> Inactief zetten
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    disabled={selectedRowCount === 0}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Exporteer ({selectedRowCount})
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" >
+                  <DropdownMenuItem onClick={handleExportXLS}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Export als XLS
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPDF}>
+                    <FileBadge2 className="mr-2 h-4 w-4" /> Export als PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full md:w-auto"><UserPlus className="mr-2 h-4 w-4" />Voeg Leiding Toe</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Nieuwe leiding aanmaken</DialogTitle>
+                    <DialogDescription>
+                      Vul snel de gegevens in om een nieuw profiel te starten.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="voornaam" className="text-right">Voornaam</Label>
+                      <Input id="voornaam" className="col-span-3" value={voornaam} onChange={(e) => setVoornaam(e.target.value)} />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="familienaam" className="text-right">Familienaam</Label>
+                      <Input id="familienaam" className="col-span-3" value={familienaam} onChange={(e) => setFamilienaam(e.target.value)} />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="leidingsploeg" className="text-right">Leidingsgroep</Label>
+                      <Select onValueChange={setLeidingsploeg} value={leidingsploeg}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Kies groep" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {groups?.map((g) => (
+                            <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="familienaam" className="text-right">Familienaam</Label>
-                    <Input id="familienaam" className="col-span-3" value={familienaam} onChange={(e) => setFamilienaam(e.target.value)} />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="leidingsploeg" className="text-right">Leidingsgroep</Label>
-                    <Select onValueChange={setLeidingsploeg} value={leidingsploeg}> {/* Added value prop */}
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Kies groep" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {groups?.map((g) => (
-                          <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">Annuleer</Button>
-                  </DialogClose>
-                  <Button onClick={handleCreate}>Ga naar profiel</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button type="button" variant="outline">Annuleer</Button>
+                    </DialogClose>
+                    <Button onClick={handleCreate}>Ga naar profiel</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </header>
 
@@ -578,7 +853,7 @@ export default function Active() {
             <DialogHeader>
               <DialogTitle>Weet je het zeker?</DialogTitle>
               <DialogDescription>
-                Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> definitief te verwijderen. Deze actie kan niet ongedaan worden gemaakt.
+                Je staat op het punt om **{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}** definitief te verwijderen. Deze actie kan niet ongedaan worden gemaakt.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -598,7 +873,7 @@ export default function Active() {
             <DialogHeader>
               <DialogTitle>Weet je het zeker?</DialogTitle>
               <DialogDescription>
-                Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
+                Je staat op het punt om **{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}** te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -611,6 +886,62 @@ export default function Active() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* NEW: Mass Edit Group Dialog */}
+        <Dialog open={massEditGroupDialog} onOpenChange={setMassEditGroupDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Massa Groep Wijzigen</DialogTitle>
+              <DialogDescription>
+                Wijzig de groep voor de geselecteerde **{selectedRowCount}** leiding.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="mass-edit-group" className="text-right">Nieuwe Leidingsgroep</Label>
+                <Select onValueChange={setSelectedMassEditGroup} value={selectedMassEditGroup}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Kies nieuwe groep" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups?.map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setMassEditGroupDialog(false); setSelectedMassEditGroup(""); }}>
+                Annuleren
+              </Button>
+              <Button onClick={handleMassUpdateGroup} disabled={!selectedMassEditGroup}>
+                Groep aanpassen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* NEW: Mass Disable Dialog */}
+        <Dialog open={massDisableDialog} onOpenChange={setMassDisableDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Massa Inactief Zetten</DialogTitle>
+              <DialogDescription>
+                Je staat op het punt om **{selectedRowCount}** geselecteerde leiding te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMassDisableDialog(false)}>
+                Annuleren
+              </Button>
+              <Button variant="destructive" onClick={handleMassDisable}>
+                Leiding inactief plaatsen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </PageLayout>
     </PrivateRoute>
   );

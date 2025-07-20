@@ -28,7 +28,7 @@ import type { Post } from "~/types";
 import PageLayout from "../../pageLayout";
 import PrivateRoute from "~/context/PrivateRoute";
 import type { Route } from "../posts/+types/edit";
-import { fetchPostById, updatePost, deletePost } from "~/utils/data";
+import { fetchPostById, updatePost, deletePost, deleteFromBucket } from "~/utils/data";
 
 
 export function meta({ }: Route.MetaArgs) {
@@ -154,6 +154,17 @@ export default function EditPostPage() {
             return;
         }
         try {
+            if (post?.cover_img) {
+                try {
+                    // Extract the filename from the URL
+                    const deleteURL = post?.cover_img;
+                    await deleteFromBucket("post-covers", deleteURL);
+                } catch (bucketErr) {
+                    console.error("Failed to delete image from bucket:", bucketErr);
+                    toast.error(String(bucketErr));
+                    return;
+                }
+            }
             await deletePost(postId);
             toast.success("Bericht succesvol verwijderd.");
             navigate("/berichten", { viewTransition: true });

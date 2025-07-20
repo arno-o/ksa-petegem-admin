@@ -49,10 +49,6 @@ const LeidingCard = ({
   onDelete,
   onRestore,
   onDisable, // Destructure new prop
-  groupName,
-  groupTextColorClass,
-  groupBadgeBgClass,
-  groupBadgeBorderClass,
   isInactiveMode = false,
 }: LeidingCardProps) => {
   const navigate = useNavigate();
@@ -161,15 +157,6 @@ const LeidingCard = ({
             <div className="text-sm text-muted-foreground flex justify-center">
               {formattedGeboortedatum}
             </div>
-            <div className="flex justify-center">
-              {groupName ? (
-                <Badge className={`${groupTextColorClass} ${groupBadgeBgClass} border ${groupBadgeBorderClass}`}>
-                  {groupName}
-                </Badge>
-              ) : (
-                <span className="text-sm text-muted-foreground">Onbekend</span>
-              )}
-            </div>
           </>
         )}
 
@@ -213,87 +200,54 @@ const LeidingCard = ({
       </div>
 
       {/* Mobile View (sm and down) - Card-like layout */}
-      <div className={`md:hidden border-b bg-card/30 dark:bg-card/20 last:border-b-0`}>
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value={`item-${leiding.id}`} className="border-none">
-            <AccordionTrigger className="flex items-center gap-4 px-4 py-4 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={leiding.foto_url ?? ""} alt={`${leiding.voornaam} ${leiding.familienaam}`} />
-                <AvatarFallback>
-                  {leiding.voornaam.charAt(0)}
-                  {leiding.familienaam.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col text-left flex-grow">
-                <p className="text-lg font-bold leading-tight">
-                  {leiding.voornaam} {leiding.familienaam}
-                </p>
-                {groupName && (
-                  <Badge className={`mt-1 text-sm ${groupTextColorClass} ${groupBadgeBgClass} border ${groupBadgeBorderClass}`}>
-                    {groupName}
-                  </Badge>
-                )}
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
-                    <MoreVertical className="h-5 w-5" />
-                    <span className="sr-only">Meer opties</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  {!isInactiveMode ? (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => navigate(`edit/${leiding.id}`, { viewTransition: true })}
-                      >
-                        <Edit className="mr-2 h-4 w-4" /> Bewerken
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDisableConfirmDialog(true)}
-                      >
-                        <ShieldX className="mr-2 h-4 w-4" /> Inactief zetten
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <DropdownMenuItem onClick={() => setRestoreConfirmDialog(true)}>
-                      <Undo2 className="mr-2 h-4 w-4" /> Herstellen
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => setDeleteDialog(true)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" /> Verwijderen
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </AccordionTrigger>
+      <div className={`flex items-center gap-4 px-4 py-4 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors md:hidden border-b bg-card/30 dark:bg-card/20 last:border-b-0`}>
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={leiding.foto_url ?? ""} alt={`${leiding.voornaam} ${leiding.familienaam}`} />
+          <AvatarFallback>
+            {leiding.voornaam.charAt(0)}
+            {leiding.familienaam.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col text-left flex-grow">
+          <p className="text-lg font-bold leading-tight">
+            {leiding.voornaam} {leiding.familienaam}
+          </p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-10 w-10">
+              <MoreVertical className="h-5 w-5" />
+              <span className="sr-only">Meer opties</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
             {!isInactiveMode ? (
-              <AccordionContent className="px-4 pb-4 text-base text-muted-foreground grid grid-cols-2 gap-y-3">
-                <div className="flex flex-col">
-                  <span className="font-semibold text-foreground">Jaren leiding:</span>
-                  <span>{yearsInLeiding !== null ? `${yearsInLeiding} jaar` : 'Onbekend'}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-semibold text-foreground">Geboortedatum:</span>
-                  <span>{formattedGeboortedatum}</span>
-                </div>
-                {age !== null && (
-                  <div className="flex flex-col col-span-2">
-                    <span className="font-semibold text-foreground">Leeftijd:</span>
-                    <span>{age} jaar oud</span>
-                  </div>
-                )}
-              </AccordionContent>
+              <>
+                <DropdownMenuItem
+                  onClick={() => navigate(`edit/${leiding.id}`, { viewTransition: true })}
+                >
+                  <Edit className="mr-2 h-4 w-4" /> Bewerken
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setDisableConfirmDialog(true)}
+                >
+                  <ShieldX className="mr-2 h-4 w-4" /> Inactief zetten
+                </DropdownMenuItem>
+              </>
             ) : (
-                <AccordionContent className="px-4 pb-4 text-base text-muted-foreground">
-                    <p className="italic">Geen verdere details nodig voor oud-leiding.</p>
-                </AccordionContent>
+              <DropdownMenuItem onClick={() => setRestoreConfirmDialog(true)}>
+                <Undo2 className="mr-2 h-4 w-4" /> Herstellen
+              </DropdownMenuItem>
             )}
-          </AccordionItem>
-        </Accordion>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => setDeleteDialog(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Verwijderen
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
 
