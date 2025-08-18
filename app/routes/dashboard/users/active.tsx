@@ -905,7 +905,7 @@ export default function Active() {
             <DialogHeader>
               <DialogTitle>Weet je het zeker?</DialogTitle>
               <DialogDescription>
-                Je staat op het punt om **{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}** te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
+                Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

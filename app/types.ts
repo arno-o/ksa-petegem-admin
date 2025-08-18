@@ -40,9 +40,13 @@ export interface Post {
 export interface Group {
     id: number;
     naam: string;
-    omschrijving: string;
+    omschrijving?: string | null;
+    info?: string | null;
+    slug: string;
     active: boolean;
-    color: string;
+    color?: string | null;
+    icon_url?: string | null;
+    brief_url?: string | null;
 }
 
 export interface Event {
