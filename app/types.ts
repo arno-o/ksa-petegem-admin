@@ -4,14 +4,13 @@ export type Leiding = {
   familienaam: string;
   werk: string | null;
   studies: string | null;
-  ksa_betekenis: string | null;
   ksa_ervaring: string | null;
   leiding_sinds: Date | null;
   geboortedatum: Date | null;
   hoofdleiding: boolean;
   werkgroepen: string | null;
   foto_url: string | null;
-  leidingsploeg: number;
+  leidingsploeg: number | null;
   trekker: boolean;
   actief: boolean;
 };
@@ -41,9 +40,13 @@ export interface Post {
 export interface Group {
     id: number;
     naam: string;
-    omschrijving: string;
+    omschrijving?: string | null;
+    info?: string | null;
+    slug: string;
     active: boolean;
-    color: string;
+    color?: string | null;
+    icon_url?: string | null;
+    brief_url?: string | null;
 }
 
 export interface Event {
@@ -57,6 +60,7 @@ export interface Event {
     date_end: Date | null;
     time_start: string | null;
     time_end: string | null;
+    link: string | null;
 }
 
 export interface EventFormState {
@@ -65,7 +69,7 @@ export interface EventFormState {
   location: string;
   target_groups: number[];
   date_start?: Date;
-  date_end?: Date;
   time_start: string;
   time_end: string;
+  link: string;
 }

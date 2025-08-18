@@ -1,3 +1,4 @@
+// event-dialog.tsx
 import {
   Dialog,
   DialogClose,
@@ -10,8 +11,6 @@ import {
 } from "~/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { ScrollArea } from "~/components/ui/scroll-area";
-
 import { EventFormFields } from "./event-form-fields";
 
 import type { EventFormState } from "../../types";
@@ -23,7 +22,6 @@ interface Props {
   errors: { [key: string]: string };
   setErrors: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
   groupOptions: Option[];
-  TIME_OPTIONS: string[];
   open: boolean;
   setOpen: (open: boolean) => void;
   onSubmit: () => void;
@@ -36,7 +34,6 @@ export function EventDialog({
   errors,
   setErrors,
   groupOptions,
-  TIME_OPTIONS,
   open,
   setOpen,
   onSubmit,
@@ -51,9 +48,10 @@ export function EventDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="overflow-x-scroll sm:max-w-[425px] rounded-lg shadow-xl max-h-[90vh]">
-        <ScrollArea className="">
-          <DialogHeader>
+
+      <DialogContent className="w-[92vw] sm:max-w-[640px] p-0 max-h-[90vh] overflow-visible">
+        <div className="flex flex-col rounded-lg border bg-background shadow-xl">
+          <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-2xl font-bold">
               {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}
             </DialogTitle>
@@ -64,26 +62,25 @@ export function EventDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <EventFormFields
-            form={form}
-            setForm={setForm}
-            errors={errors}
-            setErrors={setErrors}
-            groupOptions={groupOptions}
-            TIME_OPTIONS={TIME_OPTIONS}
-          />
+          <div className="px-6 pt-2 overflow-visible">
+            <EventFormFields
+              form={form}
+              setForm={setForm}
+              errors={errors}
+              setErrors={setErrors}
+              groupOptions={groupOptions}
+            />
+          </div>
 
-          <DialogFooter>
+          <DialogFooter className="px-6 py-4 border-t bg-background">
             <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Annuleer
-              </Button>
+              <Button type="button" variant="outline">Annuleer</Button>
             </DialogClose>
             <Button type="submit" onClick={onSubmit}>
               {isEdit ? "Opslaan" : "Activiteit aanmaken"}
             </Button>
           </DialogFooter>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -58,20 +58,6 @@ const COLOR_MAP: Record<string, string> = {
     rose: "bg-rose-500 dark:bg-rose-400",
 };
 
-const generateTimeOptions = (): string[] => {
-    const times: string[] = [];
-    for (let hour = 0; hour < 24; hour++) {
-        for (let minute = 0; minute < 60; minute += 30) {
-            const h = String(hour).padStart(2, '0');
-            const m = String(minute).padStart(2, '0');
-            times.push(`${h}:${m}`);
-        }
-    }
-    return times;
-};
-
-const TIME_OPTIONS = generateTimeOptions();
-
 function useEvents() {
     const [events, setEvents] = useState<Event[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
@@ -83,7 +69,6 @@ function useEvents() {
                 const processedData: Event[] = data.map(event => ({
                     ...event,
                     date_start: event.date_start ? new Date(event.date_start) : null,
-                    date_end: event.date_end ? new Date(event.date_end) : null,
                 }));
                 // Sort events by ID here
                 processedData.sort((a, b) => a.id - b.id);
@@ -105,7 +90,6 @@ function useEvents() {
             const processedData: Event[] = data.map(event => ({
                 ...event,
                 date_start: event.date_start ? new Date(event.date_start) : null,
-                date_end: event.date_end ? new Date(event.date_end) : null,
             }));
             // Sort events by ID here as well
             processedData.sort((a, b) => a.id - b.id);
@@ -155,9 +139,9 @@ interface EventFormState {
     location: string;
     target_groups: number[];
     date_start?: Date;
-    date_end?: Date;
     time_start: string;
     time_end: string;
+    link: string;
 }
 
 const INITIAL_FORM_STATE: EventFormState = {
@@ -166,9 +150,9 @@ const INITIAL_FORM_STATE: EventFormState = {
     location: "",
     target_groups: [],
     date_start: undefined,
-    date_end: undefined,
     time_start: "",
     time_end: "",
+    link: "",
 };
 
 export function meta({ }: Route.MetaArgs) {
@@ -223,9 +207,9 @@ export default function Events() {
                 location: form.location.trim(),
                 target_groups: form.target_groups,
                 date_start: form.date_start ? format(form.date_start, 'yyyy-MM-dd') : "",
-                date_end: form.date_end ? format(form.date_end, 'yyyy-MM-dd') : null,
                 time_start: form.time_start,
                 time_end: form.time_end || null,
+                link: form.link || "",
             };
 
             await createEvent(newEventData);
@@ -255,9 +239,9 @@ export default function Events() {
                 location: form.location.trim(),
                 target_groups: form.target_groups,
                 date_start: form.date_start ? format(form.date_start, "yyyy-MM-dd") : null,
-                date_end: form.date_end ? format(form.date_end, "yyyy-MM-dd") : null,
                 time_start: form.time_start,
                 time_end: form.time_end || null,
+                link: form.link || null,
             };
 
             if (editingEvent) {
@@ -403,9 +387,9 @@ export default function Events() {
                                             location: event.location,
                                             target_groups: event.target_groups.map(Number),
                                             date_start: event.date_start ? new Date(event.date_start) : undefined,
-                                            date_end: event.date_end ? new Date(event.date_end) : undefined,
                                             time_start: formatTime(event.time_start),
                                             time_end: formatTime(event.time_end),
+                                            link: event.link || "",
                                         });
 
                                         setEditingEvent(event);
@@ -491,7 +475,6 @@ export default function Events() {
                             errors={errors}
                             setErrors={setErrors}
                             groupOptions={groupOptions}
-                            TIME_OPTIONS={TIME_OPTIONS}
                             onSubmit={handleCreateEvent}
                         />
 
@@ -510,7 +493,6 @@ export default function Events() {
                             errors={errors}
                             setErrors={setErrors}
                             groupOptions={groupOptions}
-                            TIME_OPTIONS={TIME_OPTIONS}
                             onSubmit={handleEditEvent}
                             isEdit
                         />
@@ -600,9 +582,9 @@ export default function Events() {
                                                                         location: event.location,
                                                                         target_groups: event.target_groups.map(Number),
                                                                         date_start: event.date_start ? new Date(event.date_start) : undefined,
-                                                                        date_end: event.date_end ? new Date(event.date_end) : undefined,
                                                                         time_start: formatTime(event.time_start),
                                                                         time_end: formatTime(event.time_end),
+                                                                        link: event.link || "",
                                                                     });
 
                                                                     setEditingEvent(event);
@@ -648,9 +630,6 @@ export default function Events() {
                                                         <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                                                         <span>
                                                             {event.date_start?.toLocaleDateString("nl-BE")}
-                                                            {event.date_end &&
-                                                                event.date_start?.toDateString() !== event.date_end?.toDateString() &&
-                                                                ` - ${event.date_end?.toLocaleDateString("nl-BE")}`}
                                                         </span>
                                                     </p>
 

@@ -20,7 +20,7 @@ import {
 // Lucide Icons
 import {
   CalendarArrowUp, Crown, Star, UserPlus, MoreVertical, Edit, ShieldX,
-  Trash2, Search, Users, Download, FileSpreadsheet, FileBadge2, ListChecks
+  Trash2, Search, Users, Download, FileSpreadsheet, FileBadge2, ListChecks, UserMinus2
 } from "lucide-react";
 
 // UI Components (shadcn/ui or custom)
@@ -118,6 +118,7 @@ export default function Active() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   // NEW: States for Mass Edit
+  const [massWipeGroupDialog, setMassWipeGroupDialog] = useState(false);
   const [massEditGroupDialog, setMassEditGroupDialog] = useState(false);
   const [massDisableDialog, setMassDisableDialog] = useState(false);
   const [selectedMassEditGroup, setSelectedMassEditGroup] = useState<string>("");
@@ -222,10 +223,12 @@ export default function Active() {
       tempLeiding = leiding.filter(person => person.hoofdleiding);
       tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
     } else if (selectedFilter === "all_by_group") { // New option: All Leiding (by Group)
-      // Sort first by leidingsploeg, then by voornaam
+      // Sort first by leidingsploeg (handling null/undefined), then by voornaam
       tempLeiding.sort((a, b) => {
-        if (a.leidingsploeg !== b.leidingsploeg) {
-          return a.leidingsploeg - b.leidingsploeg;
+        const groupA = a.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
+        const groupB = b.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
+        if (groupA !== groupB) {
+          return groupA - groupB;
         }
         // If groups are the same, sort by first name
         return (a.voornaam || '').localeCompare(b.voornaam || '');
@@ -322,7 +325,30 @@ export default function Active() {
     }
   };
 
-  // NEW: Handle Mass Update Group
+  const handleMassWipe = async () => {
+    const selectedLeidingIds =
+      table.getSelectedRowModel().rows.map(r => r.original.id);
+
+    if (selectedLeidingIds.length === 0) {
+      toast.info("Geen leiding geselecteerd om groep te wissen.");
+      return;
+    }
+
+    try {
+      await massUpdateLeiding({
+        leidingIds: selectedLeidingIds,
+        updateData: { leidingsploeg: null },
+      });
+
+      toast.success(`Groep gewist voor ${selectedLeidingIds.length} leiding.`);
+      setMassWipeGroupDialog(false);
+      await reloadData();
+    } catch (err) {
+      toast.error("Groep wissen mislukt. Probeer opnieuw.");
+      console.error("Failed to mass wipe group:", err);
+    }
+  };
+  
   const handleMassUpdateGroup = async () => {
     const selectedLeidingIds = table.getSelectedRowModel().rows.map(row => row.original.id);
     if (selectedLeidingIds.length === 0) {
@@ -349,7 +375,6 @@ export default function Active() {
     }
   };
 
-  // NEW: Handle Mass Disable
   const handleMassDisable = async () => {
     const selectedLeidingIds = table.getSelectedRowModel().rows.map(row => row.original.id);
     if (selectedLeidingIds.length === 0) {
@@ -718,16 +743,23 @@ export default function Active() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
+                      onClick={() => setMassWipeGroupDialog(true)}
+                      className="cursor-pointer"
+                    >
+                      <UserMinus2 className="mr-2 h-4 w-4" /> Groep wissen
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={() => setMassEditGroupDialog(true)}
                       className="cursor-pointer"
                     >
                       <Users className="mr-2 h-4 w-4" /> Groep wijzigen
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => setMassDisableDialog(true)}
                       className="text-destructive focus:text-destructive cursor-pointer"
                     >
-                      <ShieldX className="mr-2 h-4 w-4" /> Inactief zetten
+                      <ShieldX className="mr-2 h-4 w-4 text-destructive" /> Inactief zetten
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -873,7 +905,7 @@ export default function Active() {
             <DialogHeader>
               <DialogTitle>Weet je het zeker?</DialogTitle>
               <DialogDescription>
-                Je staat op het punt om **{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}** te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
+                Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -887,13 +919,31 @@ export default function Active() {
           </DialogContent>
         </Dialog>
 
-        {/* NEW: Mass Edit Group Dialog */}
+        <Dialog open={massWipeGroupDialog} onOpenChange={setMassWipeGroupDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Massa Groep Wissen</DialogTitle>
+              <DialogDescription>
+                Je staat op het punt om <strong>{selectedRowCount}</strong> geselecteerde leiding hun groep te wissen.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMassWipeGroupDialog(false)}>
+                Annuleren
+              </Button>
+              <Button variant="destructive" onClick={handleMassWipe}>
+                Groep wissen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={massEditGroupDialog} onOpenChange={setMassEditGroupDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Massa Groep Wijzigen</DialogTitle>
               <DialogDescription>
-                Wijzig de groep voor de geselecteerde **{selectedRowCount}** leiding.
+                Wijzig de groep voor de geselecteerde <strong>{selectedRowCount}</strong> leiding.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -922,13 +972,12 @@ export default function Active() {
           </DialogContent>
         </Dialog>
 
-        {/* NEW: Mass Disable Dialog */}
         <Dialog open={massDisableDialog} onOpenChange={setMassDisableDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Massa Inactief Zetten</DialogTitle>
               <DialogDescription>
-                Je staat op het punt om **{selectedRowCount}** geselecteerde leiding te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
+                Je staat op het punt om <strong>{selectedRowCount}</strong> geselecteerde leiding te markeren als oud-leiding en te verwijderen van de huidige website.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

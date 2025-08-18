@@ -50,7 +50,6 @@ const EditUser = () => {
         foto_url: "",
         werkgroepen: "",
         ksa_ervaring: "",
-        ksa_betekenis: "",
         leidingsploeg: "",
         trekker: false,
         hoofdleiding: false,
@@ -100,7 +99,6 @@ const EditUser = () => {
                     hoofdleiding: fetchedLeiding.hoofdleiding,
                     trekker: fetchedLeiding.trekker,
                     ksa_ervaring: fetchedLeiding.ksa_ervaring,
-                    ksa_betekenis: fetchedLeiding.ksa_betekenis,
                     foto_url: fetchedLeiding.foto_url,
                 });
             } catch (err) {
@@ -313,15 +311,9 @@ const EditUser = () => {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <Label htmlFor="ksa_ervaring">KSA Ervaring</Label>
+                                    <Label htmlFor="ksa_ervaring">Beste KSA Ervaring</Label>
                                     <Textarea id="ksa_ervaring" value={form.ksa_ervaring} className="resize-none"
                                         onChange={(e) => setForm({ ...form, ksa_ervaring: e.target.value })} />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <Label htmlFor="ksa_betekenis">Wat betekent KSA voor jou?</Label>
-                                    <Textarea id="ksa_betekenis" value={form.ksa_betekenis} className="resize-none"
-                                        onChange={(e) => setForm({ ...form, ksa_betekenis: e.target.value })} />
                                 </div>
                             </div>
                         </div>
