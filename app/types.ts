@@ -4,14 +4,13 @@ export type Leiding = {
   familienaam: string;
   werk: string | null;
   studies: string | null;
-  ksa_betekenis: string | null;
   ksa_ervaring: string | null;
   leiding_sinds: Date | null;
   geboortedatum: Date | null;
   hoofdleiding: boolean;
   werkgroepen: string | null;
   foto_url: string | null;
-  leidingsploeg: number;
+  leidingsploeg: number | null;
   trekker: boolean;
   actief: boolean;
 };

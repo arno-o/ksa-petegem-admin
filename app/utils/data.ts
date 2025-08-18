@@ -272,7 +272,7 @@ export const deleteFromBucket = async (bucket: string, publicUrl: string) => {
 interface MassUpdateLeidingData {
   leidingIds: number[];
   updateData: {
-    leidingsploeg?: number;
+    leidingsploeg?: number | null;
     actief?: boolean;
   };
 }
