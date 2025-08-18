@@ -6,7 +6,6 @@ import { Calendar } from "~/components/ui/calendar";
 import { Separator } from "~/components/ui/separator";
 import MultipleSelector, { type Option } from "~/components/ui/multiselect";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
 // Utilities
 import { cn } from "~/lib/utils";
@@ -16,7 +15,7 @@ import type { EventFormState } from "../../types";
 
 // External Libraries
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock2Icon, LocationEdit } from "lucide-react";
 
 interface Props {
   form: EventFormState;
@@ -24,7 +23,6 @@ interface Props {
   errors: { [key: string]: string };
   setErrors: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
   groupOptions: Option[];
-  TIME_OPTIONS: string[];
 }
 
 export function EventFormFields({
@@ -33,7 +31,6 @@ export function EventFormFields({
   errors,
   setErrors,
   groupOptions,
-  TIME_OPTIONS,
 }: Props) {
   return (
     <div className="grid gap-4 py-4">
@@ -51,25 +48,42 @@ export function EventFormFields({
         {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="location">Locatie</Label>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="location">Locatie</Label>
+          <Input
+              id="location"
+              value={form.location}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, location: e.target.value }));
+                setErrors((prev) => ({ ...prev, location: "" }));
+              }}
+              className={cn(errors.location && "border-red-500 focus-visible:ring-red-500 w-fill pl-8")}
+            />
+          {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+        </div>
+
+        <div className="flex flex-col gap-2">
+        <Label htmlFor="link">Link (Ravot)</Label>
         <Input
-          id="location"
-          value={form.location}
+          id="link"
+          placeholder="https://"
+          value={form.link}
           onChange={(e) => {
-            setForm((prev) => ({ ...prev, location: e.target.value }));
-            setErrors((prev) => ({ ...prev, location: "" }));
+            setForm((prev) => ({ ...prev, link: e.target.value }));
+            setErrors((prev) => ({ ...prev, link: "" }));
           }}
-          className={cn(errors.location && "border-red-500 focus-visible:ring-red-500")}
+          className={cn(errors.link && "border-red-500 focus-visible:ring-red-500 w-fill")}
         />
-        {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+        {errors.link && <p className="text-red-500 text-sm mt-1">{errors.link}</p>}
+      </div>
       </div>
 
       <Separator />
 
-      <div className="grid grid-cols-5 gap-4">
-        <div className="flex flex-col gap-2 col-span-3">
-          <Label htmlFor="date_start">Startdatum</Label>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
+          <Label htmlFor="date_start">Datum</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -98,74 +112,42 @@ export function EventFormFields({
           {errors.date_start && <p className="text-red-500 text-sm mt-1">{errors.date_start}</p>}
         </div>
 
-        <div className="flex flex-col gap-2 col-span-2">
-          <Label htmlFor="time_start">Starttijd</Label>
-          <Select
-            value={form.time_start}
-            onValueChange={(value) => {
-              setForm((prev) => ({ ...prev, time_start: value }));
-              setErrors((prev) => ({ ...prev, time_start: "" }));
-            }}
-          >
-            <SelectTrigger className={cn("w-full", errors.time_start && "border-red-500 focus-visible:ring-red-500")}>
-              <SelectValue placeholder="Kies een tijd" />
-            </SelectTrigger>
-            <SelectContent>
-              {TIME_OPTIONS.map((time) => (
-                <SelectItem key={time} value={time}>
-                  {time}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="time_start">Startuur</Label>
+          <div className="relative flex w-full items-center gap-2">
+            <Clock2Icon className="text-muted-foreground pointer-events-none absolute left-2.5 size-4 select-none" />
+            <Input
+              id="time_start"
+              type="time"
+              step="1"
+              value={form.time_start}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, time_start: e.target.value }));
+                setErrors((prev) => ({ ...prev, time_start: "" }));
+              }}
+              className="appearance-none pl-8 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            />
+          </div>
           {errors.time_start && <p className="text-red-500 text-sm mt-1">{errors.time_start}</p>}
         </div>
-      </div>
 
-      <div className="grid grid-cols-5 gap-4">
-        <div className="flex flex-col gap-2 col-span-3">
-          <Label htmlFor="date_end" className="text-neutral-500">Einddatum (*)</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !form.date_end && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="h-4 w-4" />
-                {form.date_end ? format(form.date_end, "dd/MM/yyyy") : <span>Kies een datum</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={form.date_end}
-                onSelect={(date) => setForm((prev) => ({ ...prev, date_end: date ?? undefined }))}
-                defaultMonth={form.date_end}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div className="flex flex-col gap-2 col-span-2">
-          <Label htmlFor="time_end" className="text-neutral-500">Eindtijd (*)</Label>
-          <Select
-            value={form.time_end}
-            onValueChange={(value) => setForm((prev) => ({ ...prev, time_end: value }))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Kies een tijd" />
-            </SelectTrigger>
-            <SelectContent>
-              {TIME_OPTIONS.map((time) => (
-                <SelectItem key={time} value={time}>
-                  {time}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="time_end">Einduur</Label>
+          <div className="relative flex w-full items-center gap-2">
+            <Clock2Icon className="text-muted-foreground pointer-events-none absolute left-2.5 size-4 select-none" />
+            <Input
+              id="time_end"
+              type="time"
+              step="1"
+              value={form.time_end}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, time_end: e.target.value }));
+                setErrors((prev) => ({ ...prev, time_end: "" }));
+              }}
+              className="appearance-none pl-8 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            />
+          </div>
+          {errors.time_end && <p className="text-red-500 text-sm mt-1">{errors.time_end}</p>}
         </div>
       </div>
 

@@ -57,6 +57,7 @@ export interface Event {
     date_end: Date | null;
     time_start: string | null;
     time_end: string | null;
+    link: string | null;
 }
 
 export interface EventFormState {
@@ -65,7 +66,7 @@ export interface EventFormState {
   location: string;
   target_groups: number[];
   date_start?: Date;
-  date_end?: Date;
   time_start: string;
   time_end: string;
+  link: string;
 }
