@@ -26,7 +26,6 @@ export default function PdfUpload({ groupId, initialUrl, onChange }: Props) {
     setUploading(true);
     try {
       const publicUrl = await uploadGroupLetter(file, groupId);
-      // persist the URL in DB
       const updated = await updateGroupLetterUrl(groupId, publicUrl);
       setUrl(updated.brief_url ?? publicUrl);
       onChange?.(updated.brief_url ?? publicUrl);
@@ -69,7 +68,7 @@ export default function PdfUpload({ groupId, initialUrl, onChange }: Props) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-muted-foreground" />
@@ -89,7 +88,6 @@ export default function PdfUpload({ groupId, initialUrl, onChange }: Props) {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={pickFile}
                 disabled={uploading}
               >
@@ -106,7 +104,6 @@ export default function PdfUpload({ groupId, initialUrl, onChange }: Props) {
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 onClick={handleRemove}
                 disabled={uploading}
               >
@@ -115,7 +112,7 @@ export default function PdfUpload({ groupId, initialUrl, onChange }: Props) {
               </Button>
             </>
           ) : (
-            <Button type="button" onClick={pickFile} disabled={uploading} size="sm">
+            <Button type="button" onClick={pickFile} disabled={uploading}>
               {uploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Bezig...

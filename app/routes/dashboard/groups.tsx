@@ -4,7 +4,6 @@ import type { Route } from "./+types/groups";
 import PrivateRoute from "~/context/PrivateRoute";
 
 import type { Group } from "~/types";
-import PdfUpload from "~/components/groups/PDFUpload";
 import { useEffect, useState, useCallback } from "react";
 import { fetchAllGroups, createGroup, updateGroup } from "~/utils/data";
 import GroupCard from "~/components/cards/group-card";
@@ -20,12 +19,76 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "~/components/ui/sheet";
 
 import GroupForm, { type GroupFormValues } from "~/components/groups/GroupForm";
+import PdfUpload from "~/components/groups/PDFUpload"; // ensure this file exists
 
 // ---------- Page Meta ----------
-export function meta({ }: Route.MetaArgs) {
+export function meta({}: Route.MetaArgs) {
   return [{ title: "KSA Admin - Groepen" }];
+}
+
+// Small hook to detect mobile
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+// Wrapper that renders a Dialog on desktop and a Sheet on mobile
+function ModalWrap({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  mobileSide = "bottom",
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  mobileSide?: "top" | "bottom" | "left" | "right";
+}) {
+  const isMobile = useIsMobile();
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side={mobileSide} className="h-[92dvh] p-8 overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-2xl">{title}</SheetTitle>
+            {description && <SheetDescription>{description}</SheetDescription>}
+          </SheetHeader>
+          <div className="mt-4">{children}</div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function Groups() {
@@ -84,9 +147,7 @@ export default function Groups() {
     } catch (e: any) {
       console.error(e);
       toast.error(
-        e?.message?.includes("duplicate key")
-          ? "Slug bestaat al."
-          : "Aanmaken mislukt."
+        e?.message?.includes("duplicate key") ? "Slug bestaat al." : "Aanmaken mislukt."
       );
     } finally {
       setSaving(false);
@@ -105,9 +166,7 @@ export default function Groups() {
     } catch (e: any) {
       console.error(e);
       toast.error(
-        e?.message?.includes("duplicate key")
-          ? "Slug bestaat al."
-          : "Bijwerken mislukt."
+        e?.message?.includes("duplicate key") ? "Slug bestaat al." : "Bijwerken mislukt."
       );
     } finally {
       setSaving(false);
@@ -148,18 +207,20 @@ export default function Groups() {
 
         {loading ? (
           <div className="rounded-lg border border-input shadow-sm overflow-hidden">
-            <div className="grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
+            <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-1/2 mx-auto" />
               <Skeleton className="h-4 w-1/4 ml-auto" />
             </div>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center py-3 px-4 border-b border-input last:border-b-0 bg-background"
-              >
-                <div className="grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 w-full pl-2">
+              <div key={i} className="p-4 border-b border-input last:border-b-0 bg-background">
+                <div className="sm:hidden space-y-2">
+                  <Skeleton className="h-5 w-1/2" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4">
                   <Skeleton className="h-5 w-4/5" />
                   <Skeleton className="h-5 w-full" />
                   <Skeleton className="h-5 w-1/2 mx-auto" />
@@ -170,22 +231,25 @@ export default function Groups() {
           </div>
         ) : groups.length > 0 ? (
           <div className="rounded-lg border border-input shadow-sm overflow-hidden">
-            <div className="grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
+            {/* Header hidden on mobile */}
+            <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
               <div>Naam</div>
               <div>Omschrijving</div>
               <div className="text-center">Status</div>
               <div className="text-right">Acties</div>
             </div>
-            <div>
-              {groups.map((group) => (
-                <GroupCard
-                  key={group.id}
-                  group={group}
-                  onGroupUpdate={handleGroupUpdate}
-                  onEdit={handleEditGroup}
-                />
-              ))}
-            </div>
+
+            {/* Body */}
+              <div>
+                {groups.map((group) => (
+                  <GroupCard
+                    key={group.id}
+                    group={group}
+                    onGroupUpdate={handleGroupUpdate}
+                    onEdit={() => handleEditGroup(group)}
+                  />
+                ))}
+              </div>
           </div>
         ) : (
           <div className="text-center py-20 text-muted-foreground">
@@ -193,64 +257,64 @@ export default function Groups() {
           </div>
         )}
 
-        {/* Create Dialog */}
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Nieuwe groep</DialogTitle>
-              <DialogDescription>
-                Vul de velden in en klik op Opslaan.
-              </DialogDescription>
-            </DialogHeader>
-            <GroupForm
-              submitting={saving}
-              onSubmit={handleCreate}
-              onCancel={() => setCreateOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        {/* Create */}
+        <ModalWrap
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          title="Nieuwe groep"
+          description="Vul de velden in en klik op Opslaan."
+          mobileSide="bottom"
+        >
+          <GroupForm
+            submitting={saving}
+            onSubmit={handleCreate}
+            onCancel={() => setCreateOpen(false)}
+            validationMode="onSubmit"
+          />
+        </ModalWrap>
 
-        {/* Edit Dialog */}
-        <Dialog open={editOpen} onOpenChange={(v) => (v ? setEditOpen(true) : closeEdit())}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Groep bewerken</DialogTitle>
-              <DialogDescription>
-                Pas de gegevens aan en klik op Opslaan.
-              </DialogDescription>
-            </DialogHeader>
-            {selected && (
-              <>
-                <GroupForm
-                  key={selected.id}
-                  submitting={saving}
-                  initial={{
-                    naam: selected.naam ?? "",
-                    omschrijving: selected.omschrijving ?? "",
-                    info: selected.info ?? "",
-                    slug: selected.slug ?? "",
-                    active: !!selected.active,
+        {/* Edit */}
+        <ModalWrap
+          open={editOpen}
+          onOpenChange={(v: boolean) => (v ? setEditOpen(true) : closeEdit())}
+          title="Groep bewerken"
+          description="Pas de gegevens aan en klik op Opslaan."
+          mobileSide="bottom"
+        >
+          {selected && (
+            <>
+              <GroupForm
+                key={selected.id}
+                submitting={saving}
+                initial={{
+                  naam: selected.naam ?? "",
+                  omschrijving: selected.omschrijving ?? "",
+                  info: selected.info ?? "",
+                  slug: selected.slug ?? "",
+                  active: !!selected.active,
+                }}
+                onSubmit={handleUpdate}
+                onCancel={closeEdit}
+                // default validationMode = "onBlur"
+              />
+
+              {/* PDF upload section */}
+              <div className="mt-6 border-t pt-6">
+                <PdfUpload
+                  groupId={selected.id}
+                  initialUrl={selected.brief_url ?? undefined}
+                  onChange={(newUrl) => {
+                    const id = selected.id;
+                    setSelected((prev) => (prev ? { ...prev, brief_url: newUrl } : prev));
+                    setGroups((prev) =>
+                      prev.map((g) => (g.id === id ? { ...g, brief_url: newUrl } : g))
+                    );
                   }}
-                  onSubmit={handleUpdate}
-                  onCancel={closeEdit}
                 />
-
-                <div className="mt-6 border-t pt-6">
-                  <PdfUpload
-                    groupId={selected.id}
-                    initialUrl={selected.brief_url}
-                    onChange={(newUrl) => {
-                      setSelected((prev) => (prev ? { ...prev, brief_url: newUrl ?? undefined } : prev));
-                      setGroups((prev) =>
-                        prev.map((g) => (g.id === selected.id ? { ...g, brief_url: newUrl ?? undefined } : g))
-                      );
-                    }}
-                  />
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+              </div>
+            </>
+          )}
+        </ModalWrap>
       </PageLayout>
     </PrivateRoute>
   );
