@@ -77,7 +77,7 @@ export default function SettingsPage() {
         }
     }
 
-    const settingItemStyle = `flex flex-col gap-4 py-6 md:flex-row md:gap-0`;
+    const settingItemStyle = `flex flex-col gap-4 py-4 md:flex-row md:gap-0`;
 
     return (
         <PrivateRoute>
@@ -130,7 +130,7 @@ export default function SettingsPage() {
                                     placeholder="Bijv. Benieuwd om te zien wie in welke groep zit? Kom binnenkort terug!"
                                     value={form.message}
                                     onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                                    disabled={loading || saving}
+                                    disabled={loading || saving || form.published}
                                     className="md:basis-2/3"
                                 />
                             </div>
