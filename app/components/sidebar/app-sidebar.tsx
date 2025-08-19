@@ -18,7 +18,7 @@ import {
 } from "~/components/ui/sidebar"
 
 import { ModeToggle } from "~/components/sidebar/mode-toggle"
-import { Newspaper, CalendarFold, User, Puzzle, ChevronRight } from 'lucide-react';
+import { Newspaper, CalendarFold, User, Puzzle, ChevronRight, Settings } from 'lucide-react';
 import { cn } from "~/lib/utils";
 
 // --- Type Definitions ---
@@ -49,6 +49,11 @@ const data: { navMain: NavGroup[] } = {
           title: "Activiteiten",
           url: "/activiteiten",
           icon: CalendarFold,
+        },
+        {
+          title: "Instellingen",
+          url: "/instellingen",
+          icon: Settings,
         },
       ],
     },

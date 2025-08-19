@@ -418,3 +418,46 @@ export async function updateGroupLetterUrl(
   if (error) throw error;
   return data as Group;
 }
+
+// --- Settings helpers (lightweight) ---
+export type SettingType = "boolean" | "string" | "number" | "file" | "json";
+export type SettingRow = {
+  key: string;
+  value_json: any;
+  type: SettingType;
+  updated_at?: string;
+  public_read?: boolean;
+};
+
+const wrapSettingValue = (type: SettingType, value: any) =>
+  type === "file" ? { path: value || "" } :
+  type === "json" ? (value ?? {}) :
+  { v: value };
+
+export const unwrapSettingValue = (row?: SettingRow) =>
+  row?.type === "file" ? row?.value_json?.path :
+  row?.value_json?.v ?? row?.value_json;
+
+export async function fetchSettingsByKeys(keys: string[]): Promise<SettingRow[]> {
+  const { data, error } = await supabase
+    .from("settings")
+    .select("key,value_json,type,updated_at,public_read")
+    .in("key", keys);
+  if (error) throw error;
+  return (data ?? []) as SettingRow[];
+}
+
+export async function upsertSettingValue(
+  key: string,
+  value: any,
+  type: SettingType,
+  public_read = true
+): Promise<SettingRow> {
+  const { data, error } = await supabase
+    .from("settings")
+    .upsert({ key, value_json: wrapSettingValue(type, value), type, public_read })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as SettingRow;
+}
