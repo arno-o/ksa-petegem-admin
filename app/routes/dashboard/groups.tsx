@@ -280,7 +280,6 @@ export default function Groups() {
                 }}
                 onSubmit={handleUpdate}
                 onCancel={closeEdit}
-                // default validationMode = "onBlur"
               />
 
               {/* PDF upload section */}

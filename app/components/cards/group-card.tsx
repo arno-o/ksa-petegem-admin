@@ -12,14 +12,14 @@ interface GroupCardProps {
 }
 
 const COLOR_MAP: Record<string, string> = {
-    yellow: "bg-yellow-500 dark:bg-yellow-400",
-    blue: "bg-blue-500 dark:bg-blue-400",
-    green: "bg-green-500 dark:bg-green-400",
-    purple: "bg-purple-500 dark:bg-purple-400",
-    red: "bg-red-500 dark:bg-red-400",
-    orange: "bg-orange-500 dark:bg-orange-400",
-    lime: "bg-lime-500 dark:bg-lime-400",
-    rose: "bg-rose-500 dark:bg-rose-400",
+  yellow: "bg-yellow-500 dark:bg-yellow-400",
+  blue: "bg-blue-500 dark:bg-blue-400",
+  green: "bg-green-500 dark:bg-green-400",
+  purple: "bg-purple-500 dark:bg-purple-400",
+  red: "bg-red-500 dark:bg-red-400",
+  orange: "bg-orange-500 dark:bg-orange-400",
+  lime: "bg-lime-500 dark:bg-lime-400",
+  rose: "bg-rose-500 dark:bg-rose-400",
 };
 
 const GroupCard = ({ group, onEdit }: GroupCardProps) => {
@@ -29,7 +29,7 @@ const GroupCard = ({ group, onEdit }: GroupCardProps) => {
     setIsActive(group.active);
   }, [group.active]);
 
-  const colorClass = COLOR_MAP[group.color] || "bg-gray-200 dark:bg-gray-700"; 
+  const colorClass = (group.color && COLOR_MAP[group.color]) || "bg-gray-200 dark:bg-gray-700";
 
   return (
     <div
@@ -42,10 +42,10 @@ const GroupCard = ({ group, onEdit }: GroupCardProps) => {
 
       <div className="grid grid-cols-[1.5fr_2.1fr_1fr_0.8fr] items-center gap-4 w-full pl-2"> {/* Adjusted column widths */}
         <div className="flex-1 min-w-[100px] items-center">
-          <h3 className="text-base font-semibold truncate" title={group.naam}>{group.naam}</h3>
+          <h3 className="text-base font-semibold truncate">{group.naam}</h3>
         </div>
 
-        <div className="flex-1 text-sm text-muted-foreground truncate" title={group.omschrijving}>
+        <div className="flex-1 text-sm text-muted-foreground truncate">
           {group.omschrijving || "-"}
         </div>
 
