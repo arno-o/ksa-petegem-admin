@@ -1,14 +1,17 @@
 // components/groups/GroupForm.tsx
 import { z } from "zod";
 import { useEffect, useMemo } from "react";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
-import { Switch } from "~/components/ui/switch";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
+import { Separator } from "~/components/ui/separator";
+
+import { Badge, BadgeCheck } from "lucide-react";
 
 export const groupSchema = z.object({
   naam: z.string().min(2, "Minstens 2 tekens"),
@@ -29,7 +32,6 @@ type Props = {
   submitting?: boolean;
   onSubmit: (values: GroupFormValues) => Promise<void> | void;
   onCancel?: () => void;
-  /** "onSubmit" for Create (no blur validation), "onBlur" for Edit */
   validationMode?: "onSubmit" | "onBlur";
 };
 
@@ -103,6 +105,8 @@ export default function GroupForm({
     onCancel?.();
   };
 
+  const isMobile = useIsMobile();
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pb-6">
       {hasErrors && validationMode !== "onSubmit" && (
@@ -113,60 +117,72 @@ export default function GroupForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="naam">Naam</Label>
-          <Input id="naam" placeholder="Bv. Jongknapen" {...register("naam")} autoFocus />
+          <Label htmlFor="naam" className={errors.naam ? "text-destructive" : undefined}>Naam</Label>
+          <Input id="naam" placeholder="Bv. Jongknapen" {...register("naam")} className={errors.naam ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/40" : undefined}/>
           {errors.naam && <p className="text-sm text-destructive">{errors.naam.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="slug">Slug (url)</Label>
-          <Input id="slug" placeholder="jongknapen" {...register("slug")} />
+          <Label htmlFor="slug" className={errors.slug ? "text-destructive" : undefined}>Slug (url)</Label>
+          <Input id="slug" placeholder="jongknapen" {...register("slug")} className={errors.slug ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/40" : undefined}/>
           {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
         </div>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="omschrijving">Korte omschrijving</Label>
-        <Textarea id="omschrijving" rows={3} {...register("omschrijving")} className="max-h-[150px]" />
+        <Input id="omschrijving" {...register("omschrijving")} className="max-h-[150px]" />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="info">Uitgebreide info</Label>
-        <Textarea id="info" rows={6} {...register("info")} />
+        <Textarea id="info" rows={3} {...register("info")} />
       </div>
 
-      <div className="flex items-center gap-3">
-        <Controller
-          name="active"
-          control={control}
-          render={({ field: { value, onChange } }) => (
-            <>
-              <Switch id="active" checked={!!value} onCheckedChange={onChange} />
-              <Label htmlFor="active">Actief</Label>
-            </>
+      <div className="flex justify-between flex-col gap-4 md:flex-row md:gap-0">
+        <div className="flex items-center gap-3">
+          <Controller
+            name="active"
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <Button
+                type="button"
+                variant={value ? "default" : "destructive"}
+                onClick={() => onChange(!value)}
+                aria-pressed={value}
+                className="grow md:w-fit"
+              >
+                {value ? <BadgeCheck className="mr-2 h-4 w-4" /> : <Badge className="mr-2 h-4 w-4" />}
+                {value ? "Actief" : "Niet actief"}
+              </Button>
+            )}
+          />
+        </div>
+
+        {isMobile ? (
+          <Separator />
+        ) : undefined}
+
+        <div className="flex items-center gap-2 justify-center w-full md:w-auto">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={submitting || isSubmitting}
+              className={isMobile ? "w-[50%]" : undefined}
+            >
+              Annuleren
+            </Button>
           )}
-        />
-      </div>
-
-      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-        {onCancel && (
           <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={submitting || isSubmitting}
-            className="sm:w-auto w-full"
+            type="submit"
+            disabled={submitting || isSubmitting || (!isDirty && validationMode !== "onSubmit")}
+            className={isMobile ? "w-[50%]" : undefined}
           >
-            Annuleren
+            {submitting || isSubmitting ? "Opslaan..." : "Opslaan"}
           </Button>
-        )}
-        <Button
-          type="submit"
-          disabled={submitting || isSubmitting || (!isDirty && validationMode !== "onSubmit")}
-          className="sm:w-auto w-full"
-        >
-          {submitting || isSubmitting ? "Opslaan..." : "Opslaan"}
-        </Button>
+        </div>
       </div>
     </form>
   );
