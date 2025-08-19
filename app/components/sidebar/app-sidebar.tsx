@@ -14,12 +14,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarRail,
 } from "~/components/ui/sidebar"
 
-import { ModeToggle } from "~/components/sidebar/mode-toggle"
-import { Newspaper, CalendarFold, User, Puzzle, ChevronRight } from 'lucide-react';
 import { cn } from "~/lib/utils";
+import { ModeToggle } from "~/components/sidebar/mode-toggle"
+import { Newspaper, CalendarFold, User, IdCardLanyard, ChevronRight, Settings } from 'lucide-react';
 
 // --- Type Definitions ---
 interface NavItem {
@@ -50,6 +53,11 @@ const data: { navMain: NavGroup[] } = {
           url: "/activiteiten",
           icon: CalendarFold,
         },
+        {
+          title: "Instellingen",
+          url: "/instellingen",
+          icon: Settings,
+        },
       ],
     },
     {
@@ -72,7 +80,8 @@ const data: { navMain: NavGroup[] } = {
         {
           title: "Groepen",
           url: "/groepen",
-          icon: Puzzle,
+          icon: IdCardLanyard,
+          
         },
       ],
     },
@@ -82,7 +91,6 @@ const data: { navMain: NavGroup[] } = {
 // --- AppSidebar Component ---
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
-  const [openNestedGroups, setOpenNestedGroups] = useState<Record<string, boolean>>({});
 
   const isParentOrChildActive = (item: NavItem): boolean => {
     if (item.url) {
@@ -107,15 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         }
       });
     });
-    setOpenNestedGroups(initialOpenState);
   }, [location.pathname]);
-
-  const handleToggleNestedGroup = (title: string) => {
-    setOpenNestedGroups(prev => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
-  };
 
   return (
     <Sidebar {...props}>
@@ -136,50 +136,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const itemIsActive = isParentOrChildActive(item);
-                  const isNestedGroupOpen = openNestedGroups[item.title] || false;
-
                   if (item.items) {
                     return (
-                      <div key={item.title}>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                onClick={() => handleToggleNestedGroup(item.title)}
-                                isActive={itemIsActive}
-                                className={cn(
-                                    "flex items-center justify-between", // Ensure flexbox layout for content and chevron
-                                    itemIsActive ? "bg-accent text-accent-foreground" : "text-sidebar-foreground", // Example active state background
-                                )}
-                            >
-                                <span className="flex items-center gap-2">
-                                    {item.icon && <item.icon className={cn(itemIsActive ? `text-sidebar-foreground/100` : `text-sidebar-foreground/70`, `stroke-[${itemIsActive ? '2.5' : '2'}]`, `h-4 w-4`)} />}
-                                    {item.title}
-                                </span>
-                                <ChevronRight className={cn(
-                                    "h-4 w-4 shrink-0 transition-transform duration-200",
-                                    isNestedGroupOpen ? "rotate-90" : "rotate-0"
-                                )} />
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-
-                        {isNestedGroupOpen && (
-                            <SidebarMenu className="pl-6 mt-1"> {/* Increased indentation to pl-6 (24px) for clearer nesting */}
-                                {item.items.map((subItem) => {
-                                    const subItemIsActive = isParentOrChildActive(subItem);
-                                    return (
-                                        <SidebarMenuItem key={subItem.title}>
-                                            <SidebarMenuButton asChild isActive={subItemIsActive} className="text-sm">
-                                                <Link to={subItem.url!} viewTransition className="flex items-center gap-2">
-                                                    <span>
-                                                        {subItem.title}
-                                                    </span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    );
-                                })}
-                            </SidebarMenu>
-                        )}
-                      </div>
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton isActive={itemIsActive}>
+                          {item.icon && <item.icon className={cn(itemIsActive ? `text-sidebar-foreground/100` : `text-sidebar-foreground/70`, `stroke-[${itemIsActive ? '2.5' : '2'}]`)} />}
+                          {item.title}
+                        </SidebarMenuButton>
+                        <SidebarMenuSub>
+                          {item.items.map((item) => (
+                            <SidebarMenuSubItem key={item.title}>
+                              <SidebarMenuSubButton asChild>
+                                <a href={item.url}>{item.title}</a>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </SidebarMenuItem>
                     );
                   } else {
                     return (

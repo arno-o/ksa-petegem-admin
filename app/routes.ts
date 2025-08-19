@@ -6,6 +6,7 @@ export default [
     route("/berichten", "routes/dashboard/posts.tsx"),
     route("/activiteiten", "routes/dashboard/events.tsx"),
     route("/groepen", "routes/dashboard/groups.tsx"),
+    route("/instellingen", "routes/dashboard/settings.tsx"),
     
     route("/leiding/actief", "routes/dashboard/users/active.tsx"),
     route("/leiding/inactief", "routes/dashboard/users/inactive.tsx"),

@@ -12,6 +12,8 @@ import { Button } from "~/components/ui/button";
 import { CircleFadingPlus } from "lucide-react";
 import { toast } from "sonner";
 
+import { useIsMobile } from "~/hooks/use-mobile";
+
 import {
   Dialog,
   DialogContent,
@@ -20,12 +22,13 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "~/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "~/components/ui/drawer";
+
 
 import GroupForm, { type GroupFormValues } from "~/components/groups/GroupForm";
 import PdfUpload from "~/components/groups/PDFUpload"; // ensure this file exists
@@ -35,47 +38,32 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "KSA Admin - Groepen" }];
 }
 
-// Small hook to detect mobile
-function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener?.("change", update);
-    return () => mq.removeEventListener?.("change", update);
-  }, [breakpoint]);
-  return isMobile;
-}
-
-// Wrapper that renders a Dialog on desktop and a Sheet on mobile
 function ModalWrap({
   open,
   onOpenChange,
   title,
   description,
   children,
-  mobileSide = "bottom",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
   description?: string;
   children: React.ReactNode;
-  mobileSide?: "top" | "bottom" | "left" | "right";
 }) {
-  const isMobile = useIsMobile();
-  if (isMobile) {
+  if (useIsMobile()) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={mobileSide} className="h-[92dvh] p-8 overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="text-2xl">{title}</SheetTitle>
-            {description && <SheetDescription>{description}</SheetDescription>}
-          </SheetHeader>
-          <div className="mt-4">{children}</div>
-        </SheetContent>
-      </Sheet>
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <div className="p-6 pb-24 overflow-y-auto">
+            <DrawerHeader>
+              <DrawerTitle>{title}</DrawerTitle>
+              {description && <DrawerDescription>{description}</DrawerDescription>}
+            </DrawerHeader>
+            {children}
+          </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
   return (
@@ -96,7 +84,6 @@ export default function Groups() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // dialogs
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -263,7 +250,6 @@ export default function Groups() {
           onOpenChange={setCreateOpen}
           title="Nieuwe groep"
           description="Vul de velden in en klik op Opslaan."
-          mobileSide="bottom"
         >
           <GroupForm
             submitting={saving}
@@ -279,7 +265,6 @@ export default function Groups() {
           onOpenChange={(v: boolean) => (v ? setEditOpen(true) : closeEdit())}
           title="Groep bewerken"
           description="Pas de gegevens aan en klik op Opslaan."
-          mobileSide="bottom"
         >
           {selected && (
             <>
@@ -295,11 +280,10 @@ export default function Groups() {
                 }}
                 onSubmit={handleUpdate}
                 onCancel={closeEdit}
-                // default validationMode = "onBlur"
               />
 
               {/* PDF upload section */}
-              <div className="mt-6 border-t pt-6">
+              <div className="border-t pt-6">
                 <PdfUpload
                   groupId={selected.id}
                   initialUrl={selected.brief_url ?? undefined}

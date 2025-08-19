@@ -44,7 +44,7 @@ export interface Group {
     info?: string | null;
     slug: string;
     active: boolean;
-    color?: string | null;
+    color?: string;
     icon_url?: string | null;
     brief_url?: string | null;
 }
