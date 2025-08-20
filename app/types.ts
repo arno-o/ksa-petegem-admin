@@ -24,6 +24,7 @@ export interface Post {
     created_at: string; // Supabase returns ISO string
     published_at: string | null; // Supabase returns ISO string or null
     user_id: string;
+    slug: string;
     // These will be populated from the `auth_users` join in fetchPosts
     author_first_name?: string | null;
     author_last_name?: string | null;

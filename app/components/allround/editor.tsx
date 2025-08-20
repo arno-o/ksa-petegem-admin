@@ -223,7 +223,7 @@ export function SimpleEditor({ content, onChange }: Props) {
                 </ToggleGroupItem>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Kop 1</p>
+                <p>Titel 1</p>
               </TooltipContent>
             </Tooltip>
 
@@ -240,7 +240,7 @@ export function SimpleEditor({ content, onChange }: Props) {
                 </ToggleGroupItem>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Kop 2</p>
+                <p>Titel 2</p>
               </TooltipContent>
             </Tooltip>
 
@@ -257,7 +257,7 @@ export function SimpleEditor({ content, onChange }: Props) {
                 </ToggleGroupItem>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Kop 3</p>
+                <p>Titel 3</p>
               </TooltipContent>
             </Tooltip>
           </ToggleGroup>

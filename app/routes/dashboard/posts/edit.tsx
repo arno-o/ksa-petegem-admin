@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
 import { useIsMobile } from "~/hooks/use-mobile";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import { ChevronLeft, Pencil, Trash, Save, Eye, Badge, BadgeCheck } from "lucide-react";
+import { ChevronLeft, Pencil, Trash, Save, Eye, Badge, BadgeCheck, LinkIcon } from "lucide-react";
 
 import { toast } from "sonner";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
-// import { Switch } from "~/components/ui/switch"; // Removed, as publish is now a button
 import { Separator } from "~/components/ui/separator";
 import FullScreenLoader from "~/components/allround/full-screen-loader";
 
@@ -47,6 +46,7 @@ export default function EditPostPage() {
 
     const [form, setForm] = useState({
         title: "",
+        slug: "",
         description: "",
         cover_img: "",
     });
@@ -63,9 +63,9 @@ export default function EditPostPage() {
                 setPost(fetchedPost); // Set the full post object
                 setForm({
                     title: fetchedPost.title,
+                    slug: fetchedPost.slug,
                     description: fetchedPost.description ?? "",
                     cover_img: fetchedPost.cover_img,
-                    // We no longer set 'published' in the form
                 });
             } catch (err) {
                 console.error("Failed to fetch post:", err);
@@ -89,6 +89,16 @@ export default function EditPostPage() {
         };
     }, [postId, navigate]); // Added navigate to dependencies
 
+    const slugify = (input: string) =>
+        input
+            .normalize("NFKD")               // split accents
+            .replace(/[\u0300-\u036f]/g, "") // remove accents
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)+/g, "");
+
+    const computedSlug = useMemo(() => slugify(form.title || ""), [form.title]);
+
     const handleSave = async () => {
         if (!postId) {
             toast.error("Geen Post ID gevonden om op te slaan.");
@@ -98,15 +108,31 @@ export default function EditPostPage() {
         try {
             await updatePost(postId, {
                 title: form.title,
+                slug: computedSlug,
                 description: form.description,
                 cover_img: form.cover_img,
             });
             toast.success("Bericht succesvol bewerkt.");
+            navigate("/berichten", { viewTransition: true });
         } catch (err) {
             toast.error("Er is iets foutgelopen bij het opslaan.");
             console.error(err);
         }
     };
+
+    const handleQuietSave = async () => {
+        if (!postId) { return; }
+
+        try {
+            await updatePost(postId, {
+                title: form.title,
+                cover_img: form.cover_img,
+                description: form.description,
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
 
     const handlePublishToggle = async () => {
         if (!postId || !post) {
@@ -118,11 +144,6 @@ export default function EditPostPage() {
         const publishDate = newPublishedStatus ? new Date().toISOString() : null; // Set publish date if publishing
 
         try {
-            const updatedPostData = await updatePost(postId, {
-                published: newPublishedStatus,
-                published_at: publishDate // Send published_at
-            });
-
             // Update local state with the new published status and published_at date
             setPost(prevPost => ({
                 ...(prevPost as Post), // Ensure prevPost is treated as Post type
@@ -139,7 +160,7 @@ export default function EditPostPage() {
                     description: "De post is niet langer publiekelijk zichtbaar."
                 });
             }
-        } catch (err: any) { // Use 'any' or more specific error type if available
+        } catch (err: any) {
             toast.error("Error", {
                 description: `Fout bij publiceren/depubliceren: ${err.message || err}`
             });
@@ -157,7 +178,6 @@ export default function EditPostPage() {
         try {
             if (post?.cover_img) {
                 try {
-                    // Extract the filename from the URL
                     const deleteURL = post?.cover_img;
                     await deleteFromBucket("post-covers", deleteURL);
                 } catch (bucketErr) {
@@ -199,14 +219,14 @@ export default function EditPostPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div className="flex items-center gap-2">
                         <Link to="/berichten" viewTransition>
-                            <Button variant="ghost" size="icon" className="">
+                            <Button variant="outline" size="icon" className="">
                                 <ChevronLeft className="h-5 w-5" />
                                 <span className="sr-only">Terug naar berichten pagina</span>
                             </Button>
                         </Link>
                         <h1 className="text-2xl font-bold tracking-tight">Bewerk bericht</h1>
                     </div>
-                    <div className="flex flex-row w-full md:w-fit gap-2">
+                    <div className="flex flex-wrap flex-row w-full md:w-fit gap-2">
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button variant="destructive" size={isMobile ? "lg" : "icon"}>
@@ -234,9 +254,9 @@ export default function EditPostPage() {
                             </DialogContent>
                         </Dialog>
 
-                        <Button variant="outline" size={isMobile ? "lg" : "default"} onClick={() => { handleSave(); navigate(`/berichten/preview/${post.id}`); }}>
+                        <Button variant="outline" size={isMobile ? "lg" : "default"} onClick={() => { handleQuietSave(); navigate(`/berichten/preview/${post.id}`); }}>
                             <Eye />
-                            {isMobile ? "" : "Preview"}
+                            {isMobile ? "Preview" : "Preview"}
                         </Button>
 
                         <Button variant="outline" onClick={handleSave} className="grow md:w-fit">
@@ -244,7 +264,6 @@ export default function EditPostPage() {
                             Opslaan
                         </Button>
 
-                        {/* New Publish Button */}
                         <Button variant={post.published ? "default" : "outline"} onClick={handlePublishToggle} className="grow md:w-fit">
                             {!post.published ? <Badge /> : <BadgeCheck />}
                             {!post.published ? 'Publiceer' : 'Gepubliceerd'}
@@ -253,35 +272,44 @@ export default function EditPostPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Main Content Column (Editor & Title) */}
                     <div className="lg:col-span-2 space-y-4">
-                        {/* Title Input */}
-                        <div className="relative">
-                            <Label htmlFor="title" className="sr-only">Titel</Label>
-                            <Input
-                                id="title"
-                                placeholder="Titel van het bericht"
-                                value={form.title}
-                                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                            />
-                            <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                        <div className="flex gap-3">
+                            <div className="relative w-full">
+                                <Pencil className="absolute left-0 top-0 m-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    id="title"
+                                    placeholder="Titel van het bericht"
+                                    value={form.title}
+                                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                    className="pl-9"
+                                />
+                            </div>
+
+                            <div className="relative w-full">
+                                <LinkIcon className="absolute left-0 top-0 m-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    id="slug"
+                                    placeholder="Link naar het bericht"
+                                    value={computedSlug}
+                                    className="pl-9"
+                                    readOnly
+                                    disabled
+                                />
+                            </div>
                         </div>
 
-                        {/* SimpleEditor component */}
                         <SimpleEditor
                             content={form.description}
                             onChange={(html) => setForm({ ...form, description: html })}
                         />
                     </div>
 
-                    {/* Sidebar Metadata Column */}
                     <div className="space-y-4">
-                        {/* Berichtdetails section */}
                         <div className="bg-background p-4 rounded-md border border-input space-y-8">
                             <div>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="cover_image_url" className="text-sm font-medium">Cover afbeelding URL</Label>
+                                        <Label htmlFor="cover_image_url" className="text-sm font-medium">Cover afbeelding</Label>
                                         <FileUpload
                                             bucket="post-covers"
                                             path={`post-${postId}`}
@@ -293,7 +321,6 @@ export default function EditPostPage() {
                             </div>
                             <Separator />
                             <div>
-                                {/* Removed the Switch component */}
                                 <div className="flex items-center justify-between space-x-2">
                                     <p className="text-sm font-medium">Status</p>
                                     <p className={`text-sm font-semibold ${post.published ? 'text-green-600' : 'text-orange-500'}`}>
