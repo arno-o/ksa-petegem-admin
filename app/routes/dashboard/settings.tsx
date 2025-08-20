@@ -8,6 +8,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { Separator } from "~/components/ui/separator";
+import PdfSettingField from "~/components/settings/PdfSettingsField";
 
 import { fetchSettingsByKeys, upsertSettingValue, unwrapSettingValue } from "~/utils/data";
 
@@ -16,6 +17,8 @@ export function meta() {
 }
 
 const KEYS = {
+    inschrijving: "general.inschrijvingsbundel_url",
+    privacy: "general.privacyverklargin_url",
     published: "leiding.published",
     message: "leiding.published-msg",
 } as const;
@@ -26,6 +29,8 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false);
 
     const [form, setForm] = useState({
+        inschrijving: "",
+        privacy: "",
         published: true,
         message: "",
     });
@@ -41,7 +46,9 @@ export default function SettingsPage() {
                 const rawPublished = unwrapSettingValue(map[KEYS.published]);
                 const published = typeof rawPublished === "boolean" ? rawPublished : Boolean(rawPublished);
                 const message = (unwrapSettingValue(map[KEYS.message]) as string) ?? "";
-                const next = { published, message };
+                const inschrijving = (unwrapSettingValue(map[KEYS.inschrijving]) as string) ?? "";
+                const privacy = (unwrapSettingValue(map[KEYS.privacy]) as string) ?? "";
+                const next = { inschrijving, privacy, published, message };
                 if (!cancel) {
                     setForm(next);
                     setInitial(next);
@@ -77,7 +84,7 @@ export default function SettingsPage() {
         }
     }
 
-    const settingItemStyle = `flex flex-col gap-4 py-4 md:flex-row md:gap-0`;
+    const settingItemStyle = `flex flex-col gap-4 py-4 md:flex-row md:gap-0 md:items-center`;
 
     return (
         <PrivateRoute>
@@ -96,6 +103,43 @@ export default function SettingsPage() {
                     </header>
 
                     <div className="lg:col-span-2 space-y-8">
+                        <div className="space-y-4">
+                            <div className="border-b pb-4">
+                                <h2 className="text-xl font-semibold">Algemeen</h2>
+                                <p className="text-sm text-muted-foreground">Algemene instellingen voor de website.</p>
+                            </div>
+
+                            <div className={settingItemStyle}>
+                                <div className="md:basis-1/3">
+                                    <p className="font-semibold">Inschrijvingsbundel (PDF)</p>
+                                </div>
+
+                                <div className="md:basis-2/3">
+                                    <PdfSettingField
+                                        settingKey="general.inschrijvingsbundel_url"
+                                        label="Inschrijvingsbundel (PDF)"
+                                        description="Jaarlijkse bundel voor inschrijvingen."
+                                    />
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className={settingItemStyle}>
+                                <div className="md:basis-1/3">
+                                    <p className="font-semibold">Privacy Verklaring (PDF)</p>
+                                </div>
+
+                                <div className="md:basis-2/3">
+                                    <PdfSettingField
+                                        settingKey="general.privacyverklaring_url"
+                                        label="Privacyverklaring (PDF)"
+                                        description="Actuele versie van de privacyverklaring."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Leiding settings group */}
                         <div className="space-y-4">
                             <div className="border-b pb-4">

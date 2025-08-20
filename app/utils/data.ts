@@ -373,7 +373,8 @@ const LETTER_FOLDER = "groep-brieven";
 export const getGroupLetterPath = (groupId: number | string) =>
   `${LETTER_FOLDER}/brief-groep-${groupId}.pdf`;
 
-/** Uploads & overwrites the group's monthly PDF letter. Returns the public URL. */
+export const getPrivacyLetterPath = () => ``
+
 export async function uploadGroupLetter(file: File, groupId: number | string): Promise<string> {
   if (file.type !== "application/pdf") {
     throw new Error("Bestand moet een PDF zijn.");
@@ -391,9 +392,7 @@ export async function uploadGroupLetter(file: File, groupId: number | string): P
 
   if (upErr) throw upErr;
 
-  // Public URL (bucket is public per your screenshot)
   const { data } = supabase.storage.from(LETTER_BUCKET).getPublicUrl(path);
-  // cache-bust in UI if you embed the link in <object>/<iframe>
   return `${data.publicUrl}?v=${Date.now()}`;
 }
 
@@ -460,4 +459,59 @@ export async function upsertSettingValue(
     .single();
   if (error) throw error;
   return data as SettingRow;
+}
+
+// ===== Global PDF settings (General) =====
+const PDF_BUCKET = "pdf-files";
+
+/** Map setting key -> canonical filename in the pdf bucket (no folder). */
+function pdfFilenameForSetting(settingKey: string): string {
+  switch (settingKey) {
+    case "general.inschrijvingsbundel_url":
+      return "inschrijvingsbundel.pdf";
+    case "general.privacyverklaring_url":
+      return "privacy_verklaring.pdf";
+    default: {
+      // Fallback: take last segment before `_url` and slug it
+      const last = settingKey.split(".").pop() || "document_url";
+      const base = last.replace(/_?url$/i, "").replace(/[^a-z0-9]+/gi, "_").toLowerCase();
+      return `${base || "document"}.pdf`;
+    }
+  }
+}
+
+/** Uploads a PDF for the given setting key, overwriting any previous file, updates the setting with the public URL, and returns it. */
+export async function uploadGlobalPdf(settingKey: string, file: File): Promise<string> {
+  if (file.type !== "application/pdf") {
+    throw new Error("Bestand moet een PDF zijn.");
+  }
+  const filename = pdfFilenameForSetting(settingKey);
+
+  const { error: upErr } = await supabase.storage
+    .from(PDF_BUCKET)
+    .upload(filename, file, { upsert: true, contentType: "application/pdf", cacheControl: "0" });
+  if (upErr) throw upErr;
+
+  const { data } = supabase.storage.from(PDF_BUCKET).getPublicUrl(filename);
+  const publicUrl = `${data.publicUrl}?v=${Date.now()}`; // cache-bust for the site
+
+  // Save to settings (string)
+  await upsertSettingValue(settingKey, publicUrl, "string", true);
+
+  return publicUrl;
+}
+
+export async function getGlobalPdfUrl(settingKey: string): Promise<string> {
+  const rows = await fetchSettingsByKeys([settingKey]);
+  const row = rows[0];
+  const url = (unwrapSettingValue(row) as string) ?? "";
+  return url;
+}
+
+export async function deleteGlobalPdf(settingKey: string): Promise<void> {
+  const url = await getGlobalPdfUrl(settingKey);
+  if (url) {
+    await deleteFromBucket(PDF_BUCKET, url);
+  }
+  await upsertSettingValue(settingKey, "", "string", true);
 }
