@@ -1,31 +1,31 @@
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router"; // Use react-router-dom for v7 if not already
+import { Link, useNavigate } from "react-router"
 
 import type { Post } from "~/types";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Textarea } from "~/components/ui/textarea"; // Keep Textarea for description
+import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
-  DialogHeader, // Add DialogHeader
-  DialogTitle,  // Add DialogTitle
-  DialogDescription, // Add DialogDescription
-  DialogFooter, // Add DialogFooter
-  DialogClose // Add DialogClose for cancel button
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
 } from "~/components/ui/dialog";
 import { Badge } from "~/components/ui/badge";
-import { format } from "date-fns"; // For date formatting
-import { nl } from "date-fns/locale"; // For Dutch locale if needed
+import { format } from "date-fns";
+import { nl } from "date-fns/locale";
 
-import { createPost, fetchPosts } from "~/utils/data"; // Assuming fetchUsers for later if needed
+import { createPost, fetchPosts } from "~/utils/data";
 import { UserAuth } from "~/context/AuthContext";
 
 import PageLayout from "../pageLayout";
-import type { Route } from "./+types/posts"; // Adjust if your types are elsewhere
+import type { Route } from "./+types/posts";
 import PrivateRoute from "~/context/PrivateRoute";
 import { Separator } from "~/components/ui/separator";
 
@@ -66,6 +66,13 @@ export default function Posts() {
     loadPosts();
   }, []);
 
+  const slugify = (input: string) => {
+    return input
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+  };
+
   const handleCreate = async () => {
     if (!form.title.trim()) {
       console.error("Title cannot be empty.");
@@ -74,6 +81,7 @@ export default function Posts() {
     try {
       const postData = {
         ...form,
+        slug: slugify(form.title),
         description: form.description || "",
         published: false,
         user_id: session?.user.id,

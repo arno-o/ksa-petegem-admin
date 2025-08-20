@@ -102,11 +102,10 @@ export default function GroupForm({
   }, [naam, initSlug, initial?.slug, setValue, slug]);
 
   const hasErrors = Object.keys(errors).length > 0;
-  // The new logic for handling the cancel action
+
   const handleCancel = () => {
     onCancel?.();
   };
-  // --- end confirm UI ---
 
   const isMobile = useIsMobile();
 

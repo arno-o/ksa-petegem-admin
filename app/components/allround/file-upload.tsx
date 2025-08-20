@@ -37,7 +37,7 @@ const handleUpload = async (file: File) => {
   try {
     // ⬇️ Compress image
     const compressedFile = await imageCompression(file, {
-      maxSizeMB: 0.3, // Adjust max file size (in MB)
+      maxSizeMB: 1, // Adjust max file size (in MB)
       maxWidthOrHeight: 1280, // Optional: resize large images
       useWebWorker: true,
     });
