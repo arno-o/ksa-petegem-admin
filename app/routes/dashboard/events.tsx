@@ -368,7 +368,7 @@ export default function Events() {
                     const event = row.original;
 
                     return (
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
                                     <span className="sr-only">Open menu</span>
@@ -564,7 +564,7 @@ export default function Events() {
                                                             <MapPin className="h-4 w-4 mr-1 text-muted-foreground" /> {event.location}
                                                         </p>
                                                     </div>
-                                                    <DropdownMenu>
+                                                    <DropdownMenu modal={false}>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" className="h-8 w-8 p-0">
                                                                 <MoreVertical className="h-4 w-4 text-muted-foreground" />

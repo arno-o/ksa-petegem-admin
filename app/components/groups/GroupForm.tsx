@@ -1,6 +1,6 @@
 // components/groups/GroupForm.tsx
 import { z } from "zod";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,17 +10,6 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
 import { Separator } from "~/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-
 import { Badge, BadgeCheck } from "lucide-react";
 
 export const groupSchema = z.object({
@@ -56,19 +45,16 @@ export default function GroupForm({
     handleSubmit,
     watch,
     setValue,
-    reset,
     control,
-    clearErrors,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<GroupFormValues>({
     resolver: zodResolver(groupSchema),
     defaultValues: {
-      naam: "",
-      omschrijving: "",
-      info: "",
-      slug: "",
-      active: true,
-      ...initial,
+      naam: initial?.naam ?? "",
+      omschrijving: initial?.omschrijving ?? "",
+      info: initial?.info ?? "",
+      slug: initial?.slug ?? "",
+      active: initial?.active ?? true,
     },
     mode: validationMode,
     shouldUnregister: true,
@@ -77,29 +63,21 @@ export default function GroupForm({
   const slugify = (input: string) => {
     return input
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/--+/g, "-");
   };
-
-  useEffect(() => {
-    reset({
-      naam: initial?.naam ?? "",
-      omschrijving: initial?.omschrijving ?? "",
-      info: initial?.info ?? "",
-      slug: initial?.slug ?? "",
-      active: initial?.active ?? true,
-    });
-  }, [initial, reset]);
 
   const naam = watch("naam");
   const slug = watch("slug");
-  const initSlug = useMemo(() => slugify(initial?.naam ?? ""), [initial?.naam]);
+  const isEditing = initial?.slug !== undefined && initial?.slug !== "";
 
   useEffect(() => {
-    if (!initial?.slug || slug === initSlug) {
-      setValue("slug", slugify(naam ?? ""));
+    if (!isEditing && naam !== slug) {
+      setValue("slug", slugify(naam));
     }
-  }, [naam, initSlug, initial?.slug, setValue, slug]);
+  }, [naam, slug, isEditing, setValue]);
 
   const hasErrors = Object.keys(errors).length > 0;
 
