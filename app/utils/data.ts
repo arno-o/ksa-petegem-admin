@@ -1,12 +1,6 @@
-import type { Post } from "~/types";
-import { createClient } from "@supabase/supabase-js";
+import supabase from "./supabase";
 
-import { type Group } from "~/types";
-
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { type Post, type Group } from "~/types";
 
 export const fetchInactiveLeiding = async () => {
   const { data, error } = await supabase.from("leiding").select("*").eq("actief", false);
@@ -166,10 +160,9 @@ export const fetchGroupById = async (id: number | string): Promise<Group> => {
   return data as Group;
 };
 
-// LET OP: laat icon_url en brief_url ongemoeid
 export const updateGroup = async (
   id: number | string,
- updates: Partial<Omit<Group, "id" | "icon_url" | "brief_url" | "color">>
+ updates: Partial<Group>
 ): Promise<Group> => {
   const { data, error } = await supabase
     .from("groepen")
@@ -182,7 +175,7 @@ export const updateGroup = async (
 };
 
 export const createGroup = async (
-  input: Omit<Group, "id" | "icon_url" | "brief_url" | "color">
+  input: Group
 ): Promise<Group> => {
   const { data, error } = await supabase
     .from("groepen")
@@ -462,8 +455,6 @@ export async function upsertSettingValue(
 }
 
 // ===== Global PDF settings (General) =====
-const PDF_BUCKET = "pdf-files";
-
 /** Map setting key -> canonical filename in the pdf bucket (no folder). */
 function pdfFilenameForSetting(settingKey: string): string {
   switch (settingKey) {
@@ -488,11 +479,11 @@ export async function uploadGlobalPdf(settingKey: string, file: File): Promise<s
   const filename = pdfFilenameForSetting(settingKey);
 
   const { error: upErr } = await supabase.storage
-    .from(PDF_BUCKET)
+    .from(LETTER_BUCKET)
     .upload(filename, file, { upsert: true, contentType: "application/pdf", cacheControl: "0" });
   if (upErr) throw upErr;
 
-  const { data } = supabase.storage.from(PDF_BUCKET).getPublicUrl(filename);
+  const { data } = supabase.storage.from(LETTER_BUCKET).getPublicUrl(filename);
   const publicUrl = `${data.publicUrl}?v=${Date.now()}`; // cache-bust for the site
 
   // Save to settings (string)
@@ -511,7 +502,7 @@ export async function getGlobalPdfUrl(settingKey: string): Promise<string> {
 export async function deleteGlobalPdf(settingKey: string): Promise<void> {
   const url = await getGlobalPdfUrl(settingKey);
   if (url) {
-    await deleteFromBucket(PDF_BUCKET, url);
+    await deleteFromBucket(LETTER_BUCKET, url);
   }
   await upsertSettingValue(settingKey, "", "string", true);
 }

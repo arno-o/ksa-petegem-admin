@@ -31,7 +31,7 @@ import {
 
 
 import GroupForm, { type GroupFormValues } from "~/components/groups/GroupForm";
-import PdfUpload from "~/components/groups/PDFUpload"; // ensure this file exists
+import PdfUpload from "~/components/groups/PDFUpload";
 
 // ---------- Page Meta ----------
 export function meta({}: Route.MetaArgs) {
@@ -269,7 +269,7 @@ export default function Groups() {
           {selected && (
             <>
               <GroupForm
-                key={selected.id}
+                // key={selected.id} // <-- Removed this line
                 submitting={saving}
                 initial={{
                   naam: selected.naam ?? "",

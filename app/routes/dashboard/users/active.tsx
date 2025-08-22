@@ -2,63 +2,24 @@
 
 // React and Hooks
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router"; // Changed from "react-router"
+import { Link, useNavigate } from "react-router";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { toast } from "sonner";
 
 // TanStack Table
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  createColumnHelper,
-  getFilteredRowModel,
-  getPaginationRowModel, // This isn't currently used, but keep if you plan to use pagination
-} from "@tanstack/react-table";
+import { type ColumnDef, flexRender, getCoreRowModel, useReactTable, createColumnHelper, } from "@tanstack/react-table";
 
 // Lucide Icons
-import {
-  CalendarArrowUp, Crown, Star, UserPlus, MoreVertical, Edit, ShieldX,
-  Trash2, Search, Users, Download, FileSpreadsheet, FileBadge2, ListChecks, UserMinus2
-} from "lucide-react";
+import { CalendarArrowUp, Crown, Star, UserPlus, MoreVertical, Edit, ShieldX, Trash2, Search, Users, Download, FileSpreadsheet, FileBadge2, ListChecks, UserMinus2 } from "lucide-react";
 
 // UI Components (shadcn/ui or custom)
 import { Button } from "~/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from "~/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger, } from "~/components/ui/tooltip";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "~/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue, } from "~/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, } from "~/components/ui/dropdown-menu";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -302,7 +263,7 @@ export default function Active() {
       }
       await deleteLeiding(selectedLeidingForDialog.id);
       toast.success("Leiding werd definitief verwijderd.");
-      setDeleteDialog(false);
+      setDeleteDialog(false); // Close the dialog
       await reloadData();
       setSelectedLeidingForDialog(null);
     } catch (err) {
@@ -316,8 +277,8 @@ export default function Active() {
     try {
       await disableLeiding(selectedLeidingForDialog.id);
       toast.success("Leiding is succesvol inactief gezet.");
-      setDisableConfirmDialog(false);
-      await reloadData(); // Reload data after disabling
+      setDisableConfirmDialog(false); // Close the dialog
+      await reloadData();
       setSelectedLeidingForDialog(null);
     } catch (err) {
       toast.error("Inactief zetten mislukt. Probeer opnieuw.");
@@ -341,14 +302,14 @@ export default function Active() {
       });
 
       toast.success(`Groep gewist voor ${selectedLeidingIds.length} leiding.`);
-      setMassWipeGroupDialog(false);
+      setMassWipeGroupDialog(false); // Close the dialog
       await reloadData();
     } catch (err) {
       toast.error("Groep wissen mislukt. Probeer opnieuw.");
       console.error("Failed to mass wipe group:", err);
     }
   };
-  
+
   const handleMassUpdateGroup = async () => {
     const selectedLeidingIds = table.getSelectedRowModel().rows.map(row => row.original.id);
     if (selectedLeidingIds.length === 0) {
@@ -366,9 +327,9 @@ export default function Active() {
         updateData: { leidingsploeg: Number(selectedMassEditGroup) }
       });
       toast.success(`${selectedLeidingIds.length} leiding aangepast naar de nieuwe groep.`);
-      setMassEditGroupDialog(false);
+      setMassEditGroupDialog(false); // Close the dialog
       setSelectedMassEditGroup("");
-      await reloadData(); // Reload data to reflect changes
+      await reloadData();
     } catch (err) {
       toast.error("Massabewerking groep mislukt. Probeer opnieuw.");
       console.error("Failed to mass update group:", err);
@@ -388,8 +349,8 @@ export default function Active() {
         updateData: { actief: false }
       });
       toast.success(`${selectedLeidingIds.length} leiding is succesvol inactief gezet.`);
-      setMassDisableDialog(false);
-      await reloadData(); // Reload data to reflect changes
+      setMassDisableDialog(false); // Close the dialog
+      await reloadData();
     } catch (err) {
       toast.error("Massabewerking inactief zetten mislukt. Probeer opnieuw.");
       console.error("Failed to mass disable leiding:", err);
@@ -633,7 +594,7 @@ export default function Active() {
           const leiding = row.original;
           return (
             <div className="flex justify-end">
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <MoreVertical className="h-4 w-4" />
@@ -679,6 +640,10 @@ export default function Active() {
   });
 
   const selectedRowCount = Object.keys(rowSelection).length;
+
+  // active.tsx
+
+  // ... (all the imports and component logic from before)
 
   return (
     <PrivateRoute>
@@ -734,14 +699,14 @@ export default function Active() {
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
               {/* NEW: Mass Action Dropdown */}
               {selectedRowCount > 0 && (
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant={"outline"}>
                       <ListChecks className="mr-2 h-4 w-4" />
                       Massa Acties ({selectedRowCount})
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" onSelect={(e) => e.preventDefault()}>
                     <DropdownMenuItem
                       onClick={() => setMassWipeGroupDialog(true)}
                       className="cursor-pointer"
@@ -765,7 +730,7 @@ export default function Active() {
                 </DropdownMenu>
               )}
 
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant={"outline"}
@@ -993,5 +958,5 @@ export default function Active() {
 
       </PageLayout>
     </PrivateRoute>
-  );
-}
+  )
+};

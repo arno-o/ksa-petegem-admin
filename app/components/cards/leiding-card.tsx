@@ -161,7 +161,7 @@ const LeidingCard = ({
         )}
 
         <div className="flex justify-end">
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreVertical className="h-4 w-4" />
@@ -213,7 +213,7 @@ const LeidingCard = ({
             {leiding.voornaam} {leiding.familienaam}
           </p>
         </div>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-10 w-10">
               <MoreVertical className="h-5 w-5" />

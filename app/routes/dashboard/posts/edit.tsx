@@ -130,6 +130,7 @@ export default function EditPostPage() {
                 description: form.description,
             });
         } catch (err) {
+            toast.error("Er is iets foutgelopen bij het opslaan.");
             console.error(err);
         }
     }
@@ -141,16 +142,23 @@ export default function EditPostPage() {
         }
 
         const newPublishedStatus = !post.published;
-        const publishDate = newPublishedStatus ? new Date().toISOString() : null; // Set publish date if publishing
+        const publishDate = newPublishedStatus ? new Date().toISOString() : null;
 
         try {
-            // Update local state with the new published status and published_at date
+            // First, update the post in the database
+            await updatePost(postId, {
+                published: newPublishedStatus,
+                published_at: publishDate,
+            });
+
+            // If the database update is successful, then update the local state
             setPost(prevPost => ({
-                ...(prevPost as Post), // Ensure prevPost is treated as Post type
+                ...(prevPost as Post),
                 published: newPublishedStatus,
                 published_at: publishDate,
             }));
 
+            // Then, show the user a success message
             if (newPublishedStatus) {
                 toast.success("Gelukt!", {
                     description: "De post is gepubliceerd en is nu beschikbaar voor iedereen."
@@ -161,6 +169,7 @@ export default function EditPostPage() {
                 });
             }
         } catch (err: any) {
+            // If the database update fails, show an error and don't update local state
             toast.error("Error", {
                 description: `Fout bij publiceren/depubliceren: ${err.message || err}`
             });
@@ -197,19 +206,23 @@ export default function EditPostPage() {
 
     if (loading) {
         return (
-            <PageLayout>
-                <FullScreenLoader />
-            </PageLayout>
+            <PrivateRoute>
+                <PageLayout>
+                    <FullScreenLoader />
+                </PageLayout>
+            </PrivateRoute>
         );
     }
 
     if (error || !post) {
         return (
-            <PageLayout>
-                <div className="flex justify-center items-center h-[50vh]">
-                    <p className="text-destructive">{error || "Bericht niet gevonden."}</p>
-                </div>
-            </PageLayout>
+            <PrivateRoute>
+                <PageLayout>
+                    <div className="flex justify-center items-center h-[50vh]">
+                        <p className="text-destructive">{error || "Bericht niet gevonden."}</p>
+                    </div>
+                </PageLayout>
+            </PrivateRoute>
         );
     }
 
