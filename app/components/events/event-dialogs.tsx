@@ -39,49 +39,6 @@ interface Props {
   isEdit?: boolean;
 }
 
-// Wrapper component to share content between Dialog and Drawer
-const EventFormWrapper = ({
-  form,
-  setForm,
-  errors,
-  setErrors,
-  groupOptions,
-  onSubmit,
-  isEdit,
-}: Omit<Props, "open" | "setOpen">) => (
-  <>
-    <DrawerHeader className="px-6 pt-6">
-      <DrawerTitle className="text-2xl font-bold">
-        {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}
-      </DrawerTitle>
-      <DrawerDescription>
-        {isEdit
-          ? "Pas de details van deze activiteit aan."
-          : "Vul alle velden in om een nieuwe activiteit aan te maken."}
-      </DrawerDescription>
-    </DrawerHeader>
-
-    <div className="px-6 pt-2 overflow-visible">
-      <EventFormFields
-        form={form}
-        setForm={setForm}
-        errors={errors}
-        setErrors={setErrors}
-        groupOptions={groupOptions}
-      />
-    </div>
-
-    <DrawerFooter className="px-6 py-4 border-t bg-background">
-      <DrawerClose asChild>
-        <Button type="button" variant="outline">Annuleer</Button>
-      </DrawerClose>
-      <Button type="submit" onClick={onSubmit}>
-        {isEdit ? "Opslaan" : "Activiteit aanmaken"}
-      </Button>
-    </DrawerFooter>
-  </>
-);
-
 export function EventDialog({
   form,
   setForm,
@@ -106,18 +63,35 @@ export function EventDialog({
           )}
         </DrawerTrigger>
         <DrawerContent>
-          <div className=" pb-24 overflow-y-auto">
-            <EventFormWrapper
+          <DrawerHeader className="px-6 pt-6">
+            <DrawerTitle className="text-2xl font-bold">
+              {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}
+            </DrawerTitle>
+            <DrawerDescription>
+              {isEdit
+                ? "Pas de details van deze activiteit aan."
+                : "Vul alle velden in om een nieuwe activiteit aan te maken."}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-6">
+            <EventFormFields
               form={form}
               setForm={setForm}
               errors={errors}
               setErrors={setErrors}
               groupOptions={groupOptions}
-              onSubmit={onSubmit}
-              isEdit={isEdit}
             />
           </div>
+          <DrawerFooter className="px-6 py-4 border-t bg-background">
+            <DrawerClose asChild>
+              <Button type="button" variant="outline">Annuleer</Button>
+            </DrawerClose>
+            <Button type="submit" onClick={onSubmit}>
+              {isEdit ? "Opslaan" : "Activiteit aanmaken"}
+            </Button>
+          </DrawerFooter>
         </DrawerContent>
+
       </Drawer>
     );
   }
@@ -132,17 +106,36 @@ export function EventDialog({
         )}
       </DialogTrigger>
       <DialogContent className="w-[92vw] sm:max-w-[640px] p-0 max-h-[90vh] overflow-visible">
-        <div className="flex flex-col rounded-lg border bg-background shadow-xl">
-          <EventFormWrapper
+
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle className="text-2xl font-bold">
+            {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Pas de details van deze activiteit aan."
+              : "Vul alle velden in om een nieuwe activiteit aan te maken."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="px-6">
+          <EventFormFields
             form={form}
             setForm={setForm}
             errors={errors}
             setErrors={setErrors}
             groupOptions={groupOptions}
-            onSubmit={onSubmit}
-            isEdit={isEdit}
           />
         </div>
+
+        <DialogFooter className="px-6 py-4 border-t bg-background">
+          <DialogClose asChild>
+            <Button type="button" variant="outline">Annuleer</Button>
+          </DialogClose>
+          <Button type="submit" onClick={onSubmit}>
+            {isEdit ? "Opslaan" : "Activiteit aanmaken"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -15,7 +15,7 @@ import type { EventFormState } from "../../types";
 
 // External Libraries
 import { format } from "date-fns";
-import { CalendarIcon, Clock2Icon, LocationEdit } from "lucide-react";
+import { CalendarIcon, Clock2Icon } from "lucide-react";
 
 interface Props {
   form: EventFormState;
@@ -52,31 +52,31 @@ export function EventFormFields({
         <div className="flex flex-col gap-2">
           <Label htmlFor="location">Locatie</Label>
           <Input
-              id="location"
-              value={form.location}
-              onChange={(e) => {
-                setForm((prev) => ({ ...prev, location: e.target.value }));
-                setErrors((prev) => ({ ...prev, location: "" }));
-              }}
-              className={cn(errors.location && "border-red-500 focus-visible:ring-red-500 w-fill pl-8")}
-            />
+            id="location"
+            value={form.location}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, location: e.target.value }));
+              setErrors((prev) => ({ ...prev, location: "" }));
+            }}
+            className={cn(errors.location && "border-red-500 focus-visible:ring-red-500 w-fill pl-8")}
+          />
           {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
         </div>
 
         <div className="flex flex-col gap-2">
-        <Label htmlFor="link">Link (Ravot)</Label>
-        <Input
-          id="link"
-          placeholder="https://"
-          value={form.link}
-          onChange={(e) => {
-            setForm((prev) => ({ ...prev, link: e.target.value }));
-            setErrors((prev) => ({ ...prev, link: "" }));
-          }}
-          className={cn(errors.link && "border-red-500 focus-visible:ring-red-500 w-fill")}
-        />
-        {errors.link && <p className="text-red-500 text-sm mt-1">{errors.link}</p>}
-      </div>
+          <Label htmlFor="link">Link (Ravot)</Label>
+          <Input
+            id="link"
+            placeholder="https://"
+            value={form.link}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, link: e.target.value }));
+              setErrors((prev) => ({ ...prev, link: "" }));
+            }}
+            className={cn(errors.link && "border-red-500 focus-visible:ring-red-500 w-fill")}
+          />
+          {errors.link && <p className="text-red-500 text-sm mt-1">{errors.link}</p>}
+        </div>
       </div>
 
       <Separator />
@@ -84,18 +84,20 @@ export function EventFormFields({
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
           <Label htmlFor="date_start">Datum</Label>
-          <Popover>
+          <Popover modal>
             <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !form.date_start && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="inline h-4 w-4" />
-                {form.date_start ? format(form.date_start, "dd/MM/yyyy") : "Kies een datum"}
-              </Button>
+              <div className="w-full">
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !form.date_start && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="inline h-4 w-4" />
+                  {form.date_start ? format(form.date_start, "dd/MM/yyyy") : "Kies een datum"}
+                </Button>
+              </div>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Calendar
