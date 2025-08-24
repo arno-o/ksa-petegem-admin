@@ -6,18 +6,19 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { cn } from "~/lib/utils"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import { cn } from "~/lib/utils"
+import { translateSupabaseError } from "~/utils/errorTranslator";
 
+import { toast } from "sonner"
 import { useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
 import { Link, useNavigate } from "react-router"
 import { UserAuth } from "~/context/AuthContext"
 import { Separator } from "~/components/ui/separator"
-import { toast } from "sonner"; // Import toast from sonner
-import { Eye, EyeOff } from "lucide-react"; // Import Eye and EyeOff icons
 
-export function RegisterForm({className, ...props}: React.ComponentProps<"div">) {
+export function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -30,15 +31,6 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
 
   const { signUpNewUser } = UserAuth();
 
-  interface SignUpResult {
-    success: boolean;
-    // Add other properties if the result object has more
-  }
-
-  /**
-   * Validates the registration form fields.
-   * @returns {boolean} True if the form is valid, false otherwise.
-   */
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -67,140 +59,133 @@ export function RegisterForm({className, ...props}: React.ComponentProps<"div">)
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault(); // Prevent default HTML5 validation
+    e.preventDefault();
     setLoading(true);
-    setFormErrors({}); // Clear previous errors
+    setFormErrors({});
 
-    // Run validation before attempting to sign up
     if (!validateForm()) {
-      toast.error("Vul alle verplichte velden correct in."); // Show toast for validation failure
-      setLoading(false); // Stop loading if validation fails
-      return; // Stop the function if validation fails
+      toast.error("Vul alle verplichte velden correct in.");
+      setLoading(false);
+      return;
     }
 
     try {
-      const result: SignUpResult | undefined = await signUpNewUser(email, password, firstName, lastName);
-      if (result?.success) {
-        toast.success("Account succesvol aangemaakt!"); // Show success toast
+      const result = await signUpNewUser(email, password, firstName, lastName);
+
+      if (result.success) {
+        toast.success("Account succesvol aangemaakt!");
         navigate("/berichten", { viewTransition: true });
       } else {
-        // This case might be for specific backend errors not caught by the general catch block
-        toast.error("Registratie mislukt. Probeer opnieuw.");
+        const translatedError = translateSupabaseError(result.error.code);
+        toast.error(`Registratie mislukt:`, {
+          description: `${translatedError}`
+        });
       }
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Sign up error:", error);
-        toast.error(`Fout bij registreren: ${error.message}`); // Show specific error message
-      } else {
-        console.error("Sign up error:", error);
-        toast.error("Er is een onverwachte fout opgetreden tijdens de registratie.");
-      }
+      console.error("Sign up error:", error);
+      toast.error("Er is een onverwachte fout opgetreden tijdens de registratie.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Maak een account aan</CardTitle>
-          <CardDescription>
-            #gasolina
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp} noValidate>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setFormErrors((prev) => ({ ...prev, email: "" }));
-                  }}
-                  id="email"
-                  type="email"
-                  className={`${formErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                />
-                {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
-              </div>
-              <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Wachtwoord</Label>
-                </div>
-                <div className="relative">
-                  <Input
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setFormErrors((prev) => ({ ...prev, password: "" }));
-                    }}
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    className={`${formErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""} pr-10`}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-neutral-500" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-neutral-500" />
-                    )}
-                  </Button>
-                </div>
-                {formErrors.password && <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>}
-              </div>
-              <div className="flex gap-3">
-                <div className="flex flex-col gap-3 flex-1"> {/* Use flex-1 to make them take equal space */}
-                  <div className="flex items-center">
-                    <Label htmlFor="firstName">Voornaam</Label>
-                  </div>
-                  <Input
-                    onChange={(e) => {
-                      setFirstName(e.target.value);
-                      setFormErrors((prev) => ({ ...prev, firstName: "" })); // Clear error on change
-                    }}
-                    id="firstName"
-                    type="text" // Changed type to text for first name
-                    className={`${formErrors.firstName ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                  />
-                  {formErrors.firstName && <p className="text-red-500 text-sm mt-1">{formErrors.firstName}</p>}
-                </div>
-                <div className="flex flex-col gap-3 flex-1"> {/* Use flex-1 to make them take equal space */}
-                  <div className="flex items-center">
-                    <Label htmlFor="lastName">Familienaam</Label>
-                  </div>
-                  <Input
-                    onChange={(e) => {
-                      setLastName(e.target.value);
-                      setFormErrors((prev) => ({ ...prev, lastName: "" })); // Clear error on change
-                    }}
-                    id="lastName"
-                    type="text" // Changed type to text for last name
-                    className={`${formErrors.lastName ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                  />
-                  {formErrors.lastName && <p className="text-red-500 text-sm mt-1">{formErrors.lastName}</p>}
-                </div>
-              </div>
-              <Separator />
-              <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Account aanmaken..." : "Account maken"}
-                </Button>
-              </div>
+    <form onSubmit={handleSignUp} noValidate className="flex flex-col gap-6">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">Maak een account aan</h1>
+        <p className="text-muted-foreground text-sm text-balance">
+          No broke boys.. no new friends..
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-3">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setFormErrors((prev) => ({ ...prev, email: "" }));
+            }}
+            id="email"
+            type="email"
+            className={`${formErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
+        </div>
+        <div className="grid gap-3">
+          <div className="flex items-center">
+            <Label htmlFor="password">Wachtwoord</Label>
+          </div>
+          <div className="relative">
+            <Input
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setFormErrors((prev) => ({ ...prev, password: "" }));
+              }}
+              id="password"
+              type={showPassword ? "text" : "password"}
+              className={`${formErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""} pr-10`}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-neutral-500" />
+              ) : (
+                <Eye className="h-4 w-4 text-neutral-500" />
+              )}
+            </Button>
+          </div>
+          {formErrors.password && <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>}
+        </div>
+        <div className="flex gap-3">
+          <div className="flex flex-col gap-3 flex-1"> {/* Use flex-1 to make them take equal space */}
+            <div className="flex items-center">
+              <Label htmlFor="firstName">Voornaam</Label>
             </div>
-            <div className="mt-4 text-center text-sm">
-              Heb je al een account?{" "}
-              <Link to="/login" className="underline underline-offset-4" viewTransition>Log in</Link>
+            <Input
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                setFormErrors((prev) => ({ ...prev, firstName: "" })); // Clear error on change
+              }}
+              id="firstName"
+              type="text" // Changed type to text for first name
+              className={`${formErrors.firstName ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+            />
+            {formErrors.firstName && <p className="text-red-500 text-sm mt-1">{formErrors.firstName}</p>}
+          </div>
+          <div className="flex flex-col gap-3 flex-1"> {/* Use flex-1 to make them take equal space */}
+            <div className="flex items-center">
+              <Label htmlFor="lastName">Familienaam</Label>
             </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            <Input
+              onChange={(e) => {
+                setLastName(e.target.value);
+                setFormErrors((prev) => ({ ...prev, lastName: "" })); // Clear error on change
+              }}
+              id="lastName"
+              type="text" // Changed type to text for last name
+              className={`${formErrors.lastName ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+            />
+            {formErrors.lastName && <p className="text-red-500 text-sm mt-1">{formErrors.lastName}</p>}
+          </div>
+        </div>
+        
+        <div className="flex flex-col gap-3">
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Account aanmaken..." : "Account maken"}
+          </Button>
+        </div>
+      </div>
+      <Separator />
+      <div className="text-center text-sm">
+        Heb je al een account?{" "}
+        <Link to="/login" className="underline underline-offset-4" viewTransition>Log in</Link>
+      </div>
+    </form>
   )
 }

@@ -6,7 +6,7 @@
 
 :root {
   --background: rgb(255, 255, 255);
-  --foreground: rgb(10, 10, 10);
+  --foreground: rgb(63, 63, 63);
   --card: rgb(255, 255, 255);
   --card-foreground: rgb(10, 10, 10);
   --popover: rgb(255, 255, 255);
@@ -17,47 +17,47 @@
   --secondary-foreground: rgb(23, 23, 23);
   --muted: rgb(229, 229, 229);
   --muted-foreground: rgb(115, 115, 115);
-  --accent: rgb(229, 244, 255);
+  --accent: rgb(224, 240, 254);
   --accent-foreground: rgb(0, 0, 0);
   --destructive: rgb(231, 0, 11);
   --destructive-foreground: rgb(255, 255, 255);
-  --border: rgb(229, 229, 229);
-  --input: rgb(229, 229, 229);
-  --ring: rgb(161, 161, 161);
+  --border: rgb(212, 212, 212);
+  --input: rgb(212, 212, 212);
+  --ring: rgb(212, 212, 212);
   --chart-1: rgb(145, 197, 255);
   --chart-2: rgb(58, 129, 246);
   --chart-3: rgb(37, 99, 239);
   --chart-4: rgb(26, 78, 218);
   --chart-5: rgb(31, 63, 173);
-  --sidebar: rgb(250, 250, 250);
-  --sidebar-foreground: rgb(10, 10, 10);
-  --sidebar-primary: rgb(23, 23, 23);
+  --sidebar: rgb(245, 245, 245);
+  --sidebar-foreground: rgb(23, 23, 23);
+  --sidebar-primary: rgb(1, 103, 177);
   --sidebar-primary-foreground: rgb(250, 250, 250);
-  --sidebar-accent: rgb(245, 245, 245);
+  --sidebar-accent: rgb(201, 216, 239);
   --sidebar-accent-foreground: rgb(23, 23, 23);
-  --sidebar-border: rgb(229, 229, 229);
+  --sidebar-border: rgb(212, 212, 212);
   --sidebar-ring: rgb(161, 161, 161);
   --font-sans: Inter, sans-serif;
   --font-serif: Geist, sans-serif;
   --font-mono: Geist Mono, monospace;
   --radius: 0.6rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.03);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.03);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 1px 2px -1px hsl(0 0% 0% / 0.05);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 1px 2px -1px hsl(0 0% 0% / 0.05);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 2px 4px -1px hsl(0 0% 0% / 0.05);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 4px 6px -1px hsl(0 0% 0% / 0.05);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 8px 10px -1px hsl(0 0% 0% / 0.05);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.13);
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
 
 .dark {
-  --background: rgb(12, 10, 9);
-  --foreground: rgb(250, 250, 250);
+  --background: rgb(10, 10, 10);
+  --foreground: rgb(245, 245, 245);
   --card: rgb(23, 23, 23);
-  --card-foreground: rgb(250, 250, 250);
+  --card-foreground: rgb(245, 245, 245);
   --popover: rgb(23, 23, 23);
   --popover-foreground: rgb(250, 250, 250);
   --primary: rgb(0, 104, 184);
@@ -66,7 +66,7 @@
   --secondary-foreground: rgb(250, 250, 250);
   --muted: rgb(64, 64, 64);
   --muted-foreground: rgb(161, 161, 161);
-  --accent: rgb(22, 51, 70);
+  --accent: rgb(7, 43, 74);
   --accent-foreground: rgb(255, 255, 255);
   --destructive: rgb(255, 100, 103);
   --destructive-foreground: rgb(250, 250, 250);
@@ -79,10 +79,10 @@
   --chart-4: rgb(26, 78, 218);
   --chart-5: rgb(31, 63, 173);
   --sidebar: rgb(23, 23, 23);
-  --sidebar-foreground: rgb(250, 250, 250);
-  --sidebar-primary: rgb(20, 71, 230);
+  --sidebar-foreground: rgb(245, 245, 245);
+  --sidebar-primary: rgb(0, 67, 118);
   --sidebar-primary-foreground: rgb(250, 250, 250);
-  --sidebar-accent: rgb(38, 38, 38);
+  --sidebar-accent: rgb(5, 47, 74);
   --sidebar-accent-foreground: rgb(250, 250, 250);
   --sidebar-border: rgb(40, 40, 40);
   --sidebar-ring: rgb(82, 82, 82);
@@ -90,14 +90,14 @@
   --font-serif: Geist, sans-serif;
   --font-mono: Geist Mono, monospace;
   --radius: 0.6rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.03);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.03);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 1px 2px -1px hsl(0 0% 0% / 0.05);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 1px 2px -1px hsl(0 0% 0% / 0.05);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 2px 4px -1px hsl(0 0% 0% / 0.05);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 4px 6px -1px hsl(0 0% 0% / 0.05);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.05), 0 8px 10px -1px hsl(0 0% 0% / 0.05);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.13);
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 }
 
 @theme inline {

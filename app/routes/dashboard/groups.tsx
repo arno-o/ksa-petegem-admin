@@ -1,7 +1,6 @@
 // routes/groups.tsx
 import PageLayout from "../pageLayout";
 import type { Route } from "./+types/groups";
-import PrivateRoute from "~/context/PrivateRoute";
 
 import type { Group } from "~/types";
 import { useEffect, useState, useCallback } from "react";
@@ -34,7 +33,7 @@ import GroupForm, { type GroupFormValues } from "~/components/groups/GroupForm";
 import PdfUpload from "~/components/groups/PDFUpload";
 
 // ---------- Page Meta ----------
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Groepen" }];
 }
 
@@ -57,7 +56,7 @@ function ModalWrap({
         <DrawerContent>
           <div className="p-6 pb-24 overflow-y-auto">
             <DrawerHeader>
-              <DrawerTitle>{title}</DrawerTitle>
+              <DrawerTitle className="text-2xl font-bold">{title}</DrawerTitle>
               {description && <DrawerDescription>{description}</DrawerDescription>}
             </DrawerHeader>
             {children}
@@ -166,140 +165,138 @@ export default function Groups() {
   };
 
   return (
-    <PrivateRoute>
-      <PageLayout>
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
-          <h3 className="text-2xl font-semibold tracking-tight">Groepsbeheer</h3>
-          <Button onClick={() => setCreateOpen(true)} className="flex items-center gap-2">
-            <CircleFadingPlus className="h-4 w-4" />
-            Nieuwe Groep Toevoegen
-          </Button>
-        </div>
+    <PageLayout>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
+        <h3 className="text-2xl font-semibold tracking-tight">Groepsbeheer</h3>
+        <Button onClick={() => setCreateOpen(true)} className="flex items-center gap-2">
+          <CircleFadingPlus className="h-4 w-4" />
+          Nieuwe Groep Toevoegen
+        </Button>
+      </div>
 
-        {error && (
-          <div
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-            role="alert"
+      {error && (
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
+          <strong className="font-bold">Oeps!</strong>
+          <span className="block sm:inline"> {error}</span>
+          <button
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            onClick={() => setError(null)}
           >
-            <strong className="font-bold">Oeps!</strong>
-            <span className="block sm:inline"> {error}</span>
-            <button
-              className="absolute top-0 bottom-0 right-0 px-4 py-3"
-              onClick={() => setError(null)}
-            >
-              ✕
-            </button>
-          </div>
-        )}
+            ✕
+          </button>
+        </div>
+      )}
 
-        {loading ? (
-          <div className="rounded-lg border border-input shadow-sm overflow-hidden">
-            <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-1/2 mx-auto" />
-              <Skeleton className="h-4 w-1/4 ml-auto" />
-            </div>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="p-4 border-b border-input last:border-b-0 bg-background">
-                <div className="sm:hidden space-y-2">
-                  <Skeleton className="h-5 w-1/2" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4">
-                  <Skeleton className="h-5 w-4/5" />
-                  <Skeleton className="h-5 w-full" />
-                  <Skeleton className="h-5 w-1/2 mx-auto" />
-                  <Skeleton className="h-5 w-1/4 ml-auto" />
-                </div>
+      {loading ? (
+        <div className="rounded-lg border border-input shadow-sm overflow-hidden">
+          <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-1/2 mx-auto" />
+            <Skeleton className="h-4 w-1/4 ml-auto" />
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="p-4 border-b border-input last:border-b-0 bg-background">
+              <div className="sm:hidden space-y-2">
+                <Skeleton className="h-5 w-1/2" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-24" />
               </div>
+              <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4">
+                <Skeleton className="h-5 w-4/5" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-1/2 mx-auto" />
+                <Skeleton className="h-5 w-1/4 ml-auto" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : groups.length > 0 ? (
+        <div className="rounded-lg border border-input shadow-sm overflow-hidden">
+          {/* Header hidden on mobile */}
+          <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
+            <div>Naam</div>
+            <div>Omschrijving</div>
+            <div className="text-center">Status</div>
+            <div className="text-right">Acties</div>
+          </div>
+
+          {/* Body */}
+          <div>
+            {groups.map((group) => (
+              <GroupCard
+                key={group.id}
+                group={group}
+                onGroupUpdate={handleGroupUpdate}
+                onEdit={() => handleEditGroup(group)}
+              />
             ))}
           </div>
-        ) : groups.length > 0 ? (
-          <div className="rounded-lg border border-input shadow-sm overflow-hidden">
-            {/* Header hidden on mobile */}
-            <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
-              <div>Naam</div>
-              <div>Omschrijving</div>
-              <div className="text-center">Status</div>
-              <div className="text-right">Acties</div>
-            </div>
+        </div>
+      ) : (
+        <div className="text-center py-20 text-muted-foreground">
+          Geen groepen gevonden. <br /> Voeg nieuwe groepen toe om ze hier te beheren.
+        </div>
+      )}
 
-            {/* Body */}
-              <div>
-                {groups.map((group) => (
-                  <GroupCard
-                    key={group.id}
-                    group={group}
-                    onGroupUpdate={handleGroupUpdate}
-                    onEdit={() => handleEditGroup(group)}
-                  />
-                ))}
-              </div>
-          </div>
-        ) : (
-          <div className="text-center py-20 text-muted-foreground">
-            Geen groepen gevonden. <br /> Voeg nieuwe groepen toe om ze hier te beheren.
-          </div>
-        )}
+      {/* Create */}
+      <ModalWrap
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="Nieuwe groep"
+        description="Vul de velden in en klik op Opslaan."
+      >
+        <GroupForm
+          submitting={saving}
+          onSubmit={handleCreate}
+          onCancel={() => setCreateOpen(false)}
+          validationMode="onSubmit"
+        />
+      </ModalWrap>
 
-        {/* Create */}
-        <ModalWrap
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          title="Nieuwe groep"
-          description="Vul de velden in en klik op Opslaan."
-        >
-          <GroupForm
-            submitting={saving}
-            onSubmit={handleCreate}
-            onCancel={() => setCreateOpen(false)}
-            validationMode="onSubmit"
-          />
-        </ModalWrap>
+      {/* Edit */}
+      <ModalWrap
+        open={editOpen}
+        onOpenChange={(v: boolean) => (v ? setEditOpen(true) : closeEdit())}
+        title="Groep bewerken"
+        description="Pas de gegevens aan en klik op Opslaan."
+      >
+        {selected && (
+          <>
+            <GroupForm
+              // key={selected.id} // <-- Removed this line
+              submitting={saving}
+              initial={{
+                naam: selected.naam ?? "",
+                omschrijving: selected.omschrijving ?? "",
+                info: selected.info ?? "",
+                slug: selected.slug ?? "",
+                active: !!selected.active,
+              }}
+              onSubmit={handleUpdate}
+              onCancel={closeEdit}
+            />
 
-        {/* Edit */}
-        <ModalWrap
-          open={editOpen}
-          onOpenChange={(v: boolean) => (v ? setEditOpen(true) : closeEdit())}
-          title="Groep bewerken"
-          description="Pas de gegevens aan en klik op Opslaan."
-        >
-          {selected && (
-            <>
-              <GroupForm
-                // key={selected.id} // <-- Removed this line
-                submitting={saving}
-                initial={{
-                  naam: selected.naam ?? "",
-                  omschrijving: selected.omschrijving ?? "",
-                  info: selected.info ?? "",
-                  slug: selected.slug ?? "",
-                  active: !!selected.active,
+            {/* PDF upload section */}
+            <div className="border-t pt-6">
+              <PdfUpload
+                groupId={selected.id}
+                initialUrl={selected.brief_url ?? undefined}
+                onChange={(newUrl) => {
+                  const id = selected.id;
+                  setSelected((prev) => (prev ? { ...prev, brief_url: newUrl } : prev));
+                  setGroups((prev) =>
+                    prev.map((g) => (g.id === id ? { ...g, brief_url: newUrl } : g))
+                  );
                 }}
-                onSubmit={handleUpdate}
-                onCancel={closeEdit}
               />
-
-              {/* PDF upload section */}
-              <div className="border-t pt-6">
-                <PdfUpload
-                  groupId={selected.id}
-                  initialUrl={selected.brief_url ?? undefined}
-                  onChange={(newUrl) => {
-                    const id = selected.id;
-                    setSelected((prev) => (prev ? { ...prev, brief_url: newUrl } : prev));
-                    setGroups((prev) =>
-                      prev.map((g) => (g.id === id ? { ...g, brief_url: newUrl } : g))
-                    );
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </ModalWrap>
-      </PageLayout>
-    </PrivateRoute>
+            </div>
+          </>
+        )}
+      </ModalWrap>
+    </PageLayout>
   );
 }

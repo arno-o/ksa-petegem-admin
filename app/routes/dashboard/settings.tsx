@@ -2,7 +2,6 @@ import { toast } from "sonner";
 import PageLayout from "../pageLayout";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "~/hooks/use-mobile";
-import PrivateRoute from "~/context/PrivateRoute";
 
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
@@ -87,101 +86,99 @@ export default function SettingsPage() {
     const settingItemStyle = `flex flex-col gap-4 py-4 md:flex-row md:gap-0 md:items-center`;
 
     return (
-        <PrivateRoute>
-            <PageLayout>
-                <div className="flex flex-col gap-6 pb-20">
-                    <header className="flex flex-col gap-3 md:justify-between md:items-center md:flex-row">
-                        <h3 className="text-2xl font-semibold tracking-tight">Instellingen</h3>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" disabled={!isDirty || saving} onClick={() => setForm(initial)} className={isMobile ? "w-[50%]" : undefined}>
-                                Annuleren
-                            </Button>
-                            <Button disabled={!isDirty || saving} onClick={handleSave} className={isMobile ? "w-[50%]" : undefined}>
-                                {saving ? "Opslaan…" : "Opslaan"}
-                            </Button>
+        <PageLayout>
+            <div className="flex flex-col gap-6 pb-20">
+                <header className="flex flex-col gap-3 md:justify-between md:items-center md:flex-row">
+                    <h3 className="text-2xl font-semibold tracking-tight">Instellingen</h3>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" disabled={!isDirty || saving} onClick={() => setForm(initial)} className={isMobile ? "w-[50%]" : undefined}>
+                            Annuleren
+                        </Button>
+                        <Button disabled={!isDirty || saving} onClick={handleSave} className={isMobile ? "w-[50%]" : undefined}>
+                            {saving ? "Opslaan…" : "Opslaan"}
+                        </Button>
+                    </div>
+                </header>
+
+                <div className="lg:col-span-2 space-y-8">
+                    <div className="space-y-4">
+                        <div className="border-b pb-4">
+                            <h2 className="text-xl font-semibold">Algemeen</h2>
+                            <p className="text-sm text-muted-foreground">Algemene instellingen voor de website.</p>
                         </div>
-                    </header>
 
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="space-y-4">
-                            <div className="border-b pb-4">
-                                <h2 className="text-xl font-semibold">Algemeen</h2>
-                                <p className="text-sm text-muted-foreground">Algemene instellingen voor de website.</p>
+                        <div className={settingItemStyle}>
+                            <div className="md:basis-1/3">
+                                <p className="font-semibold">Inschrijvingsbundel (PDF)</p>
                             </div>
 
-                            <div className={settingItemStyle}>
-                                <div className="md:basis-1/3">
-                                    <p className="font-semibold">Inschrijvingsbundel (PDF)</p>
-                                </div>
-
-                                <div className="md:basis-2/3">
-                                    <PdfSettingField
-                                        settingKey="general.inschrijvingsbundel_url"
-                                        label="Inschrijvingsbundel (PDF)"
-                                        description="Jaarlijkse bundel voor inschrijvingen."
-                                    />
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            <div className={settingItemStyle}>
-                                <div className="md:basis-1/3">
-                                    <p className="font-semibold">Privacy Verklaring (PDF)</p>
-                                </div>
-
-                                <div className="md:basis-2/3">
-                                    <PdfSettingField
-                                        settingKey="general.privacyverklaring_url"
-                                        label="Privacyverklaring (PDF)"
-                                        description="Actuele versie van de privacyverklaring."
-                                    />
-                                </div>
+                            <div className="md:basis-2/3">
+                                <PdfSettingField
+                                    settingKey="general.inschrijvingsbundel_url"
+                                    label="Inschrijvingsbundel (PDF)"
+                                    description="Jaarlijkse bundel voor inschrijvingen."
+                                />
                             </div>
                         </div>
 
-                        {/* Leiding settings group */}
-                        <div className="space-y-4">
-                            <div className="border-b pb-4">
-                                <h2 className="text-xl font-semibold">Leiding</h2>
-                                <p className="text-sm text-muted-foreground">Zichtbaarheid en bericht wanneer verborgen.</p>
+                        <Separator />
+
+                        <div className={settingItemStyle}>
+                            <div className="md:basis-1/3">
+                                <p className="font-semibold">Privacy Verklaring (PDF)</p>
                             </div>
 
-                            <div className={settingItemStyle}>
-                                <div className="md:basis-1/3">
-                                    <p className="font-semibold">Leiding zichtbaarheid</p>
-                                </div>
-
-                                <div className="flex items-center gap-2 md:basis-2/3">
-                                    <Switch
-                                        id="leiding-published"
-                                        checked={form.published}
-                                        onCheckedChange={(v) => setForm((f) => ({ ...f, published: v }))}
-                                        disabled={loading || saving}
-                                    />
-                                    <span className="text-right">{form.published ? "Zichtbaar" : "Verborgen"}</span>
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            <div className={settingItemStyle}>
-                                <div className="md:basis-1/3">
-                                    <p className="font-semibold">Onzichtbaar Melding</p>
-                                </div>
-
-                                <Input
-                                    placeholder="Bijv. Benieuwd om te zien wie in welke groep zit? Kom binnenkort terug!"
-                                    value={form.message}
-                                    onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                                    disabled={loading || saving || form.published}
-                                    className="md:basis-2/3"
+                            <div className="md:basis-2/3">
+                                <PdfSettingField
+                                    settingKey="general.privacyverklaring_url"
+                                    label="Privacyverklaring (PDF)"
+                                    description="Actuele versie van de privacyverklaring."
                                 />
                             </div>
                         </div>
                     </div>
+
+                    {/* Leiding settings group */}
+                    <div className="space-y-4">
+                        <div className="border-b pb-4">
+                            <h2 className="text-xl font-semibold">Leiding</h2>
+                            <p className="text-sm text-muted-foreground">Zichtbaarheid en bericht wanneer verborgen.</p>
+                        </div>
+
+                        <div className={settingItemStyle}>
+                            <div className="md:basis-1/3">
+                                <p className="font-semibold">Leiding zichtbaarheid</p>
+                            </div>
+
+                            <div className="flex items-center gap-2 md:basis-2/3">
+                                <Switch
+                                    id="leiding-published"
+                                    checked={form.published}
+                                    onCheckedChange={(v) => setForm((f) => ({ ...f, published: v }))}
+                                    disabled={loading || saving}
+                                />
+                                <span className="text-right">{form.published ? "Zichtbaar" : "Verborgen"}</span>
+                            </div>
+                        </div>
+
+                        <Separator />
+
+                        <div className={settingItemStyle}>
+                            <div className="md:basis-1/3">
+                                <p className="font-semibold">Onzichtbaar Melding</p>
+                            </div>
+
+                            <Input
+                                placeholder="Bijv. Benieuwd om te zien wie in welke groep zit? Kom binnenkort terug!"
+                                value={form.message}
+                                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                                disabled={loading || saving || form.published}
+                                className="md:basis-2/3"
+                            />
+                        </div>
+                    </div>
                 </div>
-            </PageLayout>
-        </PrivateRoute>
+            </div>
+        </PageLayout>
     );
 }
