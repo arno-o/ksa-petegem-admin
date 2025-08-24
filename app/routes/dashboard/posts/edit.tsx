@@ -26,7 +26,6 @@ import {
 
 import type { Post } from "~/types";
 import PageLayout from "../../pageLayout";
-import PrivateRoute from "~/context/PrivateRoute";
 import type { Route } from "../posts/+types/edit";
 import { fetchPostById, updatePost, deletePost, deleteFromBucket } from "~/utils/data";
 
@@ -206,150 +205,144 @@ export default function EditPostPage() {
 
     if (loading) {
         return (
-            <PrivateRoute>
-                <PageLayout>
-                    <FullScreenLoader />
-                </PageLayout>
-            </PrivateRoute>
+            <PageLayout>
+                <FullScreenLoader />
+            </PageLayout>
         );
     }
 
     if (error || !post) {
         return (
-            <PrivateRoute>
-                <PageLayout>
-                    <div className="flex justify-center items-center h-[50vh]">
-                        <p className="text-destructive">{error || "Bericht niet gevonden."}</p>
-                    </div>
-                </PageLayout>
-            </PrivateRoute>
+            <PageLayout>
+                <div className="flex justify-center items-center h-[50vh]">
+                    <p className="text-destructive">{error || "Bericht niet gevonden."}</p>
+                </div>
+            </PageLayout>
         );
     }
 
     return (
-        <PrivateRoute>
-            <PageLayout>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <div className="flex items-center gap-2">
-                        <Link to="/berichten" viewTransition>
-                            <Button variant="outline" size="icon" className="">
-                                <ChevronLeft className="h-5 w-5" />
-                                <span className="sr-only">Terug naar berichten pagina</span>
+        <PageLayout>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div className="flex items-center gap-2">
+                    <Link to="/berichten" viewTransition>
+                        <Button variant="outline" size="icon" className="">
+                            <ChevronLeft className="h-5 w-5" />
+                            <span className="sr-only">Terug naar berichten pagina</span>
+                        </Button>
+                    </Link>
+                    <h1 className="text-2xl font-bold tracking-tight">Bewerk bericht</h1>
+                </div>
+                <div className="flex flex-wrap flex-row w-full md:w-fit gap-2">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="destructive" size={isMobile ? "lg" : "icon"}>
+                                <Trash />
                             </Button>
-                        </Link>
-                        <h1 className="text-2xl font-bold tracking-tight">Bewerk bericht</h1>
-                    </div>
-                    <div className="flex flex-wrap flex-row w-full md:w-fit gap-2">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="destructive" size={isMobile ? "lg" : "icon"}>
-                                    <Trash />
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Bericht verwijderen?</DialogTitle>
+                                <DialogDescription>
+                                    Deze actie kan niet worden teruggedraaid. Dit bericht wordt permanent verwijderd.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <p className="text-sm text-muted-foreground mt-4">
+                                Echt nooit nooit meer! Zelfs niet een beetje...
+                            </p>
+                            <DialogFooter className="pt-4">
+                                <DialogClose asChild>
+                                    <Button variant="outline">Annuleer</Button>
+                                </DialogClose>
+                                <Button variant="destructive" onClick={handleDelete}>
+                                    Verwijder
                                 </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                    <DialogTitle>Bericht verwijderen?</DialogTitle>
-                                    <DialogDescription>
-                                        Deze actie kan niet worden teruggedraaid. Dit bericht wordt permanent verwijderd.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <p className="text-sm text-muted-foreground mt-4">
-                                    Echt nooit nooit meer! Zelfs niet een beetje...
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Button variant="outline" size={isMobile ? "lg" : "default"} onClick={() => { handleQuietSave(); navigate(`/berichten/preview/${post.id}`); }}>
+                        <Eye />
+                        {isMobile ? "Preview" : "Preview"}
+                    </Button>
+
+                    <Button variant="outline" onClick={handleSave} className="grow md:w-fit">
+                        <Save />
+                        Opslaan
+                    </Button>
+
+                    <Button variant={post.published ? "default" : "outline"} onClick={handlePublishToggle} className="grow md:w-fit">
+                        {!post.published ? <Badge /> : <BadgeCheck />}
+                        {!post.published ? 'Publiceer' : 'Gepubliceerd'}
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="flex gap-3">
+                        <div className="relative w-full">
+                            <Pencil className="absolute left-0 top-0 m-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="title"
+                                placeholder="Titel van het bericht"
+                                value={form.title}
+                                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                className="pl-9"
+                            />
+                        </div>
+
+                        <div className="relative w-full">
+                            <LinkIcon className="absolute left-0 top-0 m-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="slug"
+                                placeholder="Link naar het bericht"
+                                value={computedSlug}
+                                className="pl-9"
+                                readOnly
+                                disabled
+                            />
+                        </div>
+                    </div>
+
+                    <SimpleEditor
+                        content={form.description}
+                        onChange={(html) => setForm({ ...form, description: html })}
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    <div className="bg-background p-4 rounded-md border border-input space-y-8">
+                        <div>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="cover_image_url" className="text-sm font-medium">Cover afbeelding</Label>
+                                    <FileUpload
+                                        bucket="post-covers"
+                                        path={`post-${postId}`}
+                                        initialUrl={form.cover_img}
+                                        onChange={(url) => setForm({ ...form, cover_img: url ?? "" })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <Separator />
+                        <div>
+                            <div className="flex items-center justify-between space-x-2">
+                                <p className="text-sm font-medium">Status</p>
+                                <p className={`text-sm font-semibold ${post.published ? 'text-green-600' : 'text-orange-500'}`}>
+                                    {post.published ? 'Gepubliceerd' : 'Concept'}
                                 </p>
-                                <DialogFooter className="pt-4">
-                                    <DialogClose asChild>
-                                        <Button variant="outline">Annuleer</Button>
-                                    </DialogClose>
-                                    <Button variant="destructive" onClick={handleDelete}>
-                                        Verwijder
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-
-                        <Button variant="outline" size={isMobile ? "lg" : "default"} onClick={() => { handleQuietSave(); navigate(`/berichten/preview/${post.id}`); }}>
-                            <Eye />
-                            {isMobile ? "Preview" : "Preview"}
-                        </Button>
-
-                        <Button variant="outline" onClick={handleSave} className="grow md:w-fit">
-                            <Save />
-                            Opslaan
-                        </Button>
-
-                        <Button variant={post.published ? "default" : "outline"} onClick={handlePublishToggle} className="grow md:w-fit">
-                            {!post.published ? <Badge /> : <BadgeCheck />}
-                            {!post.published ? 'Publiceer' : 'Gepubliceerd'}
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-4">
-                        <div className="flex gap-3">
-                            <div className="relative w-full">
-                                <Pencil className="absolute left-0 top-0 m-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    id="title"
-                                    placeholder="Titel van het bericht"
-                                    value={form.title}
-                                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                                    className="pl-9"
-                                />
                             </div>
-
-                            <div className="relative w-full">
-                                <LinkIcon className="absolute left-0 top-0 m-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    id="slug"
-                                    placeholder="Link naar het bericht"
-                                    value={computedSlug}
-                                    className="pl-9"
-                                    readOnly
-                                    disabled
-                                />
-                            </div>
-                        </div>
-
-                        <SimpleEditor
-                            content={form.description}
-                            onChange={(html) => setForm({ ...form, description: html })}
-                        />
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="bg-background p-4 rounded-md border border-input space-y-8">
-                            <div>
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cover_image_url" className="text-sm font-medium">Cover afbeelding</Label>
-                                        <FileUpload
-                                            bucket="post-covers"
-                                            path={`post-${postId}`}
-                                            initialUrl={form.cover_img}
-                                            onChange={(url) => setForm({ ...form, cover_img: url ?? "" })}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <Separator />
-                            <div>
-                                <div className="flex items-center justify-between space-x-2">
-                                    <p className="text-sm font-medium">Status</p>
-                                    <p className={`text-sm font-semibold ${post.published ? 'text-green-600' : 'text-orange-500'}`}>
-                                        {post.published ? 'Gepubliceerd' : 'Concept'}
-                                    </p>
-                                </div>
-                                {post?.published && post.published_at && (
-                                    <p className="text-sm text-muted-foreground mt-2">
-                                        Gepubliceerd op: {new Date(post.published_at).toLocaleDateString()}
-                                    </p>
-                                )}
-                            </div>
+                            {post?.published && post.published_at && (
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    Gepubliceerd op: {new Date(post.published_at).toLocaleDateString()}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
-            </PageLayout>
-        </PrivateRoute>
+            </div>
+        </PageLayout>
     );
 }

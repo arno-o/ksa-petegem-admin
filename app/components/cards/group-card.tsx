@@ -12,9 +12,9 @@ interface GroupCardProps {
 }
 
 const COLOR_MAP: Record<string, string> = {
-  yellow: "bg-yellow-500 dark:bg-yellow-400",
+  yellow: "bg-amber-500 dark:bg-amber-400",
   blue: "bg-blue-500 dark:bg-blue-400",
-  green: "bg-green-500 dark:bg-green-400",
+  green: "bg-emerald-500 dark:bg-emerald-400",
   purple: "bg-purple-500 dark:bg-purple-400",
   red: "bg-red-500 dark:bg-red-400",
   orange: "bg-orange-500 dark:bg-orange-400",

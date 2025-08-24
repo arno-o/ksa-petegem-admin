@@ -1,14 +1,13 @@
 import PageLayout from "../pageLayout";
 import type { Route } from "./+types/events";
-import PrivateRoute from "~/context/PrivateRoute";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { fetchEvents, fetchActiveGroups, createEvent, deleteEvent, updateEvent } from "~/utils/data";
 
 import type { Event, Group } from "~/types";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
 import { Edit, Trash2, MapPin, Calendar as CalendarIcon, Clock, MoreHorizontal, Calendar, MoreVertical } from "lucide-react";
@@ -42,15 +41,16 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { EventDialog } from "~/components/events/event-dialogs";
 
-// --- Constants & Utility Functions (Move to a separate 'utils' file if growing) ---
 const COLOR_MAP: Record<string, string> = {
-    yellow: "bg-yellow-500 dark:bg-yellow-400",
+    yellow: "bg-amber-500 dark:bg-amber-400",
     blue: "bg-blue-500 dark:bg-blue-400",
-    green: "bg-green-500 dark:bg-green-400",
+    green: "bg-emerald-500 dark:bg-emerald-400",
     purple: "bg-purple-500 dark:bg-purple-400",
     red: "bg-red-500 dark:bg-red-400",
     orange: "bg-orange-500 dark:bg-orange-400",
@@ -280,7 +280,7 @@ export default function Events() {
                 accessorKey: "title",
                 header: "Titel",
                 cell: ({ row }) => (
-                    <div className="font-medium">{row.getValue("title")}</div>
+                    <div className="font-medium py-4">{row.getValue("title")}</div>
                 ),
             },
             {
@@ -343,10 +343,10 @@ export default function Events() {
                                 const group = allGroups.find(g => g.id === groupId);
                                 if (group) {
                                     return (
-                                        <Tooltip>
+                                        <Tooltip key={group.id}>
                                             <TooltipTrigger>
                                                 <div key={group.id}
-                                                    className={`h-6 w-6 rounded-full ring-2 ring-background ${COLOR_MAP[group.color] ?? "bg-gray-300"}`}
+                                                    className={`h-6 w-6 rounded-full ring-2 ring-background ${group?.color ? COLOR_MAP[group.color] : "bg-gray-300"}`}
                                                 ></div>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -370,12 +370,14 @@ export default function Events() {
                     return (
                         <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                <Button variant="outline" className="h-8 w-8 p-0">
                                     <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acties</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     onClick={() => {
                                         const formatTime = (timeStr: string | null | undefined) =>
@@ -446,214 +448,225 @@ export default function Events() {
     });
 
     return (
-        <PrivateRoute>
-            <PageLayout>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 mb-6 w-full">
-                    <h3 className="text-2xl font-semibold tracking-tight">
-                        Activiteiten
-                    </h3>
+        <PageLayout>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 mb-6 w-full">
+                <h3 className="text-2xl font-semibold tracking-tight">
+                    Activiteiten
+                </h3>
 
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-fit md:ml-auto">
-                        <Input
-                            placeholder="Zoek op titel..."
-                            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-                            onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
-                            className="w-full sm:w-64"
-                        />
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-fit md:ml-auto">
+                    <Input
+                        placeholder="Zoek op titel..."
+                        value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
+                        className="w-full sm:w-64"
+                    />
 
-                        <EventDialog
-                            open={isCreateDialogOpen}
-                            setOpen={(open) => {
-                                setIsCreateDialogOpen(open);
-                                if (open) {
-                                    setForm(INITIAL_FORM_STATE);
-                                    setErrors({});
-                                }
-                            }}
-                            form={form}
-                            setForm={setForm}
-                            errors={errors}
-                            setErrors={setErrors}
-                            groupOptions={groupOptions}
-                            onSubmit={handleCreateEvent}
-                        />
+                    <EventDialog
+                        open={isCreateDialogOpen}
+                        setOpen={(open) => {
+                            setIsCreateDialogOpen(open);
+                            if (open) {
+                                setForm(INITIAL_FORM_STATE);
+                                setErrors({});
+                            }
+                        }}
+                        form={form}
+                        setForm={setForm}
+                        errors={errors}
+                        setErrors={setErrors}
+                        groupOptions={groupOptions}
+                        onSubmit={handleCreateEvent}
+                    />
 
-                        <EventDialog
-                            open={editDialogOpen}
-                            setOpen={(open) => {
-                                setEditDialogOpen(open);
-                                if (!open) {
-                                    setForm(INITIAL_FORM_STATE);
-                                    setErrors({});
-                                    setEditingEvent(null);
-                                }
-                            }}
-                            form={form}
-                            setForm={setForm}
-                            errors={errors}
-                            setErrors={setErrors}
-                            groupOptions={groupOptions}
-                            onSubmit={handleEditEvent}
-                            isEdit
-                        />
-                    </div>
+                    <EventDialog
+                        open={editDialogOpen}
+                        setOpen={(open) => {
+                            setEditDialogOpen(open);
+                            if (!open) {
+                                setForm(INITIAL_FORM_STATE);
+                                setErrors({});
+                                setEditingEvent(null);
+                            }
+                        }}
+                        form={form}
+                        setForm={setForm}
+                        errors={errors}
+                        setErrors={setErrors}
+                        groupOptions={groupOptions}
+                        onSubmit={handleEditEvent}
+                        isEdit
+                    />
                 </div>
+            </div>
 
-                {loadingEvents ? (
-                    <div className="text-center py-8">Laden van activiteiten...</div>
-                ) : (
-                    <>
-                        {table.getRowModel().rows?.length ? (
-                            <>
-                                {/* Desktop table */}
-                                <div className="hidden md:block rounded-md border">
-                                    <Table>
-                                        <TableHeader>
-                                            {table.getHeaderGroups().map((headerGroup) => (
-                                                <TableRow key={headerGroup.id}>
-                                                    {headerGroup.headers.map((header) => (
-                                                        <TableHead key={header.id}>
-                                                            {header.isPlaceholder
-                                                                ? null
-                                                                : flexRender(header.column.columnDef.header, header.getContext())}
-                                                        </TableHead>
-                                                    ))}
-                                                </TableRow>
-                                            ))}
-                                        </TableHeader>
-                                        <TableBody>
-                                            {table.getRowModel().rows.map((row) => (
-                                                <TableRow key={row.id}>
-                                                    {row.getVisibleCells().map((cell) => (
-                                                        <TableCell key={cell.id}>
-                                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                        </TableCell>
-                                                    ))}
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+            {loadingEvents ? (
+                <div className="text-center py-8">Laden van activiteiten...</div>
+            ) : (
+                <>
+                    {table.getRowModel().rows?.length ? (
+                        <>
+                            {/* Desktop table */}
+                            <div className="hidden md:block rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        {table.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead key={header.id}>
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(header.column.columnDef.header, header.getContext())}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {table.getRowModel().rows.map((row) => (
+                                            <TableRow key={row.id}>
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell key={cell.id}>
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
 
-                                {/* Mobile cards */}
-                                <div className="md:hidden flex flex-col gap-4">
-                                    {table.getRowModel().rows.map((row) => {
-                                        const event = row.original;
-                                        const groupBadges = event.target_groups.map((id) => {
-                                            const group = allGroups.find((g) => g.id === id);
-                                            return group ? (
-                                                <div
-                                                    key={group.id}
-                                                    className={`h-5 w-5 rounded-full ${COLOR_MAP[group.color] ?? "bg-gray-300"}`}
-                                                    title={group.naam}
-                                                />
-                                            ) : null;
-                                        });
-
-                                        return (
+                            {/* Mobile cards */}
+                            <div className="md:hidden flex flex-col gap-4">
+                                {table.getRowModel().rows.map((row) => {
+                                    const event = row.original;
+                                    const groupBadges = event.target_groups.map((id) => {
+                                        const group = allGroups.find((g) => g.id === id);
+                                        return group ? (
                                             <div
-                                                key={event.id}
-                                                className="bg-card border rounded-lg p-4 shadow-sm flex flex-col gap-3"
-                                            >
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex-1 pr-4">
-                                                        <h2 className="text-lg font-bold leading-snug text-foreground">
-                                                            {event.title}
-                                                        </h2>
-                                                        <p className="text-sm text-muted-foreground flex items-center mt-1">
-                                                            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" /> {event.location}
-                                                        </p>
+                                                key={group.id}
+                                                className={`h-6 w-6 rounded-full ${group.color ? COLOR_MAP[group.color] : "#9CA3AF"}`}
+                                                title={group.naam}
+                                            />
+                                        ) : null;
+                                    });
+
+                                    return (
+                                        <div
+                                            key={event.id}
+                                            className="bg-card border rounded-xl p-5 shadow-lg flex flex-col"
+                                        >
+                                            {/* Header Section */}
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1 pr-4">
+                                                    <h2 className="text-xl font-bold leading-tight text-foreground">
+                                                        {event.title}
+                                                    </h2>
+                                                    <div className="flex items-center text-sm text-muted-foreground mt-2">
+                                                        <MapPin className="h-4 w-4 mr-2 text-primary" />
+                                                        <span className="truncate">{event.location}</span>
                                                     </div>
-                                                    <DropdownMenu modal={false}>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem
-                                                                onClick={() => {
-                                                                    const formatTime = (timeStr: string | null | undefined) =>
-                                                                        timeStr?.slice(0, 5) ?? ""; // "09:00:00" → "09:00"
+                                                </div>
+                                                <DropdownMenu modal={false}>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0 shrink-0">
+                                                            <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem
+                                                            onClick={() => {
+                                                                const formatTime = (timeStr: string | null | undefined) =>
+                                                                    timeStr?.slice(0, 5) ?? ""; // "09:00:00" → "09:00"
 
-                                                                    setForm({
-                                                                        title: event.title,
-                                                                        description: event.description || "",
-                                                                        location: event.location,
-                                                                        target_groups: event.target_groups.map(Number),
-                                                                        date_start: event.date_start ? new Date(event.date_start) : undefined,
-                                                                        time_start: formatTime(event.time_start),
-                                                                        time_end: formatTime(event.time_end),
-                                                                        link: event.link || "",
-                                                                    });
+                                                                setForm({
+                                                                    title: event.title,
+                                                                    description: event.description || "",
+                                                                    location: event.location,
+                                                                    target_groups: event.target_groups.map(Number),
+                                                                    date_start: event.date_start ? new Date(event.date_start) : undefined,
+                                                                    time_start: formatTime(event.time_start),
+                                                                    time_end: formatTime(event.time_end),
+                                                                    link: event.link || "",
+                                                                });
 
-                                                                    setEditingEvent(event);
-                                                                    setEditDialogOpen(true);
-                                                                }}
-                                                            >
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                                            </DropdownMenuItem>
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <DropdownMenuItem
-                                                                        onSelect={(e) => e.preventDefault()}
-                                                                        className="text-red-600 focus:text-red-600"
+                                                                setEditingEvent(event);
+                                                                setEditDialogOpen(true);
+                                                            }}
+                                                        >
+                                                            <Edit className="mr-2 h-4 w-4" /> Bewerk
+                                                        </DropdownMenuItem>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <DropdownMenuItem
+                                                                    onSelect={(e) => e.preventDefault()}
+                                                                    className="text-red-600 focus:text-red-600"
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Verwijder
+                                                                </DropdownMenuItem>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        You are about to permanently delete this event. This action
+                                                                        cannot be undone.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction
+                                                                        onClick={() => handleDeleteEvent(event.id)}
+                                                                        className="bg-red-600 hover:bg-red-700"
                                                                     >
-                                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                                    </DropdownMenuItem>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                        <AlertDialogDescription>
-                                                                            You are about to permanently delete this event. This action
-                                                                            cannot be undone.
-                                                                        </AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                        <AlertDialogAction
-                                                                            onClick={() => handleDeleteEvent(event.id)}
-                                                                            className="bg-red-600 hover:bg-red-700"
-                                                                        >
-                                                                            Delete
-                                                                        </AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-2 text-sm text-foreground">
-                                                    <p className="flex items-center">
-                                                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                        <span>
-                                                            {event.date_start?.toLocaleDateString("nl-BE")}
-                                                        </span>
-                                                    </p>
-
-                                                    <p className="flex items-center">
-                                                        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                        <span>
-                                                            {event.time_start}
-                                                            {event.time_end && ` - ${event.time_end}`}
-                                                        </span>
-                                                    </p>
-                                                </div>
-
-                                                <div className="flex flex-wrap gap-2 mt-2">{groupBadges}</div>
+                                                                        Delete
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            </>
-                        ) : (
-                            <p className="text-center mt-10">Geen resultaten gevonden.</p>
-                        )}
-                    </>
-                )}
-            </PageLayout>
-        </PrivateRoute>
+
+                                            {/* Main Details Section */}
+                                            <div className="flex items-center justify-between text-sm text-foreground mt-4">
+                                                <div className="flex items-center">
+                                                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                                                    <span>{event.date_start?.toLocaleDateString("nl-BE")}</span>
+                                                </div>
+
+                                                <div className="flex items-center">
+                                                    <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                                                    <span>
+                                                        {event.time_start
+                                                            ? new Date(`1970-01-01T${event.time_start}Z`).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+                                                            : 'Geen tijd'}
+                                                        {event.time_end ? " - " : null}
+                                                        {event.time_end
+                                                            ? new Date(`1970-01-01T${event.time_end}Z`).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+                                                            : null}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Target Groups Section */}
+                                            <hr className="my-4 border-t border-border" />
+                                            <div className="flex flex-col gap-2">
+                                                <span className="text-sm font-medium text-muted-foreground">Doelgroepen</span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {groupBadges}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-center mt-10">Geen resultaten gevonden.</p>
+                    )}
+                </>
+            )}
+        </PageLayout>
     );
 }

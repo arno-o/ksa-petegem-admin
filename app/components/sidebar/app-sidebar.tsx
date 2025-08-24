@@ -18,11 +18,14 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarRail,
+  SidebarMenuBadge,
 } from "~/components/ui/sidebar"
+
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "~/components/ui/collapsible";
 
 import { cn } from "~/lib/utils";
 import { ModeToggle } from "~/components/sidebar/mode-toggle"
-import { Newspaper, CalendarFold, User, IdCardLanyard, ChevronRight, Settings } from 'lucide-react';
+import { Newspaper, CalendarFold, User, IdCardLanyard, ChevronRight, Settings, LayoutDashboard } from 'lucide-react';
 
 // --- Type Definitions ---
 interface NavItem {
@@ -81,7 +84,6 @@ const data: { navMain: NavGroup[] } = {
           title: "Groepen",
           url: "/groepen",
           icon: IdCardLanyard,
-          
         },
       ],
     },
@@ -95,11 +97,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isParentOrChildActive = (item: NavItem): boolean => {
     if (item.url) {
       return location.pathname === item.url || location.pathname.startsWith(`${item.url}/`);
-    }
-    if (item.items) {
-      return item.items.some(subItem =>
-        location.pathname === subItem.url || location.pathname.startsWith(`${subItem.url}/`)
-      );
     }
     return false;
   };
@@ -138,28 +135,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   const itemIsActive = isParentOrChildActive(item);
                   if (item.items) {
                     return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton isActive={itemIsActive}>
-                          {item.icon && <item.icon className={cn(itemIsActive ? `text-sidebar-foreground/100` : `text-sidebar-foreground/70`, `stroke-[${itemIsActive ? '2.5' : '2'}]`)} />}
-                          {item.title}
-                        </SidebarMenuButton>
-                        <SidebarMenuSub>
-                          {item.items.map((item) => (
-                            <SidebarMenuSubItem key={item.title}>
-                              <SidebarMenuSubButton asChild>
-                                <a href={item.url}>{item.title}</a>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </SidebarMenuItem>
+                      <Collapsible defaultOpen className="group/collapsible" key={item.title}>
+                        <SidebarMenuItem key={item.title}>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton>
+                              {item.icon && <item.icon className={cn(`text-sidebar-primray-foreground`)} />}
+                              {item.title}
+                              <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.items.map((item) => (
+                                <SidebarMenuSubItem key={item.title}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={
+                                      !!(item.url && (location.pathname === item.url || (item.url !== "/" && location.pathname.startsWith(item.url))))
+                                    }
+                                  >
+                                    <Link to={item.url!} viewTransition>{item.title}</Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </SidebarMenuItem>
+                      </Collapsible>
                     );
                   } else {
                     return (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={itemIsActive}>
+                        <SidebarMenuButton asChild isActive={
+                          !!(item.url && (location.pathname === item.url || (item.url !== "/" && location.pathname.startsWith(item.url))))
+                        }>
                           <Link to={item.url!} viewTransition className="flex items-center gap-2">
-                            {item.icon && <item.icon className={cn(itemIsActive ? `text-sidebar-foreground/100` : `text-sidebar-foreground/70`, `stroke-[${itemIsActive ? '2.5' : '2'}]`)} />}
+                            {item.icon && <item.icon />}
                             {item.title}
                           </Link>
                         </SidebarMenuButton>

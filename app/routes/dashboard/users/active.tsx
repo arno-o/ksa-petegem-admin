@@ -1,5 +1,3 @@
-// active.tsx
-
 // React and Hooks
 import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
@@ -19,15 +17,13 @@ import { Tooltip, TooltipContent, TooltipTrigger, } from "~/components/ui/toolti
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue, } from "~/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, } from "~/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, } from "~/components/ui/dropdown-menu";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Checkbox } from "~/components/ui/checkbox";
 
 // Context & Layout
-import PrivateRoute from "~/context/PrivateRoute";
 import PageLayout from "../../pageLayout";
 
 // Data Utilities & Types
@@ -84,7 +80,6 @@ export default function Active() {
   const [massDisableDialog, setMassDisableDialog] = useState(false);
   const [selectedMassEditGroup, setSelectedMassEditGroup] = useState<string>("");
 
-
   // Debounce effect for search term
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -98,9 +93,9 @@ export default function Active() {
 
   // Color maps (assuming these are constant, can be moved outside the component)
   const COLOR_MAP: Record<string, string> = {
-    yellow: "text-yellow-600 dark:text-yellow-300",
+    yellow: "text-amber-600 dark:text-amber-300",
     blue: "text-blue-600 dark:text-blue-300",
-    green: "text-green-600 dark:text-green-300",
+    green: "text-emerald-600 dark:text-emerald-300",
     purple: "text-purple-600 dark:text-purple-300",
     red: "text-red-600 dark:text-red-300",
     orange: "text-orange-600 dark:text-orange-300",
@@ -109,25 +104,14 @@ export default function Active() {
   };
 
   const BADGE_BACKGROUND_COLOR_MAP: Record<string, string> = {
-    yellow: "bg-yellow-50 dark:bg-yellow-900",
+    yellow: "bg-amber-100 dark:bg-amber-900",
     blue: "bg-blue-50 dark:bg-blue-900",
-    green: "bg-green-50 dark:bg-green-900",
+    green: "bg-emerald-50 dark:bg-emerald-900",
     purple: "bg-purple-50 dark:bg-purple-900",
     red: "bg-red-50 dark:bg-red-900",
     orange: "bg-orange-50 dark:bg-orange-900",
     lime: "bg-lime-50 dark:bg-lime-900",
     rose: "bg-rose-50 dark:bg-rose-900",
-  };
-
-  const BADGE_BORDER_COLOR_MAP: Record<string, string> = {
-    yellow: "border-yellow-200 dark:border-yellow-700",
-    blue: "border-blue-200 dark:border-blue-700",
-    green: "border-green-200 dark:border-green-700",
-    purple: "border-purple-200 dark:border-purple-700",
-    red: "border-red-200 dark:border-red-700",
-    orange: "border-orange-200 dark:border-orange-700",
-    lime: "border-lime-200 dark:border-lime-700",
-    rose: "border-rose-200 dark:border-rose-700",
   };
 
   // Helper to reload all necessary data
@@ -191,8 +175,10 @@ export default function Active() {
         if (groupA !== groupB) {
           return groupA - groupB;
         }
-        // If groups are the same, sort by first name
-        return (a.voornaam || '').localeCompare(b.voornaam || '');
+        // If groups are the same, sort by age (youngest first)
+        const dateA_geb = a.geboortedatum ? new Date(a.geboortedatum) : new Date(0);
+        const dateB_geb = b.geboortedatum ? new Date(b.geboortedatum) : new Date(0);
+        return dateA_geb.getTime() - dateB_geb.getTime();
       });
     } else {
       const selectedGroupId = Number(selectedFilter);
@@ -476,46 +462,62 @@ export default function Active() {
       }),
       columnHelper.accessor("voornaam", {
         id: "persoon",
-        header: () => "Persoon",
+        header: () => "Naam",
         cell: info => (
-          <div className="flex items-center gap-4">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={info.row.original.foto_url ?? ""} alt={`${info.row.original.voornaam || ''} ${info.row.original.familienaam || ''}`} />
-              <AvatarFallback>
-                {info.row.original.voornaam?.charAt(0) || ''}
-                {info.row.original.familienaam?.charAt(0) || ''}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-row items-center gap-2">
-              <Link to={`/leiding/actief/edit/${info.row.original.id}`} viewTransition>
-                <p className="text-md font-medium leading-none hover:underline">
+          <Link to={`/leiding/actief/edit/${info.row.original.id}`} viewTransition>
+            <div className="flex items-center gap-4">
+              <div className="flex flex-row items-center gap-2 py-6 md:py-4">
+                <p className="text-sm font-medium leading-none">
                   {info.row.original.voornaam} {info.row.original.familienaam}
                 </p>
-              </Link>
-              {info.row.original.trekker && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Star className="h-4 w-4 fill-[#0167B1] stroke-[#0167B1]" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Trekker
-                  </TooltipContent>
-                </Tooltip>
-              )}
+                {info.row.original.trekker && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Star className="h-4 w-4 fill-[#0167B1] stroke-[#0167B1]" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Trekker
+                    </TooltipContent>
+                  </Tooltip>
+                )}
 
-              {info.row.original.hoofdleiding && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Crown className="h-4 w-4 fill-[#F37D31] stroke-[#F37D31]" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Hoofdleiding
-                  </TooltipContent>
-                </Tooltip>
+                {info.row.original.hoofdleiding && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Crown className="h-4 w-4 fill-[#F37D31] stroke-[#F37D31]" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Hoofdleiding
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("leidingsploeg", {
+        id: "groep",
+        header: () => "Groep",
+        cell: info => {
+          const leidingPerson = info.row.original;
+          const group = groups?.find(g => g.id === leidingPerson.leidingsploeg);
+          const groupName = group?.naam;
+          const groupTextColorClass = group?.color ? COLOR_MAP[group.color] : "text-foreground";
+          const groupBadgeBgClass = group?.color ? BADGE_BACKGROUND_COLOR_MAP[group.color] : "bg-muted";
+
+          return (
+            <div>
+              {groupName ? (
+                <Badge className={`${groupTextColorClass} ${groupBadgeBgClass}`}>
+                  {groupName}
+                </Badge>
+              ) : (
+                <span className="text-sm text-muted-foreground">Onbekend</span>
               )}
             </div>
-          </div>
-        ),
+          );
+        },
       }),
       columnHelper.accessor("leiding_sinds", {
         id: "jarenLeiding",
@@ -537,7 +539,7 @@ export default function Active() {
           return (
             <Tooltip>
               <TooltipTrigger>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm leading-none flex justify-center">
                   {yearsInLeiding !== null ? `${yearsInLeiding} jaar` : 'Onbekend'}
                 </div>
               </TooltipTrigger>
@@ -550,58 +552,46 @@ export default function Active() {
       }),
       columnHelper.accessor("geboortedatum", {
         id: "geboortedatum",
-        header: () => <div className="flex justify-center">Geboortedatum</div>,
+        header: () => "Leeftijd",
         cell: info => {
           const geboortedatumValue = info.getValue<string | undefined>();
           const formattedGeboortedatum = geboortedatumValue
-            ? new Date(geboortedatumValue).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })
+            ? new Date(geboortedatumValue).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
             : 'Onbekend';
-          return (
-            <div className="text-sm text-muted-foreground flex justify-center">
+            const birthday = geboortedatumValue ? new Date(geboortedatumValue) : null;
+            return (
+            <Tooltip>
+              <TooltipTrigger>
+              <div className="text-sm leading-none flex justify-center">
+                {birthday
+                ? `${Math.floor((Date.now() - birthday.getTime()) / (1000 * 60 * 60 * 24 * 365.25))} jaar`
+                : 'Onbekend'}
+              </div>
+              </TooltipTrigger>
+              <TooltipContent>
               {formattedGeboortedatum}
-            </div>
-          );
-        },
-      }),
-      columnHelper.accessor("leidingsploeg", {
-        id: "groep",
-        header: () => <div className="flex justify-center">Groep</div>,
-        cell: info => {
-          const leidingPerson = info.row.original;
-          const group = groups?.find(g => g.id === leidingPerson.leidingsploeg);
-          const groupName = group?.naam;
-          const groupTextColorClass = group?.color ? COLOR_MAP[group.color] : "text-foreground";
-          const groupBadgeBgClass = group?.color ? BADGE_BACKGROUND_COLOR_MAP[group.color] : "bg-muted";
-          const groupBadgeBorderClass = group?.color ? BADGE_BORDER_COLOR_MAP[group.color] : "border-border";
-
-          return (
-            <div className="flex justify-center">
-              {groupName ? (
-                <Badge className={`${groupTextColorClass} ${groupBadgeBgClass} border ${groupBadgeBorderClass}`}>
-                  {groupName}
-                </Badge>
-              ) : (
-                <span className="text-sm text-muted-foreground">Onbekend</span>
-              )}
-            </div>
-          );
+              </TooltipContent>
+            </Tooltip>
+            );
         },
       }),
       columnHelper.display({
         id: "actions",
-        header: () => <div className="flex justify-end">Acties</div>,
+        header: () => "",
         cell: ({ row }) => {
           const leiding = row.original;
           return (
-            <div className="flex justify-end">
+            <div className="flex justify-end pr-4">
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="outline" size="icon" className="h-8 w-8">
                     <MoreVertical className="h-4 w-4" />
                     <span className="sr-only">Meer opties</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuLabel>Acties voor {leiding.voornaam}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => navigate(`edit/${leiding.id}`, { viewTransition: true })}
                   >
@@ -617,7 +607,7 @@ export default function Active() {
                     className="text-destructive focus:text-destructive"
                     onClick={() => { setSelectedLeidingForDialog(leiding); setDeleteDialog(true); }}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" /> Verwijderen
+                    <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Verwijderen
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -626,7 +616,7 @@ export default function Active() {
         },
       }),
     ],
-    [groups, navigate, setSelectedLeidingForDialog, setDisableConfirmDialog, setDeleteDialog, COLOR_MAP, BADGE_BACKGROUND_COLOR_MAP, BADGE_BORDER_COLOR_MAP]
+    [groups, navigate, setSelectedLeidingForDialog, setDisableConfirmDialog, setDeleteDialog, COLOR_MAP, BADGE_BACKGROUND_COLOR_MAP]
   );
 
   const table = useReactTable({
@@ -641,322 +631,318 @@ export default function Active() {
 
   const selectedRowCount = Object.keys(rowSelection).length;
 
-  // active.tsx
-
-  // ... (all the imports and component logic from before)
-
   return (
-    <PrivateRoute>
-      <PageLayout>
-        <header className="flex flex-col mb-4 gap-4">
+    <PageLayout>
+      <header className="flex flex-col mb-4 gap-4">
+        <div className="flex gap-2 items-baseline">
           <h3 className="text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
-          <div className="flex flex-col md:flex-row md:justify-between gap-2">
-            <div className="flex flex-col md:flex-row gap-2">
-              <div className="relative ">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Zoek op naam, groep, jaar leiding..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 w-full md:w-xs"
-                />
-              </div>
-              <Select defaultValue="all_by_group" onValueChange={setSelectedFilter}>
-                <SelectTrigger className="w-full md:w-fit">
-                  <SelectValue placeholder="Kies een groep" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Nuttig</SelectLabel>
-                    <SelectItem value="all_by_group">
-                      <Users className="mr-2 h-4 w-4" />
-                      Alle leiding (per groep)
-                    </SelectItem>
-                    <SelectItem value="*">
-                      <CalendarArrowUp className="mr-2 h-4 w-4" />
-                      Alle leiding (Anciëniteit)
-                    </SelectItem>
-                    <SelectSeparator />
-                    <SelectItem value="trekkers">
-                      <Star className="mr-2 h-4 w-4" />Trekkers
-                    </SelectItem>
-                    <SelectItem value="hoofdleiding">
-                      <Crown className="mr-2 h-4 w-4" />Hoofdleiding
-                    </SelectItem>
-                  </SelectGroup>
-                  <SelectSeparator />
-                  <SelectGroup>
-                    <SelectLabel>Groepen</SelectLabel>
-                    {groups?.sort((a, b) => a.id - b.id).map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-
-              {isMobile ? <Separator className="my-5" /> : ""}
+          <p className="text-foreground/70">{leiding ? `${leiding.length}` : "0"}</p>
+        </div>
+        <div className="flex flex-col md:flex-row md:justify-between gap-2">
+          <div className="flex flex-col md:flex-row gap-2">
+            <div className="relative ">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Zoek op naam, groep, jaar leiding..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-full md:w-xs"
+              />
             </div>
-            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-              {/* NEW: Mass Action Dropdown */}
-              {selectedRowCount > 0 && (
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant={"outline"}>
-                      <ListChecks className="mr-2 h-4 w-4" />
-                      Massa Acties ({selectedRowCount})
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onSelect={(e) => e.preventDefault()}>
-                    <DropdownMenuItem
-                      onClick={() => setMassWipeGroupDialog(true)}
-                      className="cursor-pointer"
-                    >
-                      <UserMinus2 className="mr-2 h-4 w-4" /> Groep wissen
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setMassEditGroupDialog(true)}
-                      className="cursor-pointer"
-                    >
-                      <Users className="mr-2 h-4 w-4" /> Groep wijzigen
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setMassDisableDialog(true)}
-                      className="text-destructive focus:text-destructive cursor-pointer"
-                    >
-                      <ShieldX className="mr-2 h-4 w-4 text-destructive" /> Inactief zetten
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+            <Select defaultValue="all_by_group" onValueChange={setSelectedFilter}>
+              <SelectTrigger className="w-full md:w-fit">
+                <SelectValue placeholder="Kies een groep" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Nuttig</SelectLabel>
+                  <SelectItem value="all_by_group">
+                    <Users className="mr-2 h-4 w-4" />
+                    Alle leiding (per groep)
+                  </SelectItem>
+                  <SelectItem value="*">
+                    <CalendarArrowUp className="mr-2 h-4 w-4" />
+                    Alle leiding (Anciëniteit)
+                  </SelectItem>
+                  <SelectSeparator />
+                  <SelectItem value="trekkers">
+                    <Star className="mr-2 h-4 w-4" />Trekkers
+                  </SelectItem>
+                  <SelectItem value="hoofdleiding">
+                    <Crown className="mr-2 h-4 w-4" />Hoofdleiding
+                  </SelectItem>
+                </SelectGroup>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel>Groepen</SelectLabel>
+                  {groups?.sort((a, b) => a.id - b.id).map((g) => (
+                    <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
+            {isMobile ? <Separator className="my-5" /> : ""}
+          </div>
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            {selectedRowCount > 0 && (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    disabled={selectedRowCount === 0}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exporteer ({selectedRowCount})
+                  <Button variant={"outline"}>
+                    <ListChecks className="mr-2 h-4 w-4" />
+                    Massa Acties ({selectedRowCount})
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" >
-                  <DropdownMenuItem onClick={handleExportXLS}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Export als XLS
+                <DropdownMenuContent align="end" onSelect={(e) => e.preventDefault()}>
+                  <DropdownMenuItem
+                    onClick={() => setMassWipeGroupDialog(true)}
+                    className="cursor-pointer"
+                  >
+                    <UserMinus2 className="mr-2 h-4 w-4" /> Groep wissen
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportPDF}>
-                    <FileBadge2 className="mr-2 h-4 w-4" /> Export als PDF
+                  <DropdownMenuItem
+                    onClick={() => setMassEditGroupDialog(true)}
+                    className="cursor-pointer"
+                  >
+                    <Users className="mr-2 h-4 w-4" /> Groep wijzigen
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setMassDisableDialog(true)}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <ShieldX className="mr-2 h-4 w-4 text-destructive" /> Inactief zetten
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
 
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full md:w-auto"><UserPlus className="mr-2 h-4 w-4" />Voeg Leiding Toe</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Nieuwe leiding aanmaken</DialogTitle>
-                    <DialogDescription>
-                      Vul snel de gegevens in om een nieuw profiel te starten.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="voornaam" className="text-right">Voornaam</Label>
-                      <Input id="voornaam" className="col-span-3" value={voornaam} onChange={(e) => setVoornaam(e.target.value)} />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="familienaam" className="text-right">Familienaam</Label>
-                      <Input id="familienaam" className="col-span-3" value={familienaam} onChange={(e) => setFamilienaam(e.target.value)} />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="leidingsploeg" className="text-right">Leidingsgroep</Label>
-                      <Select onValueChange={setLeidingsploeg} value={leidingsploeg}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Kies groep" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {groups?.map((g) => (
-                            <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  disabled={selectedRowCount === 0}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporteer ({selectedRowCount})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" >
+                <DropdownMenuItem onClick={handleExportXLS}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" /> Export als XLS
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileBadge2 className="mr-2 h-4 w-4" /> Export als PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full md:w-auto"><UserPlus className="mr-2 h-4 w-4" />Voeg Leiding Toe</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Nieuwe leiding aanmaken</DialogTitle>
+                  <DialogDescription>
+                    Vul snel de gegevens in om een nieuw profiel te starten.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="voornaam" className="text-right">Voornaam</Label>
+                    <Input id="voornaam" className="col-span-3" value={voornaam} onChange={(e) => setVoornaam(e.target.value)} />
                   </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button type="button" variant="outline">Annuleer</Button>
-                    </DialogClose>
-                    <Button onClick={handleCreate}>Ga naar profiel</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="familienaam" className="text-right">Familienaam</Label>
+                    <Input id="familienaam" className="col-span-3" value={familienaam} onChange={(e) => setFamilienaam(e.target.value)} />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="leidingsploeg" className="text-right">Leidingsgroep</Label>
+                    <Select onValueChange={setLeidingsploeg} value={leidingsploeg}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Kies groep" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {groups?.map((g) => (
+                          <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Annuleer</Button>
+                  </DialogClose>
+                  <Button onClick={handleCreate}>Ga naar profiel</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </header>
+
+      <div className="rounded-lg border border-muted bg-background/50 dark:bg-background/30 overflow-hidden">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Geen leiding gevonden voor de geselecteerde filter.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Weet je het zeker?</DialogTitle>
+            <DialogDescription>
+              Je staat op het punt om **{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}** definitief te verwijderen. Deze actie kan niet ongedaan worden gemaakt.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialog(false)}>
+              Annuleren
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Verwijder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Disable Confirmation Dialog (for active -> inactive) */}
+      <Dialog open={disableConfirmDialog} onOpenChange={setDisableConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Weet je het zeker?</DialogTitle>
+            <DialogDescription>
+              Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisableConfirmDialog(false)}>
+              Annuleren
+            </Button>
+            <Button variant="destructive" onClick={handleDisable}>
+              Inactief plaatsen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={massWipeGroupDialog} onOpenChange={setMassWipeGroupDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Massa Groep Wissen</DialogTitle>
+            <DialogDescription>
+              Je staat op het punt om <strong>{selectedRowCount}</strong> geselecteerde leiding hun groep te wissen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMassWipeGroupDialog(false)}>
+              Annuleren
+            </Button>
+            <Button variant="destructive" onClick={handleMassWipe}>
+              Groep wissen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={massEditGroupDialog} onOpenChange={setMassEditGroupDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Massa Groep Wijzigen</DialogTitle>
+            <DialogDescription>
+              Wijzig de groep voor de geselecteerde <strong>{selectedRowCount}</strong> leiding.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="mass-edit-group" className="text-right">Nieuwe Leidingsgroep</Label>
+              <Select onValueChange={setSelectedMassEditGroup} value={selectedMassEditGroup}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Kies nieuwe groep" />
+                </SelectTrigger>
+                <SelectContent>
+                  {groups?.map((g) => (
+                    <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </header>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setMassEditGroupDialog(false); setSelectedMassEditGroup(""); }}>
+              Annuleren
+            </Button>
+            <Button onClick={handleMassUpdateGroup} disabled={!selectedMassEditGroup}>
+              Groep aanpassen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <div className="rounded-lg border bg-background/50 dark:bg-background/30 shadow-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    Geen leiding gevonden voor de geselecteerde filter.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+      <Dialog open={massDisableDialog} onOpenChange={setMassDisableDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Massa Inactief Zetten</DialogTitle>
+            <DialogDescription>
+              Je staat op het punt om <strong>{selectedRowCount}</strong> geselecteerde leiding te markeren als oud-leiding en te verwijderen van de huidige website.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMassDisableDialog(false)}>
+              Annuleren
+            </Button>
+            <Button variant="destructive" onClick={handleMassDisable}>
+              Leiding inactief plaatsen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Weet je het zeker?</DialogTitle>
-              <DialogDescription>
-                Je staat op het punt om **{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}** definitief te verwijderen. Deze actie kan niet ongedaan worden gemaakt.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialog(false)}>
-                Annuleren
-              </Button>
-              <Button variant="destructive" onClick={handleDelete}>
-                Verwijder
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Disable Confirmation Dialog (for active -> inactive) */}
-        <Dialog open={disableConfirmDialog} onOpenChange={setDisableConfirmDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Weet je het zeker?</DialogTitle>
-              <DialogDescription>
-                Je staat op het punt om <strong>{selectedLeidingForDialog?.voornaam} {selectedLeidingForDialog?.familienaam}</strong> te markeren als oud-leiding en te verwijderen van de huidige <u>ksapetegem.be</u> website.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDisableConfirmDialog(false)}>
-                Annuleren
-              </Button>
-              <Button variant="destructive" onClick={handleDisable}>
-                Inactief plaatsen
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={massWipeGroupDialog} onOpenChange={setMassWipeGroupDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Massa Groep Wissen</DialogTitle>
-              <DialogDescription>
-                Je staat op het punt om <strong>{selectedRowCount}</strong> geselecteerde leiding hun groep te wissen.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setMassWipeGroupDialog(false)}>
-                Annuleren
-              </Button>
-              <Button variant="destructive" onClick={handleMassWipe}>
-                Groep wissen
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={massEditGroupDialog} onOpenChange={setMassEditGroupDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Massa Groep Wijzigen</DialogTitle>
-              <DialogDescription>
-                Wijzig de groep voor de geselecteerde <strong>{selectedRowCount}</strong> leiding.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="mass-edit-group" className="text-right">Nieuwe Leidingsgroep</Label>
-                <Select onValueChange={setSelectedMassEditGroup} value={selectedMassEditGroup}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Kies nieuwe groep" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groups?.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>{g.naam}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => { setMassEditGroupDialog(false); setSelectedMassEditGroup(""); }}>
-                Annuleren
-              </Button>
-              <Button onClick={handleMassUpdateGroup} disabled={!selectedMassEditGroup}>
-                Groep aanpassen
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={massDisableDialog} onOpenChange={setMassDisableDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Massa Inactief Zetten</DialogTitle>
-              <DialogDescription>
-                Je staat op het punt om <strong>{selectedRowCount}</strong> geselecteerde leiding te markeren als oud-leiding en te verwijderen van de huidige website.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setMassDisableDialog(false)}>
-                Annuleren
-              </Button>
-              <Button variant="destructive" onClick={handleMassDisable}>
-                Leiding inactief plaatsen
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-      </PageLayout>
-    </PrivateRoute>
+    </PageLayout>
   )
 };
