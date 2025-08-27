@@ -108,6 +108,7 @@ export function EventFormFields({
                   setErrors((prev) => ({ ...prev, date_start: "" }));
                 }}
                 defaultMonth={form.date_start}
+                weekStartsOn={1}
               />
             </PopoverContent>
           </Popover>
