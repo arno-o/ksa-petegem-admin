@@ -63,6 +63,7 @@ export function EventDialog({
           )}
         </DrawerTrigger>
         <DrawerContent>
+          <div className="pb-12 overflow-y-auto">
           <DrawerHeader className="px-6 pt-6">
             <DrawerTitle className="text-2xl font-bold">
               {isEdit ? "Bewerk activiteit" : "Nieuwe activiteit"}
@@ -90,6 +91,7 @@ export function EventDialog({
               {isEdit ? "Opslaan" : "Activiteit aanmaken"}
             </Button>
           </DrawerFooter>
+          </div>
         </DrawerContent>
 
       </Drawer>
