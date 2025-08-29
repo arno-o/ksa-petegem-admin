@@ -161,3 +161,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@custom-variant standalone {
+  @media (display-mode: standalone) {
+    @slot;
+  }
+}

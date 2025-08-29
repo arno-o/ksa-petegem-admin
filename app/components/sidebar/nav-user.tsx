@@ -46,9 +46,9 @@ export function NavUser() {
     const avatarAPI = `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${firstName}?scale=50`;
 
     return (
-        <SidebarMenu>
+        <SidebarMenu className="standalone:pb-8">
             <SidebarMenuItem>
-                <DropdownMenu modal={false}>
+                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
