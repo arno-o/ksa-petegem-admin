@@ -142,6 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               {item.icon && <item.icon className={cn(`text-sidebar-primray-foreground`)} />}
                               {item.title}
                               <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
                           <CollapsibleContent>
