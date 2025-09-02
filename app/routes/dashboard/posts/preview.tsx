@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useRouteError, isRouteErrorResponse, useNavigation } from "react-router";
 
 import { ArrowLeft, X } from "lucide-react";
 
@@ -17,49 +17,37 @@ export function meta({ }: Route.MetaArgs) {
     return [{ title: "Post Preview" }];
 }
 
-export default function PreviewPost() {
-    const { postId } = useParams();
+export async function loader({ params }: Route.LoaderArgs) {
+  const id = params.postId;
+  if (!id) throw new Response("Geen postID opgegeven", { status: 400 });
+
+  try {
+    const post = await fetchPostById(id);
+    if (!post) throw new Response("Post niet gevonden", { status: 404 });
+    return post; // plain object is fine
+  } catch (err) {
+    throw new Response("Kon de data niet vinden", { status: 500 });
+  }
+}
+
+export function HydrateFallback() {
+  return (
+    <PageLayout>
+      <FullScreenLoader />
+    </PageLayout>
+  );
+}
+
+const PreviewPost = ({ loaderData, }: Route.ComponentProps) => {
+    const post = loaderData;
+
     const navigate = useNavigate();
-
-    const [post, setPost] = useState<Post | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const getPost = async () => {
-            if (!postId) {
-                setError("Post ID is missing.");
-                setLoading(false);
-                return;
-            }
-            try {
-                const fetchedPost = await fetchPostById(postId);
-                setPost(fetchedPost);
-            } catch (err) {
-                console.error("Failed to fetch post:", err);
-                setError("Failed to load post data.");
-                toast.error("Fout bij het laden van het bericht.");
-            } finally {
-                setLoading(false);
-            }
-        };
-        getPost();
-    }, [postId]);
-
-    if (loading) {
+    const navigation = useNavigation();
+    const isPending = navigation.state === "loading" || navigation.state === "submitting";
+    if (isPending) {
         return (
             <PageLayout>
                 <FullScreenLoader />
-            </PageLayout>
-        );
-    }
-
-    if (error || !post) {
-        return (
-            <PageLayout>
-                <div className="flex justify-center items-center h-[50vh]">
-                    <p className="text-destructive">{error || "Bericht niet gevonden."}</p>
-                </div>
             </PageLayout>
         );
     }
@@ -121,4 +109,33 @@ export default function PreviewPost() {
             </div>
         </PageLayout>
     )
+}
+
+export default PreviewPost;
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  let message = "Er is iets misgelopen.";
+  let status: number | undefined = undefined;
+
+  if (isRouteErrorResponse(error)) {
+    status = error.status;
+    message =
+      (typeof error.data === "string" && error.data) ||
+      error.statusText ||
+      message;
+  } else if (error instanceof Error) {
+    message = error.message || message;
+  }
+
+  return (
+    <PageLayout>
+      <div className="flex justify-center items-center h-[50vh]">
+        <p className="text-destructive">
+          {status ? `Error ${status} – ${message}` : message}
+        </p>
+      </div>
+    </PageLayout>
+  );
 }

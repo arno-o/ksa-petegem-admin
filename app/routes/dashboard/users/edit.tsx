@@ -36,14 +36,21 @@ export function meta({ }: Route.MetaArgs) {
     return [{ title: "Leiding Bewerken" }];
 }
 
-const EditUser = () => {
+export async function loader({ params }: Route.LoaderArgs) {
+    const leiding = await fetchLeidingById(params.leidingId);
+    const groepen = await fetchActiveGroups();
+    return { leiding, groepen };
+}
+
+const EditUser = ({ loaderData, }: Route.ComponentProps) => {
     const [dobDatePicker, setDobDatePicker] = useState(false);
     const navigate = useNavigate();
     const { leidingId } = useParams();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [leiding, setLeiding] = useState<Leiding | null>(null);
-    const [groepen, setGroepen] = useState<Group[]>([]);
+    
+    const leiding = loaderData.leiding;
+    const groepen = loaderData.groepen;
 
     const [form, setForm] = useState({
         voornaam: "",
@@ -71,34 +78,28 @@ const EditUser = () => {
             setLoading(true);
 
             try {
-                const fetchedLeiding = await fetchLeidingById(leidingId);
-                setLeiding(fetchedLeiding);
-
-                const allGroups = await fetchActiveGroups();
-                setGroepen(allGroups);
-
                 const parseDateSafely = (dateString: string | undefined): Date | undefined => {
                     if (!dateString) return undefined;
                     const [year, month, day] = dateString.split('-').map(Number);
                     return new Date(Date.UTC(year, month - 1, day));
                 };
 
-                const geboortedatumDate = parseDateSafely(fetchedLeiding.geboortedatum);
-                const leidingSindsDate = parseDateSafely(fetchedLeiding.leiding_sinds);
+                const geboortedatumDate = parseDateSafely(leiding.geboortedatum);
+                const leidingSindsDate = parseDateSafely(leiding.leiding_sinds);
 
                 setForm({
-                    voornaam: fetchedLeiding.voornaam,
-                    familienaam: fetchedLeiding.familienaam,
+                    voornaam: leiding.voornaam,
+                    familienaam: leiding.familienaam,
                     leiding_sinds: leidingSindsDate,
                     geboortedatum: geboortedatumDate,
-                    studies: fetchedLeiding.studies,
-                    werk: fetchedLeiding.werk,
-                    leidingsploeg: fetchedLeiding.leidingsploeg,
-                    werkgroepen: fetchedLeiding.werkgroepen,
-                    hoofdleiding: fetchedLeiding.hoofdleiding,
-                    trekker: fetchedLeiding.trekker,
-                    ksa_ervaring: fetchedLeiding.ksa_ervaring,
-                    foto_url: fetchedLeiding.foto_url,
+                    studies: leiding.studies,
+                    werk: leiding.werk,
+                    leidingsploeg: leiding.leidingsploeg,
+                    werkgroepen: leiding.werkgroepen,
+                    hoofdleiding: leiding.hoofdleiding,
+                    trekker: leiding.trekker,
+                    ksa_ervaring: leiding.ksa_ervaring,
+                    foto_url: leiding.foto_url,
                 });
             } catch (err) {
                 setError("Dit profiel bestaat niet");
@@ -204,7 +205,6 @@ const EditUser = () => {
                                     <Popover open={dobDatePicker} onOpenChange={setDobDatePicker}>
                                         <PopoverTrigger asChild>
                                             <Button variant="outline" className="w-full justify-between font-normal">
-                                                {/* Display the date correctly, potentially using UTC methods */}
                                                 {form.geboortedatum ? new Date(form.geboortedatum).toLocaleDateString("nl-BE", { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }) : "Kies een datum"}
                                                 <ChevronDownIcon className="ml-2 h-4 w-4" />
                                             </Button>
@@ -217,7 +217,6 @@ const EditUser = () => {
                                                 captionLayout="dropdown"
                                                 onSelect={(date) => {
                                                     if (date) {
-                                                        // When selecting, create a date object that represents the selected day in UTC
                                                         const newDateUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
                                                         setForm({ ...form, geboortedatum: newDateUTC });
                                                         setDobDatePicker(false);
@@ -269,7 +268,7 @@ const EditUser = () => {
                                     <Label>Leidingsploeg</Label>
                                     <Select
                                         onValueChange={(value) => setForm({ ...form, leidingsploeg: value })}
-                                        defaultValue={String(form.leidingsploeg)}
+                                        value={String(form.leidingsploeg)}
                                     >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Kies groep" />

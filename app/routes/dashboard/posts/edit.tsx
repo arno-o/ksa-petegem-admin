@@ -1,6 +1,6 @@
 import { useIsMobile } from "~/hooks/use-mobile";
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router";
+import { useNavigate, useParams, Link, useRouteError, isRouteErrorResponse } from "react-router";
 import { ChevronLeft, Pencil, Trash, Save, Eye, Badge, BadgeCheck, LinkIcon } from "lucide-react";
 
 import { toast } from "sonner";
@@ -34,7 +34,28 @@ export function meta({ }: Route.MetaArgs) {
     return [{ title: "Post Bewerken" }];
 }
 
-export default function EditPostPage() {
+export async function loader({ params }: Route.LoaderArgs) {
+  const id = params.postId;
+  if (!id) throw new Response("Geen postID opgegeven", { status: 400 });
+
+  try {
+    const post = await fetchPostById(id);
+    if (!post) throw new Response("Post niet gevonden", { status: 404 });
+    return post;
+  } catch (err) {
+    throw new Response("Kon de data niet vinden", { status: 500 });
+  }
+}
+
+export function HydrateFallback() {
+  return (
+    <PageLayout>
+      <FullScreenLoader />
+    </PageLayout>
+  );
+}
+
+const EditPostPage = ({ loaderData, }: Route.ComponentProps) => {
     const { postId } = useParams();
     const navigate = useNavigate();
     const isMobile = useIsMobile();
@@ -50,15 +71,11 @@ export default function EditPostPage() {
         cover_img: "",
     });
 
+    const fetchedPost = loaderData;
+
     useEffect(() => {
         const getPost = async () => {
-            if (!postId) {
-                setError("Post ID is missing.");
-                setLoading(false);
-                return;
-            }
             try {
-                const fetchedPost = await fetchPostById(postId);
                 setPost(fetchedPost); // Set the full post object
                 setForm({
                     title: fetchedPost.title,
@@ -74,6 +91,7 @@ export default function EditPostPage() {
                 setLoading(false);
             }
         };
+
         getPost();
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,6 +117,8 @@ export default function EditPostPage() {
     const computedSlug = useMemo(() => slugify(form.title || ""), [form.title]);
 
     const handleSave = async () => {
+        setLoading(true);
+
         if (!postId) {
             toast.error("Geen Post ID gevonden om op te slaan.");
             return;
@@ -112,6 +132,7 @@ export default function EditPostPage() {
                 cover_img: form.cover_img,
             });
             toast.success("Bericht succesvol bewerkt.");
+            setLoading(false);
             navigate("/berichten", { viewTransition: true });
         } catch (err) {
             toast.error("Er is iets foutgelopen bij het opslaan.");
@@ -266,9 +287,9 @@ export default function EditPostPage() {
                         {isMobile ? "Preview" : "Preview"}
                     </Button>
 
-                    <Button variant="outline" onClick={handleSave} className="grow md:w-fit">
+                    <Button variant="outline" onClick={handleSave} disabled={loading} className="grow md:w-fit">
                         <Save />
-                        Opslaan
+                        {loading ? "Opslaan..." : "Opslaan"}
                     </Button>
 
                     <Button variant={post.published ? "default" : "outline"} onClick={handlePublishToggle} className="grow md:w-fit">
@@ -345,4 +366,33 @@ export default function EditPostPage() {
             </div>
         </PageLayout>
     );
+}
+
+export default EditPostPage;
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  let message = "Er is iets misgelopen.";
+  let status: number | undefined = undefined;
+
+  if (isRouteErrorResponse(error)) {
+    status = error.status;
+    message =
+      (typeof error.data === "string" && error.data) ||
+      error.statusText ||
+      message;
+  } else if (error instanceof Error) {
+    message = error.message || message;
+  }
+
+  return (
+    <PageLayout>
+      <div className="flex justify-center items-center h-[50vh]">
+        <p className="text-destructive">
+          {status ? `Error ${status} – ${message}` : message}
+        </p>
+      </div>
+    </PageLayout>
+  );
 }

@@ -66,21 +66,17 @@ const handleUpload = async (file: File) => {
   return (
     <div className="space-y-2">
       {previewUrl ? (
-        <div className="relative group w-full rounded-md overflow-hidden aspect-video border">
+        <div
+          className="flex items-center justify-center group w-full rounded-md overflow-hidden aspect-video border hover:border-destructive transition-all cursor-pointer relative"
+          onClick={handleRemove}
+        >
           <img
             src={previewUrl}
-            alt="Voorbeeld"
-            className="object-cover w-full h-full"
+            alt="Preview"
+            style={{ objectFit: "cover" }}
+            className="w-full h-full absolute inset-0 transition-opacity duration-200 group-hover:opacity-10"
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleRemove}
-            className="absolute top-2 right-2 z-10 bg-white/70 hover:bg-white"
-          >
-            <Trash className="h-4 w-4 text-red-500" />
-          </Button>
+          <Trash className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute inset-0 m-auto" />
         </div>
       ) : (
         <div

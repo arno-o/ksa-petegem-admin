@@ -1,9 +1,6 @@
 import Link from "@tiptap/extension-link"
 import StarterKit from "@tiptap/starter-kit"
-import Heading from "@tiptap/extension-heading"
 import Underline from "@tiptap/extension-underline"
-import Paragraph from "@tiptap/extension-paragraph"
-import BulletList from "@tiptap/extension-bullet-list"
 
 import { EditorContent, useEditor } from "@tiptap/react"
 import { useState, useCallback, useRef, useEffect } from "react"
@@ -52,14 +49,16 @@ export function SimpleEditor({ content, onChange }: Props) {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Underline,
-      Heading.configure({ levels: [1, 2, 3] }),
-      Paragraph.configure({
-        HTMLAttributes: {
-          class: 'min-h-[1rem]'
-        }
+      StarterKit.configure({
+        bulletList: undefined,
+        heading: { levels: [1, 2, 3] },
+        paragraph: {
+          HTMLAttributes: {
+            class: 'min-h-[1rem]'
+          }
+        },
       }),
+      Underline,
       Link.configure({
         linkOnPaste: true,
         openOnClick: false,
@@ -69,7 +68,6 @@ export function SimpleEditor({ content, onChange }: Props) {
         },
         shouldAutoLink: (url) => url.startsWith('https://'),
       }),
-      BulletList,
     ],
     content,
     onUpdate({ editor }) {

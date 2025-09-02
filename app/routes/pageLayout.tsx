@@ -1,12 +1,14 @@
 import { UserAuth } from "~/context/AuthContext"
-import { AppSidebar } from "~/components/sidebar/app-sidebar"
 import { Separator } from "~/components/ui/separator"
+import { AppSidebar } from "~/components/sidebar/app-sidebar"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar"
+import FullScreenLoader from "~/components/allround/full-screen-loader"
 
+import { useNavigation } from "react-router"
 import PrivateRoute from "~/context/PrivateRoute"
 
 interface PageProps {
@@ -14,6 +16,9 @@ interface PageProps {
 }
 
 export default function Page({ children }: PageProps) {
+  const navigation = useNavigation();
+  const isNavigating = Boolean(navigation.location);
+
   const { session } = UserAuth();
   const firstName = session?.user?.user_metadata?.first_name;
 
@@ -29,7 +34,7 @@ export default function Page({ children }: PageProps) {
           </header>
 
           <div className="p-4">
-            {children}
+            {isNavigating ? <FullScreenLoader /> : children}
           </div>
         </SidebarInset>
       </SidebarProvider>

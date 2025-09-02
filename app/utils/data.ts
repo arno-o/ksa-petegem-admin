@@ -109,29 +109,35 @@ export const fetchPosts = async () => {
 };
 
 export const fetchPostById = async (id: string) => {
-  const { data, error } = await supabase.from("posts").select("*").eq("id", id).single();
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", id)
+    .single();
   if (error) throw error;
   return data;
 };
 
-export const updatePost = async (id: string | number, updates: Partial<any>) => {
-  if (updates.published === true) {
+export const updatePost = async (id: string, updates: Partial<Post>) => {
+  if (updates.published === true && !updates.published_at) {
     updates.published_at = new Date().toISOString();
   }
 
   const { data, error } = await supabase
     .from("posts")
     .update(updates)
-    .eq("id", Number(id))
-    .select();
-
-  console.log("🔁 Supabase update result:", data, error);
+    .eq("id", id)            // ← no Number()
+    .select()
+    .single();               // ← get the updated row
   if (error) throw error;
-  return data;
+  return data as Post;
 };
 
-export const deletePost = async (id: string | number) => {
-  const { error } = await supabase.from("posts").delete().eq("id", Number(id));
+export const deletePost = async (id: string) => {
+  const { error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", id);           // ← no Number()
   if (error) throw error;
 };
 

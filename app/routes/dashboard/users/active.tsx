@@ -1,6 +1,6 @@
 // React and Hooks
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router";
+import { isRouteErrorResponse, Link, useNavigate, useRouteError } from "react-router";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { toast } from "sonner";
 
@@ -47,15 +47,26 @@ export function meta({ }: Route.MetaArgs) {
 
 const columnHelper = createColumnHelper<Leiding>();
 
-export default function Active() {
+export async function loader() {
+  const groupData = await fetchActiveGroups();
+  const leidingData = await fetchActiveLeiding();
+
+  return { leidingData, groupData };
+}
+
+export default function Active({ loaderData, }: Route.ComponentProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false); // For "Nieuwe leiding aanmaken"
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [groups, setGroups] = useState<Group[]>();
-  const [leiding, setLeiding] = useState<Leiding[]>();
+  
+  const groups = loaderData.groupData;
+  const leiding = loaderData.leidingData;
+
   const [filteredLeiding, setFilteredLeiding] = useState<Leiding[]>();
-  const [selectedFilter, setSelectedFilter] = useState<string>("all_by_group");
+    const [selectedFilter, setSelectedFilter] = useState<string>(() => {
+    return window.localStorage.getItem("activeFilter") || "all_by_group";
+  });
 
   // State for row selection
   const [rowSelection, setRowSelection] = useState({});
@@ -91,6 +102,10 @@ export default function Active() {
     };
   }, [searchTerm]);
 
+  useEffect(() => {
+    window.localStorage.setItem("activeFilter", selectedFilter);
+  }, [selectedFilter]);
+
   // Color maps (assuming these are constant, can be moved outside the component)
   const COLOR_MAP: Record<string, string> = {
     yellow: "text-amber-600 dark:text-amber-300",
@@ -118,10 +133,6 @@ export default function Active() {
   const reloadData = async () => {
     setLoading(true);
     try {
-      const groupData = await fetchActiveGroups();
-      setGroups(groupData);
-      const leidingData = await fetchActiveLeiding();
-      setLeiding(leidingData);
       setRowSelection({}); // Clear row selection after data reload
     } catch (err) {
       console.error("Failed to reload data:", err);
@@ -134,6 +145,11 @@ export default function Active() {
   useEffect(() => {
     reloadData();
   }, []); // Initial load
+
+  const handleFilterChange = (newFilter: string) => {
+    setSelectedFilter(newFilter);
+    // The useEffect hook above will automatically handle saving to localStorage
+  };
 
   // Effect to filter and sort leiding whenever 'leiding' data, 'selectedFilter', or 'debouncedSearchTerm' changes
   useEffect(() => {
@@ -160,8 +176,11 @@ export default function Active() {
     } else if (selectedFilter === "trekkers") {
       tempLeiding = leiding.filter(person => person.trekker);
       tempLeiding.sort((a, b) => {
-        const groupA = groups?.find(g => g.id === a.leidingsploeg)?.naam || '';
-        const groupB = groups?.find(g => g.id === b.leidingsploeg)?.naam || '';
+        const groupA = a.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
+        const groupB = b.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
+        if (groupA !== groupB) {
+          return groupA - groupB;
+        }
         return groupA.localeCompare(groupB);
       });
     } else if (selectedFilter === "hoofdleiding") {
@@ -182,7 +201,7 @@ export default function Active() {
       });
     } else {
       const selectedGroupId = Number(selectedFilter);
-      tempLeiding = leiding.filter(person => person.leidingsploeg === selectedGroupId);
+      tempLeiding = leiding.filter((person) => person.leidingsploeg === selectedGroupId);
 
       tempLeiding.sort((a, b) => {
         if (a.trekker && !b.trekker) return -1;
@@ -212,7 +231,6 @@ export default function Active() {
 
     setFilteredLeiding(tempLeiding);
   }, [leiding, selectedFilter, debouncedSearchTerm, groups]);
-
 
   const handleCreate = async () => {
     if (!voornaam || !familienaam || !leidingsploeg) {
@@ -643,13 +661,13 @@ export default function Active() {
             <div className="relative ">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Zoek op naam, groep, jaar leiding..."
+                placeholder="Zoeken"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 w-full md:w-xs"
               />
             </div>
-            <Select defaultValue="all_by_group" onValueChange={setSelectedFilter}>
+            <Select value={selectedFilter} onValueChange={setSelectedFilter}>
               <SelectTrigger className="w-full md:w-fit">
                 <SelectValue placeholder="Kies een groep" />
               </SelectTrigger>
@@ -946,3 +964,30 @@ export default function Active() {
     </PageLayout>
   )
 };
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  let message = "Er is iets misgelopen.";
+  let status: number | undefined = undefined;
+
+  if (isRouteErrorResponse(error)) {
+    status = error.status;
+    message =
+      (typeof error.data === "string" && error.data) ||
+      error.statusText ||
+      message;
+  } else if (error instanceof Error) {
+    message = error.message || message;
+  }
+
+  return (
+    <PageLayout>
+      <div className="flex justify-center items-center h-[50vh]">
+        <p className="text-destructive">
+          {status ? `Error ${status} – ${message}` : message}
+        </p>
+      </div>
+    </PageLayout>
+  );
+}
