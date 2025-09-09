@@ -490,7 +490,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                         <div className="md:hidden flex flex-col gap-4">
                             {table.getRowModel().rows.map((row) => {
                                 const event = row.original;
-                                const groupBadges = event.target_groups.map((id) => {
+                                const groupBadges = event.target_groups.map((id: any) => {
                                     const group = allGroups.find((g) => g.id === id);
                                     return group ? (
                                         <div
