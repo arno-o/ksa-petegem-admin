@@ -1,9 +1,11 @@
 import PageLayout from "../pageLayout";
 import type { Route } from "./+types/events";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRevalidator } from "react-router";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { fetchEvents, fetchActiveGroups, createEvent, deleteEvent, updateEvent } from "~/utils/data";
 
-import type { Event, Group } from "~/types";
+import type { Event } from "~/types";
+import { type Option } from "~/components/ui/multiselect";
 import {
     Tooltip,
     TooltipContent,
@@ -12,7 +14,6 @@ import {
 import { Button } from "~/components/ui/button";
 import { Edit, Trash2, MapPin, Calendar as CalendarIcon, Clock, MoreHorizontal, Calendar, MoreVertical } from "lucide-react";
 import { Input } from "~/components/ui/input";
-import { type Option } from "~/components/ui/multiselect";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -46,6 +47,7 @@ import {
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { EventDialog } from "~/components/events/event-dialogs";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 
 const COLOR_MAP: Record<string, string> = {
     yellow: "bg-amber-500 dark:bg-amber-400",
@@ -57,81 +59,6 @@ const COLOR_MAP: Record<string, string> = {
     lime: "bg-lime-500 dark:bg-lime-400",
     rose: "bg-rose-500 dark:bg-rose-400",
 };
-
-function useEvents() {
-    const [events, setEvents] = useState<Event[]>([]);
-    const [loadingEvents, setLoadingEvents] = useState(true);
-
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const data = await fetchEvents();
-                const processedData: Event[] = data.map(event => ({
-                    ...event,
-                    date_start: event.date_start ? new Date(event.date_start) : null,
-                }));
-                // Sort events by ID here
-                processedData.sort((a, b) => a.id - b.id);
-                setEvents(processedData);
-            } catch (err) {
-                console.error("Failed to fetch events:", err);
-                toast.error("Fout bij het laden van activiteiten.");
-            } finally {
-                setLoadingEvents(false);
-            }
-        };
-        load();
-    }, []);
-
-    const refreshEvents = useCallback(async () => {
-        setLoadingEvents(true);
-        try {
-            const data = await fetchEvents();
-            const processedData: Event[] = data.map(event => ({
-                ...event,
-                date_start: event.date_start ? new Date(event.date_start) : null,
-            }));
-            // Sort events by ID here as well
-            processedData.sort((a, b) => a.id - b.id);
-            setEvents(processedData);
-        } catch (err) {
-            console.error("Failed to refresh events:", err);
-            toast.error("Fout bij het verversen van activiteiten.");
-        } finally {
-            setLoadingEvents(false);
-        }
-    }, []);
-
-    return { events, setEvents, loadingEvents, refreshEvents };
-}
-
-function useActiveGroups() {
-    const [allGroups, setAllGroups] = useState<Group[]>([]);
-    const [groupOptions, setGroupOptions] = useState<Option[]>([]);
-    const [loadingGroups, setLoadingGroups] = useState(true);
-
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const groups: Group[] = await fetchActiveGroups();
-                setAllGroups(groups);
-                const options: Option[] = groups.map((g) => ({
-                    value: String(g.id),
-                    label: g.naam,
-                }));
-                setGroupOptions(options);
-            } catch (err) {
-                console.error("Failed to fetch groups:", err);
-                toast.error("Fout bij het laden van groepen.");
-            } finally {
-                setLoadingGroups(false);
-            }
-        };
-        load();
-    }, []);
-
-    return { allGroups, groupOptions, loadingGroups };
-}
 
 interface EventFormState {
     title: string;
@@ -159,17 +86,42 @@ export function meta({ }: Route.MetaArgs) {
     return [{ title: "KSA Admin - Activiteiten" }];
 }
 
-export default function Events() {
+export async function clientLoader() {
+    const events = await fetchEvents();
+    const groups = await fetchActiveGroups();
+    return { events, groups };
+}
+
+export function HydrateFallback() {
+    return (
+        <PageLayout>
+            <FullScreenLoader />
+        </PageLayout>
+    );
+}
+
+export default function Events({ loaderData, }: Route.ComponentProps) {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [form, setForm] = useState<EventFormState>(INITIAL_FORM_STATE);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-    const { events, setEvents, loadingEvents, refreshEvents } = useEvents();
-    const { allGroups, groupOptions, loadingGroups } = useActiveGroups();
+    
+    const [groupOptions, setGroupOptions] = useState<Option[]>([]);
+    
+    const events = loaderData.events;
+    const allGroups = loaderData.groups;
+    
+    useEffect(() => {
+        const options: Option[] = allGroups.map((g) => ({
+            value: String(g.id),
+            label: g.naam,
+        }));
+        setGroupOptions(options);
+    }, [allGroups]);
+    
+    const revalidator = useRevalidator();
 
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-
 
     const validateForm = useCallback((): boolean => {
         const newErrors: { [key: string]: string } = {};
@@ -217,9 +169,8 @@ export default function Events() {
             setIsCreateDialogOpen(false);
             setForm(INITIAL_FORM_STATE);
             setErrors({});
+            revalidator.revalidate();
             toast.success("Activiteit succesvol aangemaakt!");
-
-            await refreshEvents();
         } catch (error) {
             console.error("❌ Fout bij aanmaken activiteit:", error);
             toast.error("Er is een fout opgetreden bij het aanmaken van de activiteit.");
@@ -247,13 +198,14 @@ export default function Events() {
             if (editingEvent) {
                 await updateEvent(editingEvent.id, updates);
                 toast.success("Activiteit bijgewerkt!");
+                revalidator.revalidate();
                 setEditDialogOpen(false);
                 setEditingEvent(null);
                 setForm(INITIAL_FORM_STATE);
-                await refreshEvents();
             }
         } catch (error) {
             console.error("❌ Fout bij bewerken:", error);
+            revalidator.revalidate();
             toast.error("Bijwerken mislukt.");
         }
     };
@@ -261,11 +213,11 @@ export default function Events() {
     const handleDeleteEvent = async (id: number) => {
         try {
             await deleteEvent(id);
-            // After deletion, refresh all events to ensure the sorted order is maintained
-            await refreshEvents();
+            revalidator.revalidate();
             toast.success("Activiteit succesvol verwijderd.");
         } catch (err) {
             console.error("Failed to delete event:", err);
+            revalidator.revalidate();
             toast.error("Verwijderen mislukt. Probeer opnieuw.");
         }
     };
@@ -500,173 +452,170 @@ export default function Events() {
                 </div>
             </div>
 
-            {loadingEvents ? (
-                <div className="text-center py-8">Laden van activiteiten...</div>
-            ) : (
-                <>
-                    {table.getRowModel().rows?.length ? (
-                        <>
-                            {/* Desktop table */}
-                            <div className="hidden md:block rounded-md border">
-                                <Table>
-                                    <TableHeader>
-                                        {table.getHeaderGroups().map((headerGroup) => (
-                                            <TableRow key={headerGroup.id}>
-                                                {headerGroup.headers.map((header) => (
-                                                    <TableHead key={header.id}>
-                                                        {header.isPlaceholder
-                                                            ? null
-                                                            : flexRender(header.column.columnDef.header, header.getContext())}
-                                                    </TableHead>
-                                                ))}
-                                            </TableRow>
-                                        ))}
-                                    </TableHeader>
-                                    <TableBody>
-                                        {table.getRowModel().rows.map((row) => (
-                                            <TableRow key={row.id}>
-                                                {row.getVisibleCells().map((cell) => (
-                                                    <TableCell key={cell.id}>
-                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                    </TableCell>
-                                                ))}
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
 
-                            {/* Mobile cards */}
-                            <div className="md:hidden flex flex-col gap-4">
-                                {table.getRowModel().rows.map((row) => {
-                                    const event = row.original;
-                                    const groupBadges = event.target_groups.map((id) => {
-                                        const group = allGroups.find((g) => g.id === id);
-                                        return group ? (
-                                            <div
-                                                key={group.id}
-                                                className={`h-6 w-6 rounded-full ${group.color ? COLOR_MAP[group.color] : "#9CA3AF"}`}
-                                                title={group.naam}
-                                            />
-                                        ) : null;
-                                    });
+            <>
+                {table.getRowModel().rows?.length ? (
+                    <>
+                        {/* Desktop table */}
+                        <div className="hidden md:block rounded-md border">
+                            <Table>
+                                <TableHeader>
+                                    {table.getHeaderGroups().map((headerGroup) => (
+                                        <TableRow key={headerGroup.id}>
+                                            {headerGroup.headers.map((header) => (
+                                                <TableHead key={header.id}>
+                                                    {header.isPlaceholder
+                                                        ? null
+                                                        : flexRender(header.column.columnDef.header, header.getContext())}
+                                                </TableHead>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableHeader>
+                                <TableBody>
+                                    {table.getRowModel().rows.map((row) => (
+                                        <TableRow key={row.id}>
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
 
-                                    return (
+                        {/* Mobile cards */}
+                        <div className="md:hidden flex flex-col gap-4">
+                            {table.getRowModel().rows.map((row) => {
+                                const event = row.original;
+                                const groupBadges = event.target_groups.map((id) => {
+                                    const group = allGroups.find((g) => g.id === id);
+                                    return group ? (
                                         <div
-                                            key={event.id}
-                                            className="bg-card border rounded-xl p-5 shadow-lg flex flex-col"
-                                        >
-                                            {/* Header Section */}
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex-1 pr-4">
-                                                    <h2 className="text-xl font-bold leading-tight text-foreground">
-                                                        {event.title}
-                                                    </h2>
-                                                    <div className="flex items-center text-sm text-muted-foreground mt-2">
-                                                        <MapPin className="h-4 w-4 mr-2 text-primary" />
-                                                        <span className="truncate">{event.location}</span>
-                                                    </div>
+                                            key={group.id}
+                                            className={`h-6 w-6 rounded-full ${group.color ? COLOR_MAP[group.color] : "#9CA3AF"}`}
+                                            title={group.naam}
+                                        />
+                                    ) : null;
+                                });
+
+                                return (
+                                    <div
+                                        key={event.id}
+                                        className="bg-card border rounded-xl p-5 shadow-lg flex flex-col"
+                                    >
+                                        {/* Header Section */}
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1 pr-4">
+                                                <h2 className="text-xl font-bold leading-tight text-foreground">
+                                                    {event.title}
+                                                </h2>
+                                                <div className="flex items-center text-sm text-muted-foreground mt-2">
+                                                    <MapPin className="h-4 w-4 mr-2 text-primary" />
+                                                    <span className="truncate">{event.location}</span>
                                                 </div>
-                                                <DropdownMenu modal={false}>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0 shrink-0">
-                                                            <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            onClick={() => {
-                                                                const formatTime = (timeStr: string | null | undefined) =>
-                                                                    timeStr?.slice(0, 5) ?? ""; // "09:00:00" → "09:00"
+                                            </div>
+                                            <DropdownMenu modal={false}>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0 shrink-0">
+                                                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() => {
+                                                            const formatTime = (timeStr: string | null | undefined) =>
+                                                                timeStr?.slice(0, 5) ?? ""; // "09:00:00" → "09:00"
 
-                                                                setForm({
-                                                                    title: event.title,
-                                                                    description: event.description || "",
-                                                                    location: event.location,
-                                                                    target_groups: event.target_groups.map(Number),
-                                                                    date_start: event.date_start ? new Date(event.date_start) : undefined,
-                                                                    time_start: formatTime(event.time_start),
-                                                                    time_end: formatTime(event.time_end),
-                                                                    link: event.link || "",
-                                                                });
+                                                            setForm({
+                                                                title: event.title,
+                                                                description: event.description || "",
+                                                                location: event.location,
+                                                                target_groups: event.target_groups.map(Number),
+                                                                date_start: event.date_start ? new Date(event.date_start) : undefined,
+                                                                time_start: formatTime(event.time_start),
+                                                                time_end: formatTime(event.time_end),
+                                                                link: event.link || "",
+                                                            });
 
-                                                                setEditingEvent(event);
-                                                                setEditDialogOpen(true);
-                                                            }}
-                                                        >
-                                                            <Edit className="mr-2 h-4 w-4" /> Bewerk
-                                                        </DropdownMenuItem>
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <DropdownMenuItem
-                                                                    onSelect={(e) => e.preventDefault()}
-                                                                    className="text-red-600 focus:text-red-600"
+                                                            setEditingEvent(event);
+                                                            setEditDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        <Edit className="mr-2 h-4 w-4" /> Bewerk
+                                                    </DropdownMenuItem>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <DropdownMenuItem
+                                                                onSelect={(e) => e.preventDefault()}
+                                                                className="text-red-600 focus:text-red-600"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Verwijder
+                                                            </DropdownMenuItem>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    You are about to permanently delete this event. This action
+                                                                    cannot be undone.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                                    className="bg-red-600 hover:bg-red-700"
                                                                 >
-                                                                    <Trash2 className="mr-2 h-4 w-4" /> Verwijder
-                                                                </DropdownMenuItem>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        You are about to permanently delete this event. This action
-                                                                        cannot be undone.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction
-                                                                        onClick={() => handleDeleteEvent(event.id)}
-                                                                        className="bg-red-600 hover:bg-red-700"
-                                                                    >
-                                                                        Delete
-                                                                    </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                                    Delete
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+
+                                        {/* Main Details Section */}
+                                        <div className="flex items-center justify-between text-sm text-foreground mt-4">
+                                            <div className="flex items-center">
+                                                <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                                                <span>{event.date_start ? new Date(event.date_start).toLocaleDateString("nl-BE") : "Geen datum"}</span>
                                             </div>
 
-                                            {/* Main Details Section */}
-                                            <div className="flex items-center justify-between text-sm text-foreground mt-4">
-                                                <div className="flex items-center">
-                                                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                    <span>{event.date_start?.toLocaleDateString("nl-BE")}</span>
-                                                </div>
-
-                                                <div className="flex items-center">
-                                                    <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                    <span>
-                                                        {event.time_start
-                                                            ? new Date(`1970-01-01T${event.time_start}Z`).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
-                                                            : 'Geen tijd'}
-                                                        {event.time_end ? " - " : null}
-                                                        {event.time_end
-                                                            ? new Date(`1970-01-01T${event.time_end}Z`).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
-                                                            : null}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Target Groups Section */}
-                                            <hr className="my-4 border-t border-border" />
-                                            <div className="flex flex-col gap-2">
-                                                <span className="text-sm font-medium text-muted-foreground">Doelgroepen</span>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {groupBadges}
-                                                </div>
+                                            <div className="flex items-center">
+                                                <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                                                <span>
+                                                    {event.time_start
+                                                        ? new Date(`1970-01-01T${event.time_start}Z`).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+                                                        : 'Geen tijd'}
+                                                    {event.time_end ? " - " : null}
+                                                    {event.time_end
+                                                        ? new Date(`1970-01-01T${event.time_end}Z`).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+                                                        : null}
+                                                </span>
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    ) : (
-                        <p className="text-center mt-10">Geen resultaten gevonden.</p>
-                    )}
-                </>
-            )}
+
+                                        {/* Target Groups Section */}
+                                        <hr className="my-4 border-t border-border" />
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-sm font-medium text-muted-foreground">Doelgroepen</span>
+                                            <div className="flex flex-wrap gap-2">
+                                                {groupBadges}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                ) : (
+                    <p className="text-center mt-10">Geen resultaten gevonden.</p>
+                )}
+            </>
         </PageLayout>
     );
 }

@@ -1,14 +1,11 @@
-import { useState, useEffect } from "react";
 import { useNavigate, useRouteError, isRouteErrorResponse, useNavigation } from "react-router";
 
 import { ArrowLeft, X } from "lucide-react";
 
-import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import FullScreenLoader from "~/components/allround/full-screen-loader";
 
-import type { Post } from "~/types";
 import PageLayout from "../../pageLayout";
 import { fetchPostById } from "~/utils/data";
 import type { Route } from "../posts/+types/preview";
@@ -17,7 +14,7 @@ export function meta({ }: Route.MetaArgs) {
     return [{ title: "Post Preview" }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.LoaderArgs) {
   const id = params.postId;
   if (!id) throw new Response("Geen postID opgegeven", { status: 400 });
 

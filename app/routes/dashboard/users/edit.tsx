@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ChevronDownIcon, ChevronLeft, SaveIcon } from "lucide-react";
 
 import PageLayout from "../../pageLayout";
-import FileUpload from "~/components/allround/file-upload";
+import FileUpload from "~/components/images/file-upload";
 import FullScreenLoader from "~/components/allround/full-screen-loader";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
@@ -36,7 +36,7 @@ export function meta({ }: Route.MetaArgs) {
     return [{ title: "Leiding Bewerken" }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.LoaderArgs) {
     const leiding = await fetchLeidingById(params.leidingId);
     const groepen = await fetchActiveGroups();
     return { leiding, groepen };

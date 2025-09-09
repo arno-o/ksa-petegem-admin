@@ -1,18 +1,20 @@
 // routes/groups.tsx
+import { toast } from "sonner";
 import PageLayout from "../pageLayout";
-import type { Route } from "./+types/groups";
 
 import type { Group } from "~/types";
-import { useEffect, useState, useCallback } from "react";
+import type { Route } from "./+types/groups";
+
+import { useState, useCallback } from "react";
+import { useRevalidator } from "react-router";
 import { fetchAllGroups, createGroup, updateGroup } from "~/utils/data";
-import GroupCard from "~/components/cards/group-card";
-import { Skeleton } from "~/components/ui/skeleton";
-import { Button } from "~/components/ui/button";
-import { CircleFadingPlus } from "lucide-react";
-import { toast } from "sonner";
 
 import { useIsMobile } from "~/hooks/use-mobile";
 
+import { CircleFadingPlus } from "lucide-react";
+
+import GroupCard from "~/components/cards/group-card";
+import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +30,9 @@ import {
   DrawerDescription,
 } from "~/components/ui/drawer";
 
-
-import GroupForm, { type GroupFormValues } from "~/components/groups/GroupForm";
 import PdfUpload from "~/components/groups/PDFUpload";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
+import GroupForm, { type GroupFormValues } from "~/components/groups/GroupForm";
 
 // ---------- Page Meta ----------
 export function meta({ }: Route.MetaArgs) {
@@ -78,9 +80,20 @@ function ModalWrap({
   );
 }
 
-export default function Groups() {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
+export async function clientLoader() {
+  const groups = await fetchAllGroups();
+  return groups;
+}
+
+export function HydrateFallback() {
+  return (
+    <PageLayout>
+      <FullScreenLoader />
+    </PageLayout>
+  );
+}
+
+export default function Groups({ loaderData, }: Route.ComponentProps) {
   const [error, setError] = useState<string | null>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -88,34 +101,8 @@ export default function Groups() {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<Group | null>(null);
 
-  const loadGroups = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchAllGroups();
-      const ordered = (data ?? []).slice().sort((a, b) => Number(a.id) - Number(b.id));
-      setGroups(ordered);
-    } catch (err) {
-      console.error("Failed to fetch groups:", err);
-      setError("Fout bij het laden van groepen. Probeer opnieuw.");
-      toast.error("Fout bij het laden van groepen.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadGroups();
-  }, [loadGroups]);
-
-  const handleGroupUpdate = (updatedGroup: Group) => {
-    setGroups((prev) =>
-      prev
-        .map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
-        .sort((a, b) => Number(a.id) - Number(b.id))
-    );
-    toast.success(`Groep "${updatedGroup.naam}" succesvol bijgewerkt!`);
-  };
+  const groups = loaderData;
+  const revalidator = useRevalidator();
 
   const handleEditGroup = useCallback((group: Group) => {
     setSelected(group);
@@ -127,7 +114,6 @@ export default function Groups() {
     try {
       setSaving(true);
       const created = await createGroup(values as any);
-      setGroups((prev) => [created, ...prev].sort((a, b) => Number(a.id) - Number(b.id)));
       toast.success(`"${created.naam}" aangemaakt.`);
       setCreateOpen(false);
     } catch (e: any) {
@@ -145,10 +131,10 @@ export default function Groups() {
     if (!selected) return;
     try {
       setSaving(true);
-      const updated = await updateGroup(selected.id, values);
-      handleGroupUpdate(updated);
+      await updateGroup(selected.id, values);
       setEditOpen(false);
       setSelected(null);
+      revalidator.revalidate();
     } catch (e: any) {
       console.error(e);
       toast.error(
@@ -190,31 +176,7 @@ export default function Groups() {
         </div>
       )}
 
-      {loading ? (
-        <div className="rounded-lg border border-input shadow-sm overflow-hidden">
-          <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-1/2 mx-auto" />
-            <Skeleton className="h-4 w-1/4 ml-auto" />
-          </div>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="p-4 border-b border-input last:border-b-0 bg-background">
-              <div className="sm:hidden space-y-2">
-                <Skeleton className="h-5 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4">
-                <Skeleton className="h-5 w-4/5" />
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-1/2 mx-auto" />
-                <Skeleton className="h-5 w-1/4 ml-auto" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : groups.length > 0 ? (
+      {groups.length > 0 ? (
         <div className="rounded-lg border border-input shadow-sm overflow-hidden">
           {/* Header hidden on mobile */}
           <div className="hidden sm:grid grid-cols-[1.5fr_2fr_1fr_0.8fr] gap-4 p-4 text-sm font-semibold text-muted-foreground border-b border-input bg-muted/20">
@@ -230,7 +192,6 @@ export default function Groups() {
               <GroupCard
                 key={group.id}
                 group={group}
-                onGroupUpdate={handleGroupUpdate}
                 onEdit={() => handleEditGroup(group)}
               />
             ))}
@@ -288,9 +249,6 @@ export default function Groups() {
                 onChange={(newUrl) => {
                   const id = selected.id;
                   setSelected((prev) => (prev ? { ...prev, brief_url: newUrl } : prev));
-                  setGroups((prev) =>
-                    prev.map((g) => (g.id === id ? { ...g, brief_url: newUrl } : g))
-                  );
                 }}
               />
             </div>

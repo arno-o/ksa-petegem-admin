@@ -166,10 +166,7 @@ export const fetchGroupById = async (id: number | string): Promise<Group> => {
   return data as Group;
 };
 
-export const updateGroup = async (
-  id: number | string,
- updates: Partial<Group>
-): Promise<Group> => {
+export const updateGroup = async (id: number | string, updates: Partial<Group>) => {
   const { data, error } = await supabase
     .from("groepen")
     .update(updates)
@@ -177,7 +174,6 @@ export const updateGroup = async (
     .select()
     .single();
   if (error) throw error;
-  return data as Group;
 };
 
 export const createGroup = async (

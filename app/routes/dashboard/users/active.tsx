@@ -40,6 +40,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 // @ts-ignore - autoTable might not have full TS definitions
 import autoTable from 'jspdf-autotable'; // Correct import for jspdf-autotable
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Leiding" }];
@@ -47,11 +48,19 @@ export function meta({ }: Route.MetaArgs) {
 
 const columnHelper = createColumnHelper<Leiding>();
 
-export async function loader() {
+export async function clientLoader() {
   const groupData = await fetchActiveGroups();
   const leidingData = await fetchActiveLeiding();
 
   return { leidingData, groupData };
+}
+
+export function HydrateFallback() {
+  return (
+    <PageLayout>
+      <FullScreenLoader />
+    </PageLayout>
+  );
 }
 
 export default function Active({ loaderData, }: Route.ComponentProps) {

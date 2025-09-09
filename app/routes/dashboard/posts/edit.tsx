@@ -10,7 +10,7 @@ import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import FullScreenLoader from "~/components/allround/full-screen-loader";
 
-import FileUpload from "~/components/allround/file-upload"
+import FileUpload from "~/components/images/file-upload"
 import { SimpleEditor } from "~/components/allround/editor"
 
 import {
@@ -34,7 +34,7 @@ export function meta({ }: Route.MetaArgs) {
     return [{ title: "Post Bewerken" }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.LoaderArgs) {
   const id = params.postId;
   if (!id) throw new Response("Geen postID opgegeven", { status: 400 });
 

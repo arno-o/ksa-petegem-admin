@@ -7,7 +7,6 @@ import { cn } from "~/lib/utils";
 
 interface GroupCardProps {
   group: Group;
-  onGroupUpdate: (updatedGroup: Group) => void;
   onEdit?: (group: Group) => void;
 }
 
