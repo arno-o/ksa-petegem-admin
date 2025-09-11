@@ -22,7 +22,7 @@ import {
 import { Plus } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { EventFormFields } from "./event-form-fields";
-import { useIsMobile } from "~/hooks/use-mobile"; // Import your custom hook
+import { useIsMobile } from "~/hooks/use-mobile";
 
 import type { EventFormState } from "../../types";
 import type { Option } from "~/components/ui/multiselect";

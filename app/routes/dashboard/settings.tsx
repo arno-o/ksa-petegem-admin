@@ -33,6 +33,7 @@ export default function SettingsPage() {
         published: true,
         message: "",
     });
+    
     const [initial, setInitial] = useState(form);
 
     useEffect(() => {
