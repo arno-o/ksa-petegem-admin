@@ -5,7 +5,6 @@ import { useNavigate, useParams, useBlocker } from "react-router";
 import { toast } from "sonner";
 import { ChevronDownIcon, ChevronLeft, SaveIcon } from "lucide-react";
 
-
 import PageLayout from "../../pageLayout";
 import FileUpload from "~/components/images/file-upload";
 import FullScreenLoader from "~/components/allround/full-screen-loader";
@@ -30,7 +29,6 @@ import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
