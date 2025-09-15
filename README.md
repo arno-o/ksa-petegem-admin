@@ -1,6 +1,15 @@
-# KSA Admin - [![Netlify Status](https://api.netlify.com/api/v1/badges/bed51ceb-3df3-408a-9361-32a0d76f9b56/deploy-status)](https://app.netlify.com/projects/ksapetegem-cms/deploys)
-Deze website wordt voornamelijk gebruikt voor het backend CMS systeem van KSA Petegem.
+# KSA Admin
+Deze website wordt voornamelijk gebruikt voor het backend CMS systeem van KSA Petegem. Via dit platform ([admin.ksapetegem.be](https://admin.ksapetegem.be)) kan de webmaster van KSA Petegem alle content van de website ([ksapetegem.be](https://www.ksapetegem.be)) beheren.
 
-## Systemen
-- Alles wordt gehost via Netlify
-- Database & Auth wordt gehost door SupaBase
+## Tech-stack
+- Hosting via Netlify
+- Database & Auth via SupaBase
+- Project coded in React Router (TS)
+
+## Inhoud
+#### Via dit platform kunnen beheerders het volgende doen:
+- __Berichten__ maken / bewerken / verwijderen
+- __Activiteiten__ maken / bewerken / verwijderen
+- __Leidingprofielen__ maken / bewerken / verwijderen
+- Documenten van de site (inschrijvingsfiche, privacyverklaring) aanpassen
+- Maandelijkse brieven van groepen uploaden / aanpassen
