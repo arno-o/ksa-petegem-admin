@@ -13,3 +13,11 @@ Deze website wordt voornamelijk gebruikt voor het backend CMS systeem van KSA Pe
 - __Leidingprofielen__ maken / bewerken / verwijderen
 - Documenten van de site (inschrijvingsfiche, privacyverklaring) aanpassen
 - Maandelijkse brieven van groepen uploaden / aanpassen
+
+## Required
+Om dit project te kunnen draaien zul je SupaBase ENV values nodig hebben. Zet dit in een `.env.local` file.
+
+```text
+VITE_SUPABASE_URL=(URL)
+VITE_SUPABASE_ANON_KEY=(KEY)
+```
