@@ -31,7 +31,7 @@ export default function Page({ children }: PageProps) {
             <span className="pr-2">Hallo {firstName} 👋</span>
           </header>
 
-          <div className={`p-4 ${navigation.state === "loading" ? "loading" : ""}`}>
+          <div className={`p-4 ${navigation.state === "loading" ? "opacity-50 transition-opacity" : ""}`}>
             {children}
           </div>
         </SidebarInset>
