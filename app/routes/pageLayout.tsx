@@ -6,9 +6,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar"
-import FullScreenLoader from "~/components/allround/full-screen-loader"
 
-import { useNavigation } from "react-router"
+import { Outlet, useNavigation } from "react-router"
 import PrivateRoute from "~/context/PrivateRoute"
 
 interface PageProps {
@@ -17,7 +16,6 @@ interface PageProps {
 
 export default function Page({ children }: PageProps) {
   const navigation = useNavigation();
-  const isNavigating = Boolean(navigation.location);
 
   const { session } = UserAuth();
   const firstName = session?.user?.user_metadata?.first_name;
@@ -33,8 +31,8 @@ export default function Page({ children }: PageProps) {
             <span className="pr-2">Hallo {firstName} 👋</span>
           </header>
 
-          <div className="p-4">
-            {isNavigating ? <FullScreenLoader /> : children}
+          <div className={`p-4 ${navigation.state === "loading" ? "loading" : ""}`}>
+            {children}
           </div>
         </SidebarInset>
       </SidebarProvider>

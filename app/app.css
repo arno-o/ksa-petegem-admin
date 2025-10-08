@@ -163,6 +163,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -172,4 +173,9 @@
   @media (display-mode: standalone) {
     @slot;
   }
+}
+
+.loading {
+  opacity: 0.6;
+  transition: opacity 0.3s ease-in-out;
 }
