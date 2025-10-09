@@ -1,6 +1,6 @@
 import { NavUser } from "~/components/sidebar/nav-user"
 import { Link, useLocation } from "react-router"
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
 import KSALogo from "/assets/svg/KSALogo.svg";
 
@@ -18,14 +18,14 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarRail,
-  SidebarMenuBadge,
 } from "~/components/ui/sidebar"
 
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "~/components/ui/collapsible";
 
 import { cn } from "~/lib/utils";
+import { UserAuth } from "~/context/AuthContext";
 import { ModeToggle } from "~/components/sidebar/mode-toggle"
-import { Newspaper, CalendarFold, User, IdCardLanyard, ChevronRight, Settings, LayoutDashboard } from 'lucide-react';
+import { Newspaper, CalendarFold, User, IdCardLanyard, ChevronRight, Settings } from 'lucide-react';
 
 // --- Type Definitions ---
 interface NavItem {
@@ -33,6 +33,7 @@ interface NavItem {
   url?: string;
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   items?: NavItem[];
+  lvl: number;
 }
 
 interface NavGroup {
@@ -50,16 +51,19 @@ const data: { navMain: NavGroup[] } = {
           title: "Berichten",
           url: "/berichten",
           icon: Newspaper,
+          lvl: 1
         },
         {
           title: "Activiteiten",
           url: "/activiteiten",
           icon: CalendarFold,
+          lvl: 1
         },
         {
           title: "Instellingen",
           url: "/instellingen",
           icon: Settings,
+          lvl: 1
         },
       ],
     },
@@ -73,17 +77,21 @@ const data: { navMain: NavGroup[] } = {
             {
               title: "Actieve leiding",
               url: "/leiding/actief",
+              lvl: 1,
             },
             {
               title: "Inactieve leiding",
               url: "/leiding/inactief",
+              lvl: 3
             }
-          ]
+          ],
+          lvl: 1
         },
         {
           title: "Groepen",
           url: "/groepen",
           icon: IdCardLanyard,
+          lvl: 1
         },
       ],
     },
@@ -93,6 +101,7 @@ const data: { navMain: NavGroup[] } = {
 // --- AppSidebar Component ---
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
+  const { permission } = UserAuth();
 
   const isParentOrChildActive = (item: NavItem): boolean => {
     if (item.url) {
@@ -135,7 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   const itemIsActive = isParentOrChildActive(item);
                   if (item.items) {
                     return (
-                      <Collapsible defaultOpen className="group/collapsible" key={item.title}>
+                      <Collapsible defaultOpen className="group/collapsible" key={item.title} hidden={item.lvl > permission}>
                         <SidebarMenuItem key={item.title}>
                           <CollapsibleTrigger asChild>
                             <SidebarMenuButton>
@@ -148,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <CollapsibleContent>
                             <SidebarMenuSub>
                               {item.items.map((item) => (
-                                <SidebarMenuSubItem key={item.title}>
+                                <SidebarMenuSubItem key={item.title} hidden={item.lvl > permission}>
                                   <SidebarMenuSubButton
                                     asChild
                                     isActive={
@@ -166,7 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     );
                   } else {
                     return (
-                      <SidebarMenuItem key={item.title}>
+                      <SidebarMenuItem key={item.title} hidden={item.lvl > permission}>
                         <SidebarMenuButton asChild isActive={
                           !!(item.url && (location.pathname === item.url || (item.url !== "/" && location.pathname.startsWith(item.url))))
                         }>
