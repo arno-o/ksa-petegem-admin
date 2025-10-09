@@ -508,3 +508,15 @@ export async function deleteGlobalPdf(settingKey: string): Promise<void> {
   }
   await upsertSettingValue(settingKey, "", "string", true);
 }
+
+export const fetchProfiles = async () => {
+  const { data, error } = await supabase.from("profiles").select("*");
+  if (error) throw error;
+  return data;
+}
+
+export const fetchPermissionLevel = async (uid: string): Promise<number> => {
+  const { data, error } = await supabase.from("profiles").select("permission").eq("id", uid).single();
+  if (error) throw error;
+  return data?.permission ?? 0;
+}

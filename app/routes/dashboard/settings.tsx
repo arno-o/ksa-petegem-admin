@@ -87,7 +87,7 @@ export default function SettingsPage() {
     const settingItemStyle = `flex flex-col gap-4 py-4 md:flex-row md:gap-0 md:items-center`;
 
     return (
-        <PageLayout>
+        <PageLayout permission={2}>
             <div className="flex flex-col gap-6 pb-20">
                 <header className="flex flex-col gap-3 md:justify-between md:items-center md:flex-row">
                     <h3 className="text-2xl font-semibold tracking-tight">Instellingen</h3>

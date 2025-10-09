@@ -74,3 +74,10 @@ export interface EventFormState {
   time_end: string;
   link: string;
 }
+
+export interface Profile {
+    id: string,
+    first_name: string,
+    last_name: string,
+    permission: number
+}

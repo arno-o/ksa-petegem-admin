@@ -12,16 +12,17 @@ import PrivateRoute from "~/context/PrivateRoute"
 
 interface PageProps {
   children: React.ReactNode;
+  permission?: number;
 }
 
-export default function Page({ children }: PageProps) {
+export default function Page({ children, permission = 1 }: PageProps) {
   const navigation = useNavigation();
 
   const { session } = UserAuth();
   const firstName = session?.user?.user_metadata?.first_name;
 
   return (
-    <PrivateRoute>
+    <PrivateRoute permissionLvl={permission}>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>

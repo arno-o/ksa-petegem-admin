@@ -57,7 +57,7 @@ export async function clientLoader() {
 
 export function HydrateFallback() {
   return (
-    <PageLayout>
+    <PageLayout permission={2}>
       <FullScreenLoader />
     </PageLayout>
   );
@@ -659,7 +659,7 @@ export default function Active({ loaderData, }: Route.ComponentProps) {
   const selectedRowCount = Object.keys(rowSelection).length;
 
   return (
-    <PageLayout>
+    <PageLayout permission={2}>
       <header className="flex flex-col mb-4 gap-4">
         <div className="flex gap-2 items-baseline">
           <h3 className="text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
@@ -991,7 +991,7 @@ export function ErrorBoundary() {
   }
 
   return (
-    <PageLayout>
+    <PageLayout permission={2}>
       <div className="flex justify-center items-center h-[50vh]">
         <p className="text-destructive">
           {status ? `Error ${status} – ${message}` : message}

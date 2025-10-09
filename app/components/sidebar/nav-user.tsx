@@ -1,4 +1,4 @@
-import { IconDotsVertical, IconLogout } from "@tabler/icons-react"
+import { IconDotsVertical, IconLogout, IconUser } from "@tabler/icons-react"
 
 import {
     Avatar,
@@ -23,6 +23,7 @@ import {
 
 import { useNavigate } from "react-router"
 import { UserAuth } from "~/context/AuthContext"
+import { toast } from "sonner"
 
 export function NavUser() {
     const { isMobile } = useSidebar()
@@ -34,6 +35,7 @@ export function NavUser() {
     const handleSignOut = async () => {
         try {
             await signOut();
+            toast.info("Uitgelogd");
             navigate("/")
         } catch (err) {
             console.error(err);
@@ -88,6 +90,10 @@ export function NavUser() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate("/profiel")}>
+                            <IconUser />
+                            Mijn profiel
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleSignOut}>
                             <IconLogout />
                             Afmelden

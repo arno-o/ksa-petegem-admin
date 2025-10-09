@@ -1,6 +1,6 @@
 import { NavUser } from "~/components/sidebar/nav-user"
 import { Link, useLocation } from "react-router"
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
 import KSALogo from "/assets/svg/KSALogo.svg";
 
@@ -18,14 +18,14 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarRail,
-  SidebarMenuBadge,
 } from "~/components/ui/sidebar"
 
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "~/components/ui/collapsible";
 
 import { cn } from "~/lib/utils";
+import { UserAuth } from "~/context/AuthContext";
 import { ModeToggle } from "~/components/sidebar/mode-toggle"
-import { Newspaper, CalendarFold, User, IdCardLanyard, ChevronRight, Settings, LayoutDashboard } from 'lucide-react';
+import { Newspaper, CalendarFold, User, IdCardLanyard, ChevronRight, Settings } from 'lucide-react';
 
 // --- Type Definitions ---
 interface NavItem {
@@ -33,11 +33,13 @@ interface NavItem {
   url?: string;
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   items?: NavItem[];
+  lvl?: number;
 }
 
 interface NavGroup {
   title: string;
   items: NavItem[];
+  lvl?: number;
 }
 
 // --- Navigation Data ---
@@ -50,16 +52,19 @@ const data: { navMain: NavGroup[] } = {
           title: "Berichten",
           url: "/berichten",
           icon: Newspaper,
+          lvl: 1
         },
         {
           title: "Activiteiten",
           url: "/activiteiten",
           icon: CalendarFold,
+          lvl: 1
         },
         {
           title: "Instellingen",
           url: "/instellingen",
           icon: Settings,
+          lvl: 1
         },
       ],
     },
@@ -73,19 +78,24 @@ const data: { navMain: NavGroup[] } = {
             {
               title: "Actieve leiding",
               url: "/leiding/actief",
+              lvl: 2,
             },
             {
               title: "Inactieve leiding",
               url: "/leiding/inactief",
+              lvl: 3
             }
-          ]
+          ],
+          lvl: 2
         },
         {
           title: "Groepen",
           url: "/groepen",
           icon: IdCardLanyard,
+          lvl: 2
         },
       ],
+      lvl: 2,
     },
   ],
 };
@@ -93,6 +103,7 @@ const data: { navMain: NavGroup[] } = {
 // --- AppSidebar Component ---
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
+  const { permission } = UserAuth();
 
   const isParentOrChildActive = (item: NavItem): boolean => {
     if (item.url) {
@@ -127,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {data.navMain.map((group) => (
-          <SidebarGroup key={group.title}>
+          <SidebarGroup key={group.title} hidden={group.lvl ? group.lvl > permission : false}>
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -135,14 +146,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   const itemIsActive = isParentOrChildActive(item);
                   if (item.items) {
                     return (
-                      <Collapsible defaultOpen className="group/collapsible" key={item.title}>
-                        <SidebarMenuItem key={item.title}>
+                      <Collapsible defaultOpen className="group/collapsible" key={item.title} disabled={item.lvl ? item.lvl > permission : false}>
+                        <SidebarMenuItem key={item.title} hidden={item.lvl ? item.lvl > permission : false}>
                           <CollapsibleTrigger asChild>
                             <SidebarMenuButton>
                               {item.icon && <item.icon className={cn(`text-sidebar-primray-foreground`)} />}
                               {item.title}
                               <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
                           <CollapsibleContent>
@@ -167,7 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   } else {
                     return (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={
+                        <SidebarMenuButton asChild disabled={item.lvl ? item.lvl > permission : false} isActive={
                           !!(item.url && (location.pathname === item.url || (item.url !== "/" && location.pathname.startsWith(item.url))))
                         }>
                           <Link to={item.url!} viewTransition className="flex items-center gap-2">
