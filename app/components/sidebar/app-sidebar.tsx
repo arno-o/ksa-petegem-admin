@@ -33,12 +33,13 @@ interface NavItem {
   url?: string;
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   items?: NavItem[];
-  lvl: number;
+  lvl?: number;
 }
 
 interface NavGroup {
   title: string;
   items: NavItem[];
+  lvl?: number;
 }
 
 // --- Navigation Data ---
@@ -77,7 +78,7 @@ const data: { navMain: NavGroup[] } = {
             {
               title: "Actieve leiding",
               url: "/leiding/actief",
-              lvl: 1,
+              lvl: 2,
             },
             {
               title: "Inactieve leiding",
@@ -85,15 +86,16 @@ const data: { navMain: NavGroup[] } = {
               lvl: 3
             }
           ],
-          lvl: 1
+          lvl: 2
         },
         {
           title: "Groepen",
           url: "/groepen",
           icon: IdCardLanyard,
-          lvl: 1
+          lvl: 2
         },
       ],
+      lvl: 2,
     },
   ],
 };
@@ -136,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {data.navMain.map((group) => (
-          <SidebarGroup key={group.title}>
+          <SidebarGroup key={group.title} hidden={group.lvl ? group.lvl > permission : false}>
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -144,20 +146,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   const itemIsActive = isParentOrChildActive(item);
                   if (item.items) {
                     return (
-                      <Collapsible defaultOpen className="group/collapsible" key={item.title} hidden={item.lvl > permission}>
-                        <SidebarMenuItem key={item.title}>
+                      <Collapsible defaultOpen className="group/collapsible" key={item.title} disabled={item.lvl ? item.lvl > permission : false}>
+                        <SidebarMenuItem key={item.title} hidden={item.lvl ? item.lvl > permission : false}>
                           <CollapsibleTrigger asChild>
                             <SidebarMenuButton>
                               {item.icon && <item.icon className={cn(`text-sidebar-primray-foreground`)} />}
                               {item.title}
                               <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <SidebarMenuSub>
                               {item.items.map((item) => (
-                                <SidebarMenuSubItem key={item.title} hidden={item.lvl > permission}>
+                                <SidebarMenuSubItem key={item.title}>
                                   <SidebarMenuSubButton
                                     asChild
                                     isActive={
@@ -175,8 +176,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     );
                   } else {
                     return (
-                      <SidebarMenuItem key={item.title} hidden={item.lvl > permission}>
-                        <SidebarMenuButton asChild isActive={
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild disabled={item.lvl ? item.lvl > permission : false} isActive={
                           !!(item.url && (location.pathname === item.url || (item.url !== "/" && location.pathname.startsWith(item.url))))
                         }>
                           <Link to={item.url!} viewTransition className="flex items-center gap-2">

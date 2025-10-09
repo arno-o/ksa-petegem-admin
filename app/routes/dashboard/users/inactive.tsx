@@ -52,7 +52,7 @@ export default function Inactive() {
 
 
   return (
-    <PageLayout>
+    <PageLayout permission={2}>
       <header className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-semibold tracking-tight">Oudleiding</h3>
       </header>

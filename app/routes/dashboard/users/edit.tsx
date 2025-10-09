@@ -55,7 +55,7 @@ export async function clientLoader({ params }: Route.LoaderArgs) {
 
 export function HydrateFallback() {
   return (
-    <PageLayout>
+    <PageLayout permission={2}>
       <FullScreenLoader />
     </PageLayout>
   );
@@ -293,7 +293,7 @@ const EditUser = ({ loaderData }: Route.ComponentProps) => {
   /* ---------------------------------- UI ---------------------------------- */
   if (loading) {
     return (
-      <PageLayout>
+      <PageLayout permission={2}>
         <FullScreenLoader />
       </PageLayout>
     );
@@ -301,7 +301,7 @@ const EditUser = ({ loaderData }: Route.ComponentProps) => {
 
   if (error || !leiding) {
     return (
-      <PageLayout>
+      <PageLayout permission={2}>
         <div className="flex justify-center items-center h-[50vh]">
           <p className="text-destructive">{error || "Leiding niet gevonden."}</p>
         </div>
@@ -310,7 +310,7 @@ const EditUser = ({ loaderData }: Route.ComponentProps) => {
   }
 
   return (
-    <PageLayout>
+    <PageLayout permission={2}>
       {/* Leave Guard Dialog */}
       <AlertDialog open={leaveOpen} onOpenChange={(open) => !open && onCancelLeave()}>
         <AlertDialogContent>
