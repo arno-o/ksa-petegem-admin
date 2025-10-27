@@ -1,3 +1,5 @@
+"use client";
+
 import PageLayout from "../pageLayout";
 import type { Route } from "./+types/events";
 import { useRevalidator } from "react-router";

@@ -54,8 +54,34 @@ export default function Active({ loaderData }: Route.ComponentProps) {
   const leiding = loaderData.leidingData;
 
   const [filteredLeiding, setFilteredLeiding] = useState<Leiding[]>();
-  const [selectedFilter, setSelectedFilter] = useState<string>(() => {
-    return window.localStorage.getItem("activeFilter") || "all_by_group";
+  
+  // New separate filter states
+  const [sortBy, setSortBy] = useState<string>(() => {
+    return window.localStorage.getItem("activeSortBy") || "age";
+  });
+  const [filterByGroup, setFilterByGroup] = useState<string[]>(() => {
+    const stored = window.localStorage.getItem("activeFilterGroup");
+    if (!stored) return [];
+    try {
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      // Old format was a string, clear it
+      window.localStorage.removeItem("activeFilterGroup");
+      return [];
+    }
+  });
+  const [filterByFunction, setFilterByFunction] = useState<string[]>(() => {
+    const stored = window.localStorage.getItem("activeFilterFunction");
+    if (!stored) return [];
+    try {
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      // Old format was a string, clear it
+      window.localStorage.removeItem("activeFilterFunction");
+      return [];
+    }
   });
 
   // State for "Nieuwe leiding aanmaken" form
@@ -94,78 +120,79 @@ export default function Active({ loaderData }: Route.ComponentProps) {
     reloadData();
   }, []); // Initial load
 
+  // Save filter preferences to localStorage
   useEffect(() => {
-    window.localStorage.setItem("activeFilter", selectedFilter);
-  }, [selectedFilter]);
+    window.localStorage.setItem("activeSortBy", sortBy);
+  }, [sortBy]);
 
-  const handleFilterChange = (newFilter: string) => {
-    setSelectedFilter(newFilter);
-  };
+  useEffect(() => {
+    window.localStorage.setItem("activeFilterGroup", JSON.stringify(filterByGroup));
+  }, [filterByGroup]);
 
-  // Effect to filter and sort leiding whenever 'leiding' data or 'selectedFilter' changes
+  useEffect(() => {
+    window.localStorage.setItem("activeFilterFunction", JSON.stringify(filterByFunction));
+  }, [filterByFunction]);
+
+  // Effect to filter and sort leiding whenever filters change
   useEffect(() => {
     if (!leiding) {
       setFilteredLeiding([]);
       return;
     }
 
-    let tempLeiding = [...leiding]; // Create a mutable copy to sort
+    let tempLeiding = [...leiding];
 
-    // Apply main filter based on selected group/category
-    if (selectedFilter === "*") {
-      tempLeiding.sort((a, b) => {
-        const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
-        const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
-        if (dateA_sinds.getTime() !== dateB_sinds.getTime()) {
-          return dateA_sinds.getTime() - dateB_sinds.getTime();
-        }
+    // Apply function filter (trekker/hoofdleiding) - multi-select
+    if (filterByFunction.length > 0) {
+      tempLeiding = tempLeiding.filter((person: Leiding) => {
+        if (filterByFunction.includes("trekkers") && person.trekker) return true;
+        if (filterByFunction.includes("hoofdleiding") && person.hoofdleiding) return true;
+        return false;
+      });
+    }
 
-        const dateA_geb = a.geboortedatum ? new Date(a.geboortedatum) : new Date(0);
-        const dateB_geb = b.geboortedatum ? new Date(b.geboortedatum) : new Date(0);
-        return dateA_geb.getTime() - dateB_geb.getTime();
-      });
-    } else if (selectedFilter === "trekkers") {
-      tempLeiding = leiding.filter((person: Leiding) => person.trekker);
+    // Apply group filter - multi-select
+    if (filterByGroup.length > 0) {
+      const selectedGroupIds = filterByGroup.map(id => Number(id));
+      tempLeiding = tempLeiding.filter((person: Leiding) => 
+        person.leidingsploeg && selectedGroupIds.includes(person.leidingsploeg)
+      );
+    }
+
+    // Apply sorting
+    if (sortBy === "age") {
+      // Sort by age (youngest first)
       tempLeiding.sort((a, b) => {
-        const groupA = a.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
-        const groupB = b.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
-        if (groupA !== groupB) {
-          return groupA - groupB;
-        }
-        return a.voornaam.localeCompare(b.voornaam);
-      });
-    } else if (selectedFilter === "hoofdleiding") {
-      tempLeiding = leiding.filter((person: Leiding) => person.hoofdleiding);
-      tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
-    } else if (selectedFilter === "all_by_group") {
-      // Sort first by leidingsploeg (handling null/undefined), then by age
-      tempLeiding.sort((a, b) => {
-        const groupA = a.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
-        const groupB = b.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
-        if (groupA !== groupB) {
-          return groupA - groupB;
-        }
-        // If groups are the same, sort by age (youngest first)
         const dateA_geb = a.geboortedatum ? new Date(a.geboortedatum) : new Date(0);
         const dateB_geb = b.geboortedatum ? new Date(b.geboortedatum) : new Date(0);
         return dateB_geb.getTime() - dateA_geb.getTime();
       });
-    } else {
-      const selectedGroupId = Number(selectedFilter);
-      tempLeiding = leiding.filter((person: Leiding) => person.leidingsploeg === selectedGroupId);
-
+    } else if (sortBy === "ancienniteit") {
+      // Sort by seniority (leiding_sinds)
       tempLeiding.sort((a, b) => {
-        if (a.trekker && !b.trekker) return -1;
-        if (!a.trekker && b.trekker) return 1;
-
         const dateA_sinds = a.leiding_sinds ? new Date(a.leiding_sinds) : new Date(0);
         const dateB_sinds = b.leiding_sinds ? new Date(b.leiding_sinds) : new Date(0);
         return dateA_sinds.getTime() - dateB_sinds.getTime();
       });
+    } else if (sortBy === "alphabet") {
+      // Sort alphabetically by first name
+      tempLeiding.sort((a, b) => a.voornaam.localeCompare(b.voornaam));
+    } else if (sortBy === "group") {
+      // Sort by group, then by age within group
+      tempLeiding.sort((a, b) => {
+        const groupA = a.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
+        const groupB = b.leidingsploeg ?? Number.MAX_SAFE_INTEGER;
+        if (groupA !== groupB) {
+          return groupA - groupB;
+        }
+        const dateA_geb = a.geboortedatum ? new Date(a.geboortedatum) : new Date(0);
+        const dateB_geb = b.geboortedatum ? new Date(b.geboortedatum) : new Date(0);
+        return dateB_geb.getTime() - dateA_geb.getTime();
+      });
     }
 
     setFilteredLeiding(tempLeiding);
-  }, [leiding, selectedFilter, groups]);
+  }, [leiding, sortBy, filterByGroup, filterByFunction]);
 
   const handleCreate = async () => {
     if (!voornaam || !familienaam || !leidingsploeg) {
@@ -330,7 +357,7 @@ export default function Active({ loaderData }: Route.ComponentProps) {
 
   return (
     <PageLayout permission={2}>
-      <header className="flex flex-col mb-4 gap-4">
+      <header className="flex justify-between mb-4 gap-4">
         <div className="flex gap-2 items-baseline">
           <h3 className="text-2xl font-semibold tracking-tight">Actieve Leiding</h3>
           <p className="text-foreground/70">{leiding ? `${leiding.length}` : "0"}</p>
@@ -398,8 +425,12 @@ export default function Active({ loaderData }: Route.ComponentProps) {
         data={filteredLeiding || []}
         groups={groups || []}
         isMobile={isMobile}
-        selectedFilter={selectedFilter}
-        onFilterChange={handleFilterChange}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        filterByGroup={filterByGroup}
+        onFilterGroupChange={setFilterByGroup}
+        filterByFunction={filterByFunction}
+        onFilterFunctionChange={setFilterByFunction}
         onMassWipe={handleMassWipe}
         onMassEditGroup={handleMassEditGroup}
         onMassDisable={handleMassDisable}

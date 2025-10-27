@@ -126,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [location.pathname]);
 
   return (
-    <Sidebar {...props}>
+    <Sidebar {...props} variant="inset">
       <SidebarHeader>
         <div className="flex flex-row items-center justify-between gap-0.5 leading-none p-2">
           <div className="flex items-center gap-2">

@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react";
 import type { ColumnDef, ColumnFiltersState, SortingState, VisibilityState } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
@@ -13,6 +11,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSepa
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "~/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Separator } from "~/components/ui/separator";
+import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 
 // Types
 import type { Leiding, Group } from "~/types";
@@ -29,8 +28,12 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   groups: Group[];
   isMobile: boolean;
-  selectedFilter: string;
-  onFilterChange: (filter: string) => void;
+  sortBy: string;
+  onSortChange: (sort: string) => void;
+  filterByGroup: string[];
+  onFilterGroupChange: (groups: string[]) => void;
+  filterByFunction: string[];
+  onFilterFunctionChange: (functions: string[]) => void;
   onMassWipe: (selectedIds: number[]) => void;
   onMassEditGroup: (selectedIds: number[]) => void;
   onMassDisable: (selectedIds: number[]) => void;
@@ -41,8 +44,12 @@ export function DataTable<TData extends Leiding, TValue>({
   data,
   groups,
   isMobile,
-  selectedFilter,
-  onFilterChange,
+  sortBy,
+  onSortChange,
+  filterByGroup,
+  onFilterGroupChange,
+  filterByFunction,
+  onFilterFunctionChange,
   onMassWipe,
   onMassEditGroup,
   onMassDisable,
@@ -129,20 +136,29 @@ export function DataTable<TData extends Leiding, TValue>({
   };
 
   const getFilterTitle = () => {
-    switch (selectedFilter) {
-      case "all_by_group":
-        return "Alle Leiding (per groep)";
-      case "*":
-        return "Alle Leiding (Anciëniteit)";
-      case "trekkers":
-        return "Trekkers";
-      case "hoofdleiding":
-        return "Hoofdleiding";
-      default:
-        const selectedGroupId = Number(selectedFilter);
-        const group = groups?.find((g) => g.id === selectedGroupId);
-        return group ? `Groep: ${group.naam}` : "Onbekende Filter";
+    let parts: string[] = [];
+    
+    // Add sort description
+    if (sortBy === "age") parts.push("Leeftijd");
+    else if (sortBy === "ancienniteit") parts.push("Anciëniteit");
+    else if (sortBy === "alphabet") parts.push("Alfabetisch");
+    else if (sortBy === "group") parts.push("Per groep");
+    
+    // Add function filter
+    if (filterByFunction.includes("trekkers")) parts.push("Trekkers");
+    if (filterByFunction.includes("hoofdleiding")) parts.push("Hoofdleiding");
+    
+    // Add group filter
+    if (filterByGroup.length > 0) {
+      const selectedGroups = filterByGroup
+        .map(id => groups?.find((g) => g.id === Number(id))?.naam)
+        .filter(Boolean);
+      if (selectedGroups.length > 0) {
+        parts.push(selectedGroups.join(", "));
+      }
     }
+    
+    return parts.length > 0 ? `Leidinglijst - ${parts.join(" - ")}` : "Leidinglijst";
   };
 
   const handleExportXLS = () => {
@@ -194,33 +210,44 @@ export function DataTable<TData extends Leiding, TValue>({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Zoeken" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 w-full md:w-xs" />
           </div>
-          <Select value={selectedFilter} onValueChange={onFilterChange}>
-            <SelectTrigger className="w-full md:w-fit">
-              <SelectValue placeholder="Kies een groep" />
+          
+          {/* Sort By */}
+          <Select value={sortBy} onValueChange={onSortChange}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Sorteren op" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Nuttig</SelectLabel>
-                <SelectItem value="all_by_group">
-                  <Users className="mr-2 h-4 w-4" />
-                  Alle leiding (per groep)
-                </SelectItem>
-                <SelectItem value="*">Alle leiding (Anciëniteit)</SelectItem>
-                <SelectSeparator />
-                <SelectItem value="trekkers">Trekkers</SelectItem>
-                <SelectItem value="hoofdleiding">Hoofdleiding</SelectItem>
-              </SelectGroup>
-              <SelectSeparator />
-              <SelectGroup>
-                <SelectLabel>Groepen</SelectLabel>
-                {groups?.sort((a, b) => a.id - b.id).map((g) => (
-                  <SelectItem key={g.id} value={String(g.id)}>
-                    {g.naam}
-                  </SelectItem>
-                ))}
+                <SelectLabel>Sorteren op</SelectLabel>
+                <SelectItem value="group">Per groep</SelectItem>
+                <SelectItem value="age">Leeftijd</SelectItem>
+                <SelectItem value="ancienniteit">Anciëniteit</SelectItem>
+                <SelectItem value="alphabet">Alfabetisch</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
+
+          {/* Filter by Group - Faceted */}
+          <DataTableFacetedFilter
+            title="Groep"
+            options={groups?.sort((a, b) => a.id - b.id).map((g) => ({
+              label: g.naam,
+              value: String(g.id),
+            })) || []}
+            selectedValues={new Set(filterByGroup)}
+            onSelectionChange={onFilterGroupChange}
+          />
+
+          {/* Filter by Function - Faceted */}
+          <DataTableFacetedFilter
+            title="Functie"
+            options={[
+              { label: "Trekkers", value: "trekkers" },
+              { label: "Hoofdleiding", value: "hoofdleiding" },
+            ]}
+            selectedValues={new Set(filterByFunction)}
+            onSelectionChange={onFilterFunctionChange}
+          />
 
           {isMobile && <Separator className="my-5" />}
         </div>
