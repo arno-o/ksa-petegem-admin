@@ -9,7 +9,7 @@ export default [
     route("/instellingen", "routes/dashboard/settings.tsx"),
     route("/profiel", "routes/dashboard/profile.tsx"),
     
-    route("/leiding/actief", "routes/dashboard/users/active.tsx"),
+    route("/leiding/actief", "routes/dashboard/users/active/page.tsx"),
     route("/leiding/inactief", "routes/dashboard/users/inactive.tsx"),
     route("/leiding/actief/edit/:leidingId", "routes/dashboard/users/edit.tsx"),
     

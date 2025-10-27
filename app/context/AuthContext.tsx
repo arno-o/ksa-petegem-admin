@@ -19,46 +19,70 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
   const [permission, setPermission] = useState<number>(0);
 
   useEffect(() => {
+    let isMounted = true;
+
     const getSession = async () => {
       const { data, error } = await supabase.auth.getSession();
+      
+      if (!isMounted) return;
+      
       setSession(data?.session ?? null);
       
       // Fetch permission level if user is authenticated
       if (data?.session?.user?.id) {
         try {
           const permissionLevel = await fetchPermissionLevel(data.session.user.id);
-          setPermission(permissionLevel);
+          if (isMounted) {
+            setPermission(permissionLevel);
+          }
         } catch (error) {
-          console.error("Failed to fetch permission level:", error);
-          setPermission(0);
+          if (import.meta.env.DEV) {
+            console.error("Failed to fetch permission level:", error);
+          }
+          if (isMounted) {
+            setPermission(0);
+          }
         }
       } else {
         setPermission(0);
       }
       
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
     getSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+      
       setSession(session);
       
       // Update permission when auth state changes
       if (session?.user?.id) {
         try {
           const permissionLevel = await fetchPermissionLevel(session.user.id);
-          setPermission(permissionLevel);
+          if (isMounted) {
+            setPermission(permissionLevel);
+          }
         } catch (error) {
-          console.error("Failed to fetch permission level:", error);
-          setPermission(0);
+          if (import.meta.env.DEV) {
+            console.error("Failed to fetch permission level:", error);
+          }
+          if (isMounted) {
+            setPermission(0);
+          }
         }
       } else {
-        setPermission(0);
+        if (isMounted) {
+          setPermission(0);
+        }
       }
     });
 
     return () => {
+      isMounted = false;
       listener.subscription.unsubscribe();
     };
   }, []);

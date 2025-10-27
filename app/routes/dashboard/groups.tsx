@@ -145,10 +145,10 @@ export default function Groups({ loaderData, }: Route.ComponentProps) {
     }
   };
 
-  const closeEdit = () => {
+  const closeEdit = useCallback(() => {
     setEditOpen(false);
-    setTimeout(() => setSelected(null), 0);
-  };
+    setSelected(null);
+  }, []);
 
   return (
     <PageLayout permission={2}>

@@ -1,23 +1,23 @@
 import supabase from "./supabase";
 
-import { type Post, type Group } from "~/types";
+import { type Post, type Group, type Event } from "~/types";
 
 export const fetchInactiveLeiding = async () => {
   const { data, error } = await supabase.from("leiding").select("*").eq("actief", false);
   if (error) throw error;
-  return data;
+  return data as any[];
 };
 
 export const fetchLeidingById = async (id: string | number) => {
   const { data, error } = await supabase.from("leiding").select("*").eq("id", id).single();
   if (error) throw error;
-  return data;
+  return data as any;
 }
 
 export const fetchActiveLeiding = async () => {
   const { data, error } = await supabase.from("leiding").select("*").eq("actief", true);
   if (error) throw error;
-  return data;
+  return data as any[];
 }
 
 export const updateLeiding = async (id: string | number, updates: Partial<any>) => {
@@ -46,12 +46,15 @@ export const deleteLeiding = async (id: number) => {
   if (fetchError) throw fetchError;
 
   // 2) Best-effort: delete the profile image if we have a URL
-  if (leiding?.foto_url) {
+  const fotoUrl = (leiding as any)?.foto_url;
+  if (fotoUrl && typeof fotoUrl === 'string') {
     try {
-      await deleteFromBucket("leiding-fotos", leiding.foto_url);
+      await deleteFromBucket("leiding-fotos", fotoUrl);
     } catch (e) {
       // Don't block the row deletion if storage delete fails
-      console.warn("Kon profielfoto niet verwijderen, ga verder met verwijderen van record.", e);
+      if (import.meta.env.DEV) {
+        console.warn("Kon profielfoto niet verwijderen, ga verder met verwijderen van record.", e);
+      }
     }
   }
 
@@ -76,11 +79,13 @@ export const createLeiding = async (newLeiding: {
     .single();
 
   if (error) {
-    console.error("Error creating leiding:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error creating leiding:", error);
+    }
     throw error;
   }
 
-  return data;
+  return data as any;
 };
 
 export const createPost = async (post: {
@@ -89,23 +94,25 @@ export const createPost = async (post: {
   user_id: string;
   published: boolean;
   cover_img: string;
-}): Promise<Post[]> => { // Make return type explicitly allow null
+}): Promise<Post[]> => {
   const { data, error } = await supabase.from("posts").insert([{
     ...post,
     created_at: new Date().toISOString(),
-  }]).select(); // Make sure .select() is there to return the data
+  }]).select();
 
   if (error) {
-    console.error("Supabase createPost error:", error);
-    throw error; // Still throw on error, but 'data' could be null before this if no rows affected
+    if (import.meta.env.DEV) {
+      console.error("Supabase createPost error:", error);
+    }
+    throw error;
   }
-  return data as Post[]; // Explicitly cast and allow null
+  return (data as any) as Post[];
 };
 
 export const fetchPosts = async () => {
   const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
   if (error) throw error;
-  return data;
+  return (data as any) as Post[];
 };
 
 export const fetchPostById = async (id: string) => {
@@ -115,7 +122,7 @@ export const fetchPostById = async (id: string) => {
     .eq("id", id)
     .single();
   if (error) throw error;
-  return data;
+  return (data as any) as Post;
 };
 
 export const updatePost = async (id: string, updates: Partial<Post>) => {
@@ -126,11 +133,11 @@ export const updatePost = async (id: string, updates: Partial<Post>) => {
   const { data, error } = await supabase
     .from("posts")
     .update(updates)
-    .eq("id", id)            // ← no Number()
+    .eq("id", id)
     .select()
-    .single();               // ← get the updated row
+    .single();
   if (error) throw error;
-  return data as Post;
+  return (data as any) as Post;
 };
 
 export const deletePost = async (id: string) => {
@@ -144,7 +151,7 @@ export const deletePost = async (id: string) => {
 export const fetchActiveGroups = async () => {
   const { data, error } = await supabase.from("groepen").select("*").eq("active", true).order('id', { ascending: true });
   if (error) throw error;
-  return data;
+  return (data as any) as Group[];
 };
 
 export const fetchAllGroups = async (): Promise<Group[]> => {
@@ -153,7 +160,7 @@ export const fetchAllGroups = async (): Promise<Group[]> => {
     .select("*")
     .order("id", { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  return (data as any) ?? [];
 };
 
 export const fetchGroupById = async (id: number | string): Promise<Group> => {
@@ -163,7 +170,7 @@ export const fetchGroupById = async (id: number | string): Promise<Group> => {
     .eq("id", id)
     .single();
   if (error) throw error;
-  return data as Group;
+  return (data as any) as Group;
 };
 
 export const updateGroup = async (id: number | string, updates: Partial<Group>) => {
@@ -181,11 +188,11 @@ export const createGroup = async (
 ): Promise<Group> => {
   const { data, error } = await supabase
     .from("groepen")
-    .insert(input)
+    .insert(input as any)
     .select()
     .single();
   if (error) throw error;
-  return data as Group;
+  return (data as any) as Group;
 };
 
 export const deleteGroup = async (id: number | string) => {
@@ -196,7 +203,7 @@ export const deleteGroup = async (id: number | string) => {
 export const fetchEvents = async () => {
   const { data, error } = await supabase.from("events").select("*");
   if (error) throw error;
-  return data;
+  return (data as any) as Event[];
 }
 
 export const updateEvent = async (id: string | number, updates: Partial<any>) => {
@@ -217,19 +224,21 @@ export const createEvent = async (newEvent: {
 }) => {
   const { data, error } = await supabase
     .from("events")
-    .insert([newEvent])
+    .insert([newEvent as any])
     .select()
     .single();
 
   if (error) {
-    console.error("Error creating event:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error creating event:", error);
+    }
     throw error;
   }
 
-  return data;
+  return (data as any) as Event;
 };
 
-export const fetchGroupsByEventID = async (eventId: number): Promise<any> => {
+export const fetchGroupsByEventID = async (eventId: number): Promise<Group[]> => {
   // Step 1: Get the target_groups array from the event
   const { data: eventData, error: eventError } = await supabase
     .from("events")
@@ -238,11 +247,13 @@ export const fetchGroupsByEventID = async (eventId: number): Promise<any> => {
     .single();
 
   if (eventError) {
-    console.error("Error fetching event:", eventError);
+    if (import.meta.env.DEV) {
+      console.error("Error fetching event:", eventError);
+    }
     throw eventError;
   }
 
-  const groupIds: number[] = eventData?.target_groups || [];
+  const groupIds: number[] = (eventData as any)?.target_groups || [];
 
   if (groupIds.length === 0) return [];
 
@@ -253,11 +264,13 @@ export const fetchGroupsByEventID = async (eventId: number): Promise<any> => {
     .in("id", groupIds);
 
   if (groepenError) {
-    console.error("Error fetching groepen:", groepenError);
+    if (import.meta.env.DEV) {
+      console.error("Error fetching groepen:", groepenError);
+    }
     throw groepenError;
   }
 
-  return groepen;
+  return (groepen as any) as Group[];
 };
 
 export const uploadLeidingPhoto = async (file: File, userId: string): Promise<string> => {
@@ -329,11 +342,15 @@ export const deleteFromBucket = async (bucket: string, publicUrl: string) => {
 
     const { error } = await supabase.storage.from(bucket).remove([filePath]);
     if (error) {
-      console.warn("Fout bij verwijderen van afbeelding:", error.message);
+      if (import.meta.env.DEV) {
+        console.warn("Fout bij verwijderen van afbeelding:", error.message);
+      }
       throw error;
     }
   } catch (err) {
-    console.error("deleteFromBucket error:", err);
+    if (import.meta.env.DEV) {
+      console.error("deleteFromBucket error:", err);
+    }
     throw err;
   }
 };
@@ -348,7 +365,9 @@ interface MassUpdateLeidingData {
 
 export const massUpdateLeiding = async ({ leidingIds, updateData }: MassUpdateLeidingData) => {
   if (leidingIds.length === 0) {
-    console.warn("No leiding IDs provided for mass update.");
+    if (import.meta.env.DEV) {
+      console.warn("No leiding IDs provided for mass update.");
+    }
     return;
   }
   const { error } = await supabase
@@ -357,7 +376,9 @@ export const massUpdateLeiding = async ({ leidingIds, updateData }: MassUpdateLe
     .in("id", leidingIds);
 
   if (error) {
-    console.error("Error during mass update:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error during mass update:", error);
+    }
     throw error;
   }
 };
@@ -410,7 +431,7 @@ export async function updateGroupLetterUrl(
     .select()
     .single();
   if (error) throw error;
-  return data as Group;
+  return (data as any) as Group;
 }
 
 // --- Settings helpers (lightweight) ---
@@ -438,7 +459,7 @@ export async function fetchSettingsByKeys(keys: string[]): Promise<SettingRow[]>
     .select("key,value_json,type,updated_at,public_read")
     .in("key", keys);
   if (error) throw error;
-  return (data ?? []) as SettingRow[];
+  return ((data as any) ?? []) as SettingRow[];
 }
 
 export async function upsertSettingValue(
@@ -453,7 +474,7 @@ export async function upsertSettingValue(
     .select()
     .single();
   if (error) throw error;
-  return data as SettingRow;
+  return (data as any) as SettingRow;
 }
 
 // ===== Global PDF settings (General) =====
@@ -512,11 +533,11 @@ export async function deleteGlobalPdf(settingKey: string): Promise<void> {
 export const fetchProfiles = async () => {
   const { data, error } = await supabase.from("profiles").select("*");
   if (error) throw error;
-  return data;
+  return data as any[];
 }
 
 export const fetchPermissionLevel = async (uid: string): Promise<number> => {
   const { data, error } = await supabase.from("profiles").select("permission").eq("id", uid).single();
   if (error) throw error;
-  return data?.permission ?? 0;
+  return (data as any)?.permission ?? 0;
 }

@@ -45,7 +45,6 @@ export function SimpleEditor({ content, onChange }: Props) {
   const [showLinkPopover, setShowLinkPopover] = useState(false)
   const [url, setUrl] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const [toolbarKey, setToolbarKey] = useState(0);
 
   const editor = useEditor({
     extensions: [
@@ -72,7 +71,6 @@ export function SimpleEditor({ content, onChange }: Props) {
     content,
     onUpdate({ editor }) {
       onChange(editor.getHTML())
-      setToolbarKey(prev => prev + 1);
     },
     editorProps: {
       attributes: {
@@ -134,7 +132,7 @@ export function SimpleEditor({ content, onChange }: Props) {
 
   return (
     <div className="rounded-md border border-input bg-background">
-      <div key={toolbarKey} className="flex flex-wrap gap-2 p-2 border-b border-input rounded-t-md">
+      <div className="flex flex-wrap gap-2 p-2 border-b border-input rounded-t-md">
         {/* Wrap the entire toolbar with TooltipProvider */}
         <TooltipProvider>
           <ToggleGroup variant="outline" type="multiple">

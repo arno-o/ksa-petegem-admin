@@ -105,17 +105,15 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
     const [form, setForm] = useState<EventFormState>(INITIAL_FORM_STATE);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     
-    const [groupOptions, setGroupOptions] = useState<Option[]>([]);
-    
     const events = loaderData.events;
     const allGroups = loaderData.groups;
     
-    useEffect(() => {
-        const options: Option[] = allGroups.map((g) => ({
+    // Memoize group options to avoid recreating on every render
+    const groupOptions = useMemo<Option[]>(() => {
+        return allGroups.map((g: any) => ({
             value: String(g.id),
-            label: g.naam,
+            label: String(g.naam),
         }));
-        setGroupOptions(options);
     }, [allGroups]);
     
     const revalidator = useRevalidator();
@@ -285,20 +283,21 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                 accessorKey: "target_groups",
                 header: "Groepen",
                 cell: ({ row }) => {
-                    const targetGroupIds: number[] = Array.isArray(row.original.target_groups)
-                        ? row.original.target_groups.map(Number)
+                    const event = row.original as any;
+                    const targetGroupIds: number[] = Array.isArray(event.target_groups)
+                        ? event.target_groups.map(Number)
                         : [];
 
                     return (
                         <div className="flex -space-x-2">
                             {targetGroupIds.map((groupId) => {
-                                const group = allGroups.find(g => g.id === groupId);
+                                const group = allGroups.find((g: any) => g.id === groupId) as any;
                                 if (group) {
                                     return (
                                         <Tooltip key={group.id}>
                                             <TooltipTrigger>
                                                 <div key={group.id}
-                                                    className={`h-6 w-6 rounded-full ring-2 ring-background ${group?.color ? COLOR_MAP[group.color] : "bg-gray-300"}`}
+                                                    className={`h-6 w-6 rounded-full ring-2 ring-background ${group?.color ? COLOR_MAP[group.color as keyof typeof COLOR_MAP] : "bg-gray-300"}`}
                                                 ></div>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -317,7 +316,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                 id: "actions",
                 enableHiding: false,
                 cell: ({ row }) => {
-                    const event = row.original;
+                    const event = row.original as any;
 
                     return (
                         <DropdownMenu modal={false}>
@@ -336,17 +335,17 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                                             timeStr?.slice(0, 5) ?? ""; // "09:00:00" → "09:00"
 
                                         setForm({
-                                            title: event.title,
-                                            description: event.description || "",
-                                            location: event.location,
-                                            target_groups: event.target_groups.map(Number),
-                                            date_start: event.date_start ? new Date(event.date_start) : undefined,
-                                            time_start: formatTime(event.time_start),
-                                            time_end: formatTime(event.time_end),
-                                            link: event.link || "",
+                                            title: String(event.title || ""),
+                                            description: String(event.description || ""),
+                                            location: String(event.location || ""),
+                                            target_groups: Array.isArray(event.target_groups) ? event.target_groups.map(Number) : [],
+                                            date_start: event.date_start ? new Date(event.date_start as any) : undefined,
+                                            time_start: formatTime(event.time_start as string),
+                                            time_end: formatTime(event.time_end as string),
+                                            link: String(event.link || ""),
                                         });
 
-                                        setEditingEvent(event);
+                                        setEditingEvent(event as Event);
                                         setEditDialogOpen(true);
                                     }}
                                 >
@@ -368,7 +367,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteEvent(event.id)} className="bg-red-600 hover:bg-red-700">
+                                            <AlertDialogAction onClick={() => handleDeleteEvent(event.id as number)} className="bg-red-600 hover:bg-red-700">
                                                 Verwijder
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
@@ -489,14 +488,15 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                         {/* Mobile cards */}
                         <div className="md:hidden flex flex-col gap-4">
                             {table.getRowModel().rows.map((row) => {
-                                const event = row.original;
-                                const groupBadges = event.target_groups.map((id: any) => {
-                                    const group = allGroups.find((g) => g.id === id);
+                                const event = row.original as any;
+                                const targetGroups = Array.isArray(event.target_groups) ? event.target_groups : [];
+                                const groupBadges = targetGroups.map((id: any) => {
+                                    const group = allGroups.find((g: any) => g.id === id) as any;
                                     return group ? (
                                         <div
                                             key={group.id}
-                                            className={`h-6 w-6 rounded-full ${group.color ? COLOR_MAP[group.color] : "#9CA3AF"}`}
-                                            title={group.naam}
+                                            className={`h-6 w-6 rounded-full ${group.color ? COLOR_MAP[group.color as keyof typeof COLOR_MAP] : "#9CA3AF"}`}
+                                            title={String(group.naam)}
                                         />
                                     ) : null;
                                 });
@@ -530,17 +530,17 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                                                                 timeStr?.slice(0, 5) ?? ""; // "09:00:00" → "09:00"
 
                                                             setForm({
-                                                                title: event.title,
-                                                                description: event.description || "",
-                                                                location: event.location,
-                                                                target_groups: event.target_groups.map(Number),
-                                                                date_start: event.date_start ? new Date(event.date_start) : undefined,
-                                                                time_start: formatTime(event.time_start),
-                                                                time_end: formatTime(event.time_end),
-                                                                link: event.link || "",
+                                                                title: String(event.title || ""),
+                                                                description: String(event.description || ""),
+                                                                location: String(event.location || ""),
+                                                                target_groups: Array.isArray(event.target_groups) ? event.target_groups.map(Number) : [],
+                                                                date_start: event.date_start ? new Date(event.date_start as any) : undefined,
+                                                                time_start: formatTime(event.time_start as string),
+                                                                time_end: formatTime(event.time_end as string),
+                                                                link: String(event.link || ""),
                                                             });
 
-                                                            setEditingEvent(event);
+                                                            setEditingEvent(event as Event);
                                                             setEditDialogOpen(true);
                                                         }}
                                                     >
@@ -566,7 +566,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                                                             <AlertDialogFooter>
                                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                                 <AlertDialogAction
-                                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                                    onClick={() => handleDeleteEvent(event.id as number)}
                                                                     className="bg-red-600 hover:bg-red-700"
                                                                 >
                                                                     Delete
