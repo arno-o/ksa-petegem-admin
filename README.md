@@ -2,7 +2,7 @@
 Deze website wordt voornamelijk gebruikt voor het backend CMS systeem van KSA Petegem. Via dit platform ([admin.ksapetegem.be](https://admin.ksapetegem.be)) kan de webmaster van KSA Petegem alle content van de website ([ksapetegem.be](https://www.ksapetegem.be)) beheren.
 
 ## Tech-stack
-- Hosting via Netlify
+- Hosting via Vercel
 - Database & Auth via SupaBase
 - Project coded in React Router (TS)
 
