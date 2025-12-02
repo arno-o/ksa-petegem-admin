@@ -109,6 +109,12 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
     
     const events = loaderData.events;
     const allGroups = loaderData.groups;
+
+    const groupsMap = useMemo(() => {
+        const map = new Map<number, any>();
+        allGroups.forEach((g: any) => map.set(g.id, g));
+        return map;
+    }, [allGroups]);
     
     // Memoize group options to avoid recreating on every render
     const groupOptions = useMemo<Option[]>(() => {
@@ -293,7 +299,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                     return (
                         <div className="flex -space-x-2">
                             {targetGroupIds.map((groupId) => {
-                                const group = allGroups.find((g: any) => g.id === groupId) as any;
+                                const group = groupsMap.get(groupId);
                                 if (group) {
                                     return (
                                         <Tooltip key={group.id}>
@@ -381,7 +387,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                 },
             },
         ],
-        [allGroups, handleDeleteEvent]
+        [groupsMap, handleDeleteEvent]
     );
 
     const table = useReactTable({
@@ -493,7 +499,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
                                 const event = row.original as any;
                                 const targetGroups = Array.isArray(event.target_groups) ? event.target_groups : [];
                                 const groupBadges = targetGroups.map((id: any) => {
-                                    const group = allGroups.find((g: any) => g.id === id) as any;
+                                    const group = groupsMap.get(id);
                                     return group ? (
                                         <div
                                             key={group.id}

@@ -13,6 +13,7 @@ import type { Route } from "./+types/root";
 import { Toaster } from "~/components/ui/sonner"
 import { ThemeProvider } from "./components/sidebar/theme-provider"
 import { AuthContextProvider } from "~/context/AuthContext"
+import { TooltipProvider } from "~/components/ui/tooltip"
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -47,10 +48,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
           <AuthContextProvider>
-            <Toaster />
-            {children}
-            <ScrollRestoration />
-            <Scripts />
+            <TooltipProvider>
+              <Toaster />
+              {children}
+              <ScrollRestoration />
+              <Scripts />
+            </TooltipProvider>
           </AuthContextProvider>
         </ThemeProvider>
       </body>

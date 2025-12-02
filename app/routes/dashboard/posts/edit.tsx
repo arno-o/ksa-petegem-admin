@@ -60,40 +60,30 @@ const EditPostPage = ({ loaderData, }: Route.ComponentProps) => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
 
-    const [post, setPost] = useState<Post | null>(null); // Post state directly holds published status
-    const [loading, setLoading] = useState(true);
+    const fetchedPost = loaderData;
+
+    const [post, setPost] = useState<Post | null>(fetchedPost); // Post state directly holds published status
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const [form, setForm] = useState({
-        title: "",
-        slug: "",
-        description: "",
-        cover_img: "",
+        title: fetchedPost.title,
+        slug: fetchedPost.slug,
+        description: fetchedPost.description ?? "",
+        cover_img: fetchedPost.cover_img,
     });
 
-    const fetchedPost = loaderData;
+    useEffect(() => {
+        setPost(fetchedPost);
+        setForm({
+            title: fetchedPost.title,
+            slug: fetchedPost.slug,
+            description: fetchedPost.description ?? "",
+            cover_img: fetchedPost.cover_img,
+        });
+    }, [fetchedPost]);
 
     useEffect(() => {
-        const getPost = async () => {
-            try {
-                setPost(fetchedPost); // Set the full post object
-                setForm({
-                    title: fetchedPost.title,
-                    slug: fetchedPost.slug,
-                    description: fetchedPost.description ?? "",
-                    cover_img: fetchedPost.cover_img,
-                });
-            } catch (err) {
-                console.error("Failed to fetch post:", err);
-                setError("Failed to load post data.");
-                toast.error("Fout bij het laden van het bericht.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        getPost();
-
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 navigate("/berichten", { viewTransition: true });
@@ -104,7 +94,7 @@ const EditPostPage = ({ loaderData, }: Route.ComponentProps) => {
         return () => { // Cleanup event listener
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [postId, navigate]); // Added navigate to dependencies
+    }, [navigate]);
 
     const slugify = (input: string) =>
         input

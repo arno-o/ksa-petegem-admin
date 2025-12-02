@@ -45,6 +45,7 @@ export function SimpleEditor({ content, onChange }: Props) {
   const [showLinkPopover, setShowLinkPopover] = useState(false)
   const [url, setUrl] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -70,7 +71,14 @@ export function SimpleEditor({ content, onChange }: Props) {
     ],
     content,
     onUpdate({ editor }) {
-      onChange(editor.getHTML())
+      // Debounce the onChange call to prevent excessive re-renders in parent
+      const html = editor.getHTML();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        onChange(html);
+      }, 500);
     },
     editorProps: {
       attributes: {
@@ -78,6 +86,15 @@ export function SimpleEditor({ content, onChange }: Props) {
       },
     },
   })
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (showLinkPopover && inputRef.current) {
@@ -134,7 +151,7 @@ export function SimpleEditor({ content, onChange }: Props) {
     <div className="rounded-md border border-input bg-background">
       <div className="flex flex-wrap gap-2 p-2 border-b border-input rounded-t-md">
         {/* Wrap the entire toolbar with TooltipProvider */}
-        <TooltipProvider>
+        
           <ToggleGroup variant="outline" type="multiple">
             {/* Bold Toggle */}
             <Tooltip>
@@ -314,7 +331,7 @@ export function SimpleEditor({ content, onChange }: Props) {
               </div>
             </PopoverContent>
           </Popover>
-        </TooltipProvider>
+        
       </div>
 
       <div className="p-4">

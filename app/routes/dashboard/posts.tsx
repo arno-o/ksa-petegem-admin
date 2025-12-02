@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { Link, useNavigate, useRevalidator } from "react-router"
 
@@ -39,6 +39,18 @@ const stripHtmlAndTruncate = (html: string, maxLength: number = 150) => {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const text = doc.body.textContent || "";
   return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+};
+
+const PostDescription = ({ html }: { html: string }) => {
+  const text = useMemo(() => {
+    return stripHtmlAndTruncate(html, 120);
+  }, [html]);
+
+  return (
+    <p className="text-sm text-muted-foreground mb-3 flex-grow line-clamp-3">
+      {text}
+    </p>
+  );
 };
 
 export async function clientLoader() {
@@ -164,7 +176,12 @@ export default function Posts({ loaderData, }: Route.ComponentProps) {
                 <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden h-full flex flex-col hover:shadow-lg transition-all duration-200 ease-in-out">
                   {post.cover_img ? (
                     <div className="w-full h-40 overflow-hidden bg-gray-100 flex items-center justify-center">
-                      <img src={post.cover_img} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 ease-in-out" />
+                      <img 
+                        src={post.cover_img} 
+                        alt={post.title} 
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 ease-in-out" 
+                      />
                     </div>
                   ) : (
                     <div className="w-full h-40 bg-muted flex items-center justify-center text-muted-foreground text-sm border-b">
@@ -175,9 +192,7 @@ export default function Posts({ loaderData, }: Route.ComponentProps) {
                     <h4 className="text-xl font-bold mb-2 leading-tight group-hover:text-primary transition-colors">
                       {post.title}
                     </h4>
-                    <p className="text-sm text-muted-foreground mb-3 flex-grow line-clamp-3">
-                      {stripHtmlAndTruncate(post.description, 120)}
-                    </p>
+                    <PostDescription html={post.description} />
                     <div className="flex flex-col gap-3">
 
                       <Separator />
