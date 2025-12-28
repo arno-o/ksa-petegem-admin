@@ -17,7 +17,7 @@ export function meta() {
 
 const KEYS = {
     inschrijving: "general.inschrijvingsbundel_url",
-    privacy: "general.privacyverklargin_url",
+    privacy: "general.privacyverklaring_url",
     published: "leiding.published",
     message: "leiding.published-msg",
 } as const;
@@ -28,8 +28,6 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false);
 
     const [form, setForm] = useState({
-        inschrijving: "",
-        privacy: "",
         published: true,
         message: "",
     });
@@ -46,9 +44,7 @@ export default function SettingsPage() {
                 const rawPublished = unwrapSettingValue(map[KEYS.published]);
                 const published = typeof rawPublished === "boolean" ? rawPublished : Boolean(rawPublished);
                 const message = (unwrapSettingValue(map[KEYS.message]) as string) ?? "";
-                const inschrijving = (unwrapSettingValue(map[KEYS.inschrijving]) as string) ?? "";
-                const privacy = (unwrapSettingValue(map[KEYS.privacy]) as string) ?? "";
-                const next = { inschrijving, privacy, published, message };
+                const next = { published, message };
                 if (!cancel) {
                     setForm(next);
                     setInitial(next);

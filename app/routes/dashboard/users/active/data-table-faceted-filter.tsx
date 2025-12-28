@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, PlusCircle } from "lucide-react";
+import { Check, ListFilter } from "lucide-react";
 
 import { cn } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
@@ -39,28 +39,33 @@ export function DataTableFacetedFilter({
   onSelectionChange,
   facetCounts,
 }: DataTableFacetedFilterProps) {
+  const selectedCount = selectedValues?.size ?? 0;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          {title}
-          {selectedValues?.size > 0 && (
+        <Button
+          variant="outline"
+          className="h-9 min-w-[120px] justify-start gap-2 px-3"
+        >
+          <ListFilter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">{title}</span>
+          {selectedCount > 0 && (
             <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
+              <Separator orientation="vertical" className="mx-1 h-4" />
               <Badge
                 variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
+                className="px-2 font-normal lg:hidden"
               >
-                {selectedValues.size}
+                {selectedCount}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
+                {selectedCount > 2 ? (
                   <Badge
                     variant="secondary"
-                    className="rounded-sm px-1 font-normal"
+                    className="px-2 font-normal"
                   >
-                    {selectedValues.size} geselecteerd
+                    {selectedCount} geselecteerd
                   </Badge>
                 ) : (
                   options
@@ -69,7 +74,7 @@ export function DataTableFacetedFilter({
                       <Badge
                         variant="secondary"
                         key={option.value}
-                        className="rounded-sm px-1 font-normal"
+                        className="px-2 font-normal"
                       >
                         {option.label}
                       </Badge>
@@ -80,7 +85,7 @@ export function DataTableFacetedFilter({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent className="w-[240px] p-0" align="start">
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>

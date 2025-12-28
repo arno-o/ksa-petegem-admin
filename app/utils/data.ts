@@ -110,7 +110,10 @@ export const createPost = async (post: {
 };
 
 export const fetchPosts = async () => {
-  const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id,title,description,cover_img,created_at,published,published_at")
+    .order("created_at", { ascending: false });
   if (error) throw error;
   return (data as any) as Post[];
 };
@@ -149,7 +152,11 @@ export const deletePost = async (id: string) => {
 };
 
 export const fetchActiveGroups = async () => {
-  const { data, error } = await supabase.from("groepen").select("*").eq("active", true).order('id', { ascending: true });
+  const { data, error } = await supabase
+    .from("groepen")
+    .select("id,naam,color")
+    .eq("active", true)
+    .order("id", { ascending: true });
   if (error) throw error;
   return (data as any) as Group[];
 };
@@ -201,7 +208,10 @@ export const deleteGroup = async (id: number | string) => {
 };
 
 export const fetchEvents = async () => {
-  const { data, error } = await supabase.from("events").select("*");
+  const { data, error } = await supabase
+    .from("events")
+    .select("id,title,description,location,target_groups,date_start,date_end,time_start,time_end,link")
+    .order("date_start", { ascending: false });
   if (error) throw error;
   return (data as any) as Event[];
 }
@@ -530,10 +540,14 @@ export async function deleteGlobalPdf(settingKey: string): Promise<void> {
   await upsertSettingValue(settingKey, "", "string", true);
 }
 
-export const fetchProfiles = async () => {
-  const { data, error } = await supabase.from("profiles").select("*");
+export const fetchProfileById = async (uid: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id,first_name,last_name,permission")
+    .eq("id", uid)
+    .single();
   if (error) throw error;
-  return data as any[];
+  return data as any;
 }
 
 export const fetchPermissionLevel = async (uid: string): Promise<number> => {

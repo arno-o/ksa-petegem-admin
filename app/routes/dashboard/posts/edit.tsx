@@ -331,7 +331,7 @@ const EditPostPage = ({ loaderData, }: Route.ComponentProps) => {
                                     <FileUpload
                                         bucket="post-covers"
                                         path={`post-${postId}`}
-                                        initialUrl={form.cover_img}
+                                        initialUrl={form.cover_img ?? undefined}
                                         onChange={(url) => setForm({ ...form, cover_img: url ?? "" })}
                                     />
                                 </div>

@@ -1,5 +1,6 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
+import { Button } from "~/components/ui/button";
+import { Link, Navigate } from "react-router";
 import { UserAuth } from "~/context/AuthContext";
 
 interface PageProps {
@@ -9,20 +10,33 @@ interface PageProps {
 
 export default function PrivateRoute({ children, permissionLvl = 1 }: PageProps) {
   const { session, loading, permission } = UserAuth();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && !session) {
-      navigate("/login");
-    }
-  }, [loading, session, navigate]);
+  if (loading) {
+    return <FullScreenLoader />;
+  }
 
-  if (loading) return null; // or a loading spinner
-  if (!session) return null;
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
 
   // Check if user has sufficient permission level
   if (permission < permissionLvl) {
-    return <div>You don't have permission to access this page.</div>;
+    return (
+      <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-3 py-16 text-center">
+        <h1 className="text-xl font-semibold tracking-tight">Geen toegang</h1>
+        <p className="text-sm text-muted-foreground">
+          Je hebt onvoldoende rechten om deze pagina te openen.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link to="/profiel">Naar profiel</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/berichten">Terug naar dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

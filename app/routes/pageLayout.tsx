@@ -6,6 +6,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar"
+import { Spinner } from "~/components/ui/spinner"
 
 import { Outlet, useNavigation } from "react-router"
 import PrivateRoute from "~/context/PrivateRoute"
@@ -30,6 +31,12 @@ export default function Page({ children, permission = 1 }: PageProps) {
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
             <span className="pr-2">Hallo {firstName} 👋</span>
+            {navigation.state === "loading" ? (
+              <span className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+                <Spinner className="size-4" />
+                Laden…
+              </span>
+            ) : null}
           </header>
 
           <div className={`p-4 ${navigation.state === "loading" ? "opacity-50 transition-opacity" : ""}`}>

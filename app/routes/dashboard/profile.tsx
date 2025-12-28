@@ -1,10 +1,10 @@
 "use client"
 
-import FullScreenLoader from "~/components/allround/full-screen-loader";
 import { UserAuth } from "~/context/AuthContext";
-import { fetchProfiles } from "~/utils/data";
+import supabase from "~/utils/supabase";
+import { fetchProfileById } from "~/utils/data";
 import PageLayout from "../pageLayout";
-import type { Profile } from "~/types";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -12,8 +12,11 @@ import { Separator } from "~/components/ui/separator";
 import { Mail, Shield, User, Calendar } from "lucide-react";
 
 export async function clientLoader() {
-  const profiles = await fetchProfiles();
-  return { profiles };
+    const { data } = await supabase.auth.getUser();
+    const uid = data?.user?.id;
+    if (!uid) return { profile: null };
+    const profile = await fetchProfileById(uid);
+    return { profile };
 }
 
 export function HydrateFallback() {
@@ -31,13 +34,12 @@ const permissionLevels: Record<number, { title: string, variant: "default" | "se
     3: { title: 'Admin', variant: 'destructive', color: 'text-red-600' },
 }
 
-export default function ProfilePage({ loaderData }: { loaderData: { profiles: Profile[] } }) {
+export default function ProfilePage({ loaderData }: { loaderData: { profile: any | null } }) {
     const { session, permission } = UserAuth();
     const uid = session?.user?.id;
     const email = session?.user?.email;
 
-    const { profiles } = loaderData;
-    const user = profiles.find(profile => profile.id === uid);
+    const user = loaderData.profile;
 
     const permissionInfo = permissionLevels[permission] || permissionLevels[0];
     const initials = user ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase() : 'U';
