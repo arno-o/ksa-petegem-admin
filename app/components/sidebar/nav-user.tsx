@@ -1,4 +1,4 @@
-import { IconDotsVertical, IconLogout, IconUser } from "@tabler/icons-react"
+import { EllipsisVertical, LogOut, User } from "lucide-react"
 
 import {
     Avatar,
@@ -66,7 +66,7 @@ export function NavUser() {
                                     {session?.user?.email}
                                 </span>
                             </div>
-                            <IconDotsVertical className="ml-auto size-4" />
+                            <EllipsisVertical className="ml-auto size-4" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -91,11 +91,11 @@ export function NavUser() {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate("/profiel")}>
-                            <IconUser />
+                            <User className="size-4" />
                             Mijn profiel
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleSignOut}>
-                            <IconLogout />
+                            <LogOut className="size-4" />
                             Afmelden
                         </DropdownMenuItem>
                     </DropdownMenuContent>

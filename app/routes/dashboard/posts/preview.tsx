@@ -78,6 +78,7 @@ const PreviewPost = ({ loaderData, }: Route.ComponentProps) => {
                         <img
                             src={post.cover_img}
                             alt={post.title}
+                            loading="lazy"
                             className="w-full h-auto max-h-[14rem] md:max-h-[24rem] object-cover transition-transform duration-300"
                             onError={(e) => {
                                 e.currentTarget.src = `https://placehold.co/800x400/CCCCCC/333333?text=Image+Not+Found`;

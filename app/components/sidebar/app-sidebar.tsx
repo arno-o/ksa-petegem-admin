@@ -1,6 +1,6 @@
 import { NavUser } from "~/components/sidebar/nav-user"
 import { Link, useLocation } from "react-router"
-import React, { useEffect } from "react";
+import React from "react";
 
 import KSALogo from "/assets/svg/KSALogo.svg";
 
@@ -111,19 +111,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
     return false;
   };
-
-  useEffect(() => {
-    const initialOpenState: Record<string, boolean> = {};
-    data.navMain.forEach(group => {
-      group.items.forEach(item => {
-        if (item.items) {
-          if (isParentOrChildActive(item)) {
-            initialOpenState[item.title] = true;
-          }
-        }
-      });
-    });
-  }, [location.pathname]);
 
   return (
     <Sidebar {...props} variant="inset">

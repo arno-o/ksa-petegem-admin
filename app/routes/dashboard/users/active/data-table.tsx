@@ -16,11 +16,6 @@ import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 // Types
 import type { Leiding, Group } from "~/types";
 
-// Export Libraries
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-// @ts-ignore - autoTable might not have full TS definitions
-import autoTable from "jspdf-autotable";
 import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
@@ -161,13 +156,14 @@ export function DataTable<TData extends Leiding, TValue>({
     return parts.length > 0 ? `Leidinglijst - ${parts.join(" - ")}` : "Leidinglijst";
   };
 
-  const handleExportXLS = () => {
+  const handleExportXLS = async () => {
     const exportData = getFormattedExportData();
     if (exportData.length === 0) {
       toast.info("Geen leiding geselecteerd voor export.");
       return;
     }
 
+    const XLSX = await import("xlsx");
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Actieve Leiding");
@@ -175,12 +171,15 @@ export function DataTable<TData extends Leiding, TValue>({
     toast.success("Geselecteerde leiding geëxporteerd als XLS!");
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const exportData = getFormattedExportData();
     if (exportData.length === 0) {
       toast.info("Geen leiding geselecteerd voor export.");
       return;
     }
+
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
 
     const doc = new jsPDF();
     const filterTypeText = getFilterTitle();

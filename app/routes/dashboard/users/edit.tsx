@@ -48,8 +48,10 @@ export function meta({ }: Route.MetaArgs) {
 
 /* ----------------------------- clientLoader (SSR) ----------------------------- */
 export async function clientLoader({ params }: Route.LoaderArgs) {
-  const leiding = await fetchLeidingById(params.leidingId);
-  const groepen = await fetchActiveGroups();
+  const [leiding, groepen] = await Promise.all([
+    fetchLeidingById(params.leidingId),
+    fetchActiveGroups(),
+  ]);
   return { leiding, groepen };
 }
 

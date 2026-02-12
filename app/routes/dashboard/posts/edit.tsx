@@ -1,5 +1,5 @@
 import { useIsMobile } from "~/hooks/use-mobile";
-import { useMemo, useState, useEffect } from "react";
+import React, { Suspense, useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams, Link, useRouteError, isRouteErrorResponse } from "react-router";
 import { ChevronLeft, Pencil, Trash, Save, Eye, Badge, BadgeCheck, LinkIcon } from "lucide-react";
 
@@ -11,7 +11,10 @@ import { Separator } from "~/components/ui/separator";
 import FullScreenLoader from "~/components/allround/full-screen-loader";
 
 import FileUpload from "~/components/images/file-upload"
-import { SimpleEditor } from "~/components/allround/editor"
+
+const SimpleEditor = React.lazy(() =>
+    import("~/components/allround/editor").then(m => ({ default: m.SimpleEditor }))
+);
 
 import {
     Dialog,
@@ -316,10 +319,12 @@ const EditPostPage = ({ loaderData, }: Route.ComponentProps) => {
                         </div>
                     </div>
 
-                    <SimpleEditor
-                        content={form.description}
-                        onChange={(html) => setForm({ ...form, description: html })}
-                    />
+                    <Suspense fallback={<div className="h-[300px] rounded-md border border-input bg-muted/30 animate-pulse" />}>
+                        <SimpleEditor
+                            content={form.description}
+                            onChange={(html) => setForm({ ...form, description: html })}
+                        />
+                    </Suspense>
                 </div>
 
                 <div className="space-y-4">

@@ -1,5 +1,6 @@
 // React and Hooks
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRevalidator } from "react-router";
 
 // UI Components (shadcn/ui or custom)
 import LeidingCard from "~/components/cards/leiding-card";
@@ -12,44 +13,42 @@ import { toast } from "sonner";
 import type { Group, Leiding } from "~/types";
 import type { Route } from "../users/+types/inactive";
 import { fetchInactiveLeiding, fetchActiveGroups } from "~/utils/data";
+import FullScreenLoader from "~/components/allround/full-screen-loader";
 
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "KSA Admin - Leiding" }];
 }
 
-export default function Inactive() {
-  const [loading, setLoading] = useState(false);
-  const [leiding, setLeiding] = useState<Leiding[]>();
-  const [groups, setGroups] = useState<Group[]>(); // Keep this to display group names for inactive leiding
+export async function clientLoader() {
+  const [leiding, groups] = await Promise.all([
+    fetchInactiveLeiding(),
+    fetchActiveGroups(),
+  ]);
+  return { leiding, groups };
+}
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const inactiveLeidingData = await fetchInactiveLeiding();
-        setLeiding(inactiveLeidingData);
-        const activeGroupsData = await fetchActiveGroups();
-        setGroups(activeGroupsData);
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
-        toast.error("Fout bij het laden van oud-leiding.");
-      } finally {
-        setLoading(false);
-      }
-    };
+export function HydrateFallback() {
+  return (
+    <PageLayout permission={2}>
+      <FullScreenLoader />
+    </PageLayout>
+  );
+}
 
-    loadData();
-  }, []);
+export default function Inactive({ loaderData }: Route.ComponentProps) {
+  const revalidator = useRevalidator();
 
   const handleDeleteLeiding = (id: number) => {
-    setLeiding((prev) => prev?.filter((persoon) => persoon.id !== id));
+    revalidator.revalidate();
   };
 
   const handleRestoreLeiding = (id: number) => {
-    setLeiding((prev) => prev?.filter((persoon) => persoon.id !== id));
+    revalidator.revalidate();
   };
 
+  const leiding = loaderData.leiding;
+  const groups = loaderData.groups;
 
   return (
     <PageLayout permission={2}>
@@ -64,15 +63,12 @@ export default function Inactive() {
         </div>
 
         <div>
-          {loading && <div className="p-4 text-center text-muted-foreground">Laden...</div>}
-          {!loading && leiding?.length === 0 && (
+          {leiding?.length === 0 && (
             <div className="p-4 text-center text-muted-foreground">
               Geen oud-leiding gevonden.
             </div>
           )}
-          {!loading && leiding?.map((person) => {
-            const group = groups?.find(g => g.id === person.leidingsploeg);
-
+          {leiding?.map((person) => {
             return (
               <LeidingCard
                 key={person.id}

@@ -89,8 +89,10 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export async function clientLoader() {
-    const events = await fetchEvents();
-    const groups = await fetchActiveGroups();
+    const [events, groups] = await Promise.all([
+        fetchEvents(),
+        fetchActiveGroups(),
+    ]);
     return { events, groups };
 }
 
@@ -216,7 +218,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
         }
     };
 
-    const handleDeleteEvent = async (id: number) => {
+    const handleDeleteEvent = useCallback(async (id: number) => {
         try {
             await deleteEvent(id);
             revalidator.revalidate();
@@ -226,7 +228,7 @@ export default function Events({ loaderData, }: Route.ComponentProps) {
             revalidator.revalidate();
             toast.error("Verwijderen mislukt. Probeer opnieuw.");
         }
-    };
+    }, [revalidator]);
 
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);

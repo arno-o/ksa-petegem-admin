@@ -1,5 +1,4 @@
 import type { Group } from "~/types";
-import { useState, useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
 import { PencilIcon } from "lucide-react";
@@ -22,12 +21,6 @@ const COLOR_MAP: Record<string, string> = {
 };
 
 const GroupCard = ({ group, onEdit }: GroupCardProps) => {
-  const [isActive, setIsActive] = useState(group.active);
-
-  useEffect(() => {
-    setIsActive(group.active);
-  }, [group.active]);
-
   const colorClass = (group.color && COLOR_MAP[group.color]) || "bg-gray-200 dark:bg-gray-700";
 
   return (
@@ -52,12 +45,12 @@ const GroupCard = ({ group, onEdit }: GroupCardProps) => {
           <span
             className={cn(
               "h-2.5 w-2.5 rounded-full",
-              isActive ? "bg-green-500" : "bg-red-500"
+              group.active ? "bg-green-500" : "bg-red-500"
             )}
             aria-hidden="true"
           />
           <span className="text-sm text-muted-foreground">
-            {isActive ? "Actief" : "Inactief"}
+            {group.active ? "Actief" : "Inactief"}
           </span>
         </div>
 

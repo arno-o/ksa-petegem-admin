@@ -5,7 +5,7 @@ import { cn } from "~/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ImageIcon, Loader2, Trash, ArrowLeftIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
 
-import imageCompression from "browser-image-compression";
+// browser-image-compression is dynamically imported when needed
 import { uploadLeidingPhoto, uploadPostCover, deleteFromBucket } from "~/utils/data";
 
 import { Button } from '~/components/ui/button'
@@ -122,6 +122,7 @@ export default function FileUpload({ bucket, path, initialUrl, onChange }: FileU
       }
 
       const croppedFile = new File([croppedBlob], "cropped.jpg", { type: "image/jpeg" });
+      const { default: imageCompression } = await import("browser-image-compression");
       const compressedFile = await imageCompression(croppedFile, {
         maxSizeMB: 1,
         maxWidthOrHeight: 1280,

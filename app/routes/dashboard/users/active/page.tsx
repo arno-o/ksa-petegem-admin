@@ -1,6 +1,6 @@
 // React and Hooks
 import { useEffect, useState, useMemo } from "react";
-import { isRouteErrorResponse, useNavigate, useRouteError } from "react-router";
+import { isRouteErrorResponse, useNavigate, useRevalidator, useRouteError } from "react-router";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { toast } from "sonner";
 
@@ -30,8 +30,10 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function clientLoader() {
-  const groupData = await fetchActiveGroups();
-  const leidingData = await fetchActiveLeiding();
+  const [groupData, leidingData] = await Promise.all([
+    fetchActiveGroups(),
+    fetchActiveLeiding(),
+  ]);
 
   return { leidingData, groupData };
 }
@@ -47,8 +49,8 @@ export function HydrateFallback() {
 export default function Active({ loaderData }: Route.ComponentProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const groups = loaderData.groupData;
   const leiding = loaderData.leidingData;
@@ -100,25 +102,6 @@ export default function Active({ loaderData }: Route.ComponentProps) {
   const [massDisableDialog, setMassDisableDialog] = useState(false);
   const [selectedMassEditGroup, setSelectedMassEditGroup] = useState<string>("");
   const [selectedMassIds, setSelectedMassIds] = useState<number[]>([]);
-
-  // Helper to reload all necessary data
-  const reloadData = async () => {
-    setLoading(true);
-    try {
-      // In a real implementation, you'd refetch the data here
-      // For now, we'll just wait a bit to simulate loading
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (err) {
-      console.error("Failed to reload data:", err);
-      toast.error("Fout bij het vernieuwen van de gegevens.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    reloadData();
-  }, []); // Initial load
 
   // Save filter preferences to localStorage
   useEffect(() => {
@@ -230,7 +213,7 @@ export default function Active({ loaderData }: Route.ComponentProps) {
       await deleteLeiding(selectedLeidingForDialog.id);
       toast.success("Leiding werd definitief verwijderd.");
       setDeleteDialog(false);
-      await reloadData();
+      revalidator.revalidate();
       setSelectedLeidingForDialog(null);
     } catch (err) {
       toast.error("Verwijderen mislukt. Probeer opnieuw.");
@@ -244,7 +227,7 @@ export default function Active({ loaderData }: Route.ComponentProps) {
       await disableLeiding(selectedLeidingForDialog.id);
       toast.success("Leiding is succesvol inactief gezet.");
       setDisableConfirmDialog(false);
-      await reloadData();
+      revalidator.revalidate();
       setSelectedLeidingForDialog(null);
     } catch (err) {
       toast.error("Inactief zetten mislukt. Probeer opnieuw.");
@@ -273,7 +256,7 @@ export default function Active({ loaderData }: Route.ComponentProps) {
       toast.success(`Groep gewist voor ${selectedMassIds.length} leiding.`);
       setMassWipeGroupDialog(false);
       setSelectedMassIds([]);
-      await reloadData();
+      revalidator.revalidate();
     } catch (err) {
       toast.error("Groep wissen mislukt. Probeer opnieuw.");
       console.error("Failed to mass wipe group:", err);
@@ -304,7 +287,7 @@ export default function Active({ loaderData }: Route.ComponentProps) {
       setMassEditGroupDialog(false);
       setSelectedMassEditGroup("");
       setSelectedMassIds([]);
-      await reloadData();
+      revalidator.revalidate();
     } catch (err) {
       toast.error("Massabewerking groep mislukt. Probeer opnieuw.");
       console.error("Failed to mass update group:", err);
@@ -331,7 +314,7 @@ export default function Active({ loaderData }: Route.ComponentProps) {
       toast.success(`${selectedMassIds.length} leiding is succesvol inactief gezet.`);
       setMassDisableDialog(false);
       setSelectedMassIds([]);
-      await reloadData();
+      revalidator.revalidate();
     } catch (err) {
       toast.error("Massabewerking inactief zetten mislukt. Probeer opnieuw.");
       console.error("Failed to mass disable leiding:", err);
