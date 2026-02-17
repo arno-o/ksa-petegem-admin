@@ -1,6 +1,5 @@
-import FullScreenLoader from "~/components/allround/full-screen-loader";
 import { Button } from "~/components/ui/button";
-import { Link, Navigate } from "react-router";
+import { Link } from "react-router";
 import { UserAuth } from "~/context/AuthContext";
 
 interface PageProps {
@@ -9,17 +8,10 @@ interface PageProps {
 }
 
 export default function PrivateRoute({ children, permissionLvl = 1 }: PageProps) {
-  const { session, loading, permission } = UserAuth();
+  const { permission } = UserAuth();
 
-  if (loading) {
-    return <FullScreenLoader />;
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check if user has sufficient permission level
+  // Auth redirect is now handled server-side by the dashboard layout loader.
+  // This component only checks permission levels.
   if (permission < permissionLvl) {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-3 py-16 text-center">

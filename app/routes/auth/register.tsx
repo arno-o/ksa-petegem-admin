@@ -1,4 +1,6 @@
+import { redirect, data } from "react-router";
 import type { Route } from "./+types/register";
+import { createSupabaseServerClient } from "~/utils/supabase.server";
 import { RegisterForm } from "~/components/allround/register-form";
 
 import CoverFoto from "/assets/img/leiding_cover_foto.jpg";
@@ -9,6 +11,17 @@ export function meta({ }: Route.MetaArgs) {
   return [
     { title: "KSA Admin - Register" },
   ];
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const { supabase, headers } = createSupabaseServerClient(request);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    throw redirect("/berichten", { headers });
+  }
+
+  return data(null, { headers });
 }
 
 export default function Register() {

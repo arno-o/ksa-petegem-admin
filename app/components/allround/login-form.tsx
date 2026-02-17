@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { useState } from "react"
-import { Link, useNavigate } from "react-router"
+import { Link, useNavigate, useRevalidator } from "react-router"
 import { Eye, EyeOff } from "lucide-react"
 import { UserAuth } from "~/context/AuthContext"
 import { translateSupabaseError } from "~/utils/errorTranslator";
@@ -22,6 +22,7 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
 
   const { signInUser } = UserAuth();
 
@@ -57,7 +58,9 @@ export function LoginForm({
       const result = await signInUser(email, password);
       if (result.success) {
         toast.info("Succesvol aangemeld");
-        navigate("/");
+        // Revalidate root loader so session data is fresh, then navigate
+        revalidator.revalidate();
+        navigate("/berichten", { viewTransition: true });
       } else {
         const translatedError = translateSupabaseError(result.error.code);
         toast.error("Aanmelden mislukt.", {

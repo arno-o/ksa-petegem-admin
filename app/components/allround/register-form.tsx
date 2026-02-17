@@ -14,7 +14,7 @@ import { translateSupabaseError } from "~/utils/errorTranslator";
 import { toast } from "sonner"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
-import { Link, useNavigate } from "react-router"
+import { Link, useNavigate, useRevalidator } from "react-router"
 import { UserAuth } from "~/context/AuthContext"
 import { Separator } from "~/components/ui/separator"
 
@@ -28,6 +28,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
   const [showPassword, setShowPassword] = useState<boolean>(false); // State to toggle password visibility
 
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
 
   const { signUpNewUser } = UserAuth();
 
@@ -74,6 +75,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
 
       if (result.success) {
         toast.success("Account succesvol aangemaakt!");
+        revalidator.revalidate();
         navigate("/berichten", { viewTransition: true });
       } else {
         const translatedError = translateSupabaseError(result.error.code);

@@ -1,9 +1,7 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { redirect, data } from "react-router";
 import type { Route } from "./+types/login";
-import { UserAuth } from "~/context/AuthContext";
+import { createSupabaseServerClient } from "~/utils/supabase.server";
 import { LoginForm } from "~/components/allround/login-form";
-import FullScreenLoader from "~/components/allround/full-screen-loader";
 
 import CoverFoto from "/assets/img/leiding_cover_foto.jpg";
 
@@ -15,20 +13,18 @@ export function meta({ }: Route.MetaArgs) {
   ];
 }
 
-export default function Login() {
-  const { session, loading } = UserAuth();
-  const navigate = useNavigate();
+export async function loader({ request }: Route.LoaderArgs) {
+  const { supabase, headers } = createSupabaseServerClient(request);
+  const { data: { user } } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    if (!loading && session) {
-      navigate("/", { viewTransition: true });
-    }
-  }, [loading, session, navigate]);
-
-  if (loading || session) {
-    return <FullScreenLoader />;
+  if (user) {
+    throw redirect("/berichten", { headers });
   }
 
+  return data(null, { headers });
+}
+
+export default function Login() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">

@@ -13,53 +13,43 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [permission, setPermission] = useState<number>(0);
+interface AuthProviderProps {
+  children: React.ReactNode;
+  initialUser?: any | null;
+  initialPermission?: number;
+}
+
+export const AuthContextProvider = ({
+  children,
+  initialUser = null,
+  initialPermission = 0,
+}: AuthProviderProps) => {
+  // Build a minimal session-like object from loader data so `session?.user` works immediately
+  const [session, setSession] = useState<any | null>(
+    initialUser ? { user: initialUser } : null
+  );
+  const [loading, setLoading] = useState(false);
+  const [permission, setPermission] = useState<number>(initialPermission);
 
   useEffect(() => {
     let isMounted = true;
 
-    const getSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
+    // Hydrate the full session from the browser client (reads cookies)
+    const initSession = async () => {
+      const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
-      
-      setSession(data?.session ?? null);
-      
-      // Fetch permission level if user is authenticated
-      if (data?.session?.user?.id) {
-        try {
-          const permissionLevel = await fetchPermissionLevel(data.session.user.id);
-          if (isMounted) {
-            setPermission(permissionLevel);
-          }
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error("Failed to fetch permission level:", error);
-          }
-          if (isMounted) {
-            setPermission(0);
-          }
-        }
-      } else {
-        setPermission(0);
-      }
-      
-      if (isMounted) {
-        setLoading(false);
+      if (data?.session) {
+        setSession(data.session);
       }
     };
 
-    getSession();
+    initSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
       if (!isMounted) return;
-      
+
       setSession(session);
-      
-      // Update permission when auth state changes
+
       if (session?.user?.id) {
         try {
           const permissionLevel = await fetchPermissionLevel(session.user.id);

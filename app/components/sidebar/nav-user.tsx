@@ -21,7 +21,7 @@ import {
     useSidebar,
 } from "~/components/ui/sidebar"
 
-import { useNavigate } from "react-router"
+import { useNavigate, useRevalidator } from "react-router"
 import { UserAuth } from "~/context/AuthContext"
 import { toast } from "sonner"
 
@@ -31,12 +31,14 @@ export function NavUser() {
     const { session, signOut } = UserAuth();
 
     let navigate = useNavigate();
+    let revalidator = useRevalidator();
 
     const handleSignOut = async () => {
         try {
             await signOut();
             toast.info("Uitgelogd");
-            navigate("/")
+            revalidator.revalidate();
+            navigate("/login");
         } catch (err) {
             console.error(err);
         }

@@ -1,4 +1,5 @@
 import {
+  data,
   isRouteErrorResponse,
   Links,
   Meta,
@@ -14,6 +15,7 @@ import { Toaster } from "~/components/ui/sonner"
 import { ThemeProvider } from "./components/sidebar/theme-provider"
 import { AuthContextProvider } from "~/context/AuthContext"
 import { TooltipProvider } from "~/components/ui/tooltip"
+import { createSupabaseServerClient } from "~/utils/supabase.server"
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -27,6 +29,23 @@ export const links: Route.LinksFunction = () => [
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
 ];
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const { supabase, headers } = createSupabaseServerClient(request);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let permission = 0;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("permission")
+      .eq("id", user.id)
+      .single();
+    permission = profile?.permission ?? 0;
+  }
+
+  return data({ user, permission }, { headers });
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -47,22 +66,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-          <AuthContextProvider>
-            <TooltipProvider>
-              <Toaster />
-              {children}
-              <ScrollRestoration />
-              <Scripts />
-            </TooltipProvider>
-          </AuthContextProvider>
+          <TooltipProvider>
+            <Toaster />
+            {children}
+            <ScrollRestoration />
+            <Scripts />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
 
-export default function App() {
-  return <Outlet />;
+export default function App({ loaderData }: Route.ComponentProps) {
+  const { user, permission } = loaderData ?? {};
+  return (
+    <AuthContextProvider initialUser={user ?? null} initialPermission={permission ?? 0}>
+      <Outlet />
+    </AuthContextProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
